@@ -618,7 +618,7 @@
             <div class="login-card animate__animated animate__fadeInUp">
                 <div class="card-header">
                     <div class="logo-container">
-                        <img src="./images/logo.png" alt="EduPro Logo" class="logo">
+                        <img src="logo.png" alt="EduPro Logo" class="logo">
                         <h2 class="logo-text">EduPro Suite 2.0</h2>
                         <p class="logo-subtext">Premium Education Portal</p>
                     </div>
@@ -667,7 +667,7 @@
     <!-- Spinner Overlay -->
     <div id="spinnerOverlay" class="spinner-overlay">
         <div class="spinner-content">
-            <img src="./images/logo.png" alt="Loading" class="spinner-logo">
+            <img src="logo.png" alt="Loading" class="spinner-logo">
             <p class="spinner-text">Authenticating credentials...</p>
         </div>
     </div>
