@@ -7,7 +7,751 @@ require_once "header.php";
 <!-- Modern CSS Framework with Improved Typography -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;<?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+require_once "../../require_developer.php";
+require_once "header.php";
+?>
+
+<!-- Modern CSS Framework -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+<!-- Professional CSS -->
+<style>
+    :root {
+        /* Professional Color Palette */
+        --primary: #4361ee;
+        --primary-light: #ebf0ff;
+        --primary-dark: #3a56d5;
+        --secondary: #7209b7;
+        --success: #2a9d8f;
+        --info: #4895ef;
+        --warning: #f4a261;
+        --danger: #e63946;
+        --light: #f8f9fa;
+        --dark: #212529;
+        --gray-100: #f1f5f9;
+        --gray-200: #e2e8f0;
+        --gray-300: #cbd5e1;
+        --gray-500: #64748b;
+        --gray-700: #334155;
+        --gray-900: #0f172a;
+        
+        /* Spacing System */
+        --space-xs: 0.25rem;
+        --space-sm: 0.5rem;
+        --space-md: 1rem;
+        --space-lg: 1.5rem;
+        --space-xl: 2rem;
+        --space-2xl: 3rem;
+        
+        /* Typography */
+        --text-sm: 0.875rem;
+        --text-base: 1rem;
+        --text-lg: 1.125rem;
+        --text-xl: 1.25rem;
+        --text-2xl: 1.5rem;
+        --text-3xl: 1.875rem;
+        
+        /* Border Radius */
+        --rounded-sm: 0.25rem;
+        --rounded: 0.375rem;
+        --rounded-md: 0.5rem;
+        --rounded-lg: 0.75rem;
+        --rounded-xl: 1rem;
+        --rounded-full: 9999px;
+        
+        /* Shadows */
+        --shadow-sm: 0 1px 3px 0 rgba(0,0,0,0.1);
+        --shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        --shadow-md: 0 10px 15px -3px rgba(0,0,0,0.1);
+        --shadow-lg: 0 20px 25px -5px rgba(0,0,0,0.1);
+        
+        /* Transitions */
+        --transition: all 0.2s ease;
+        --transition-slow: all 0.4s ease;
+    }
+
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        background-color: var(--gray-100);
+        color: var(--dark);
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* Accessibility */
+    .skip-link {
+        position: absolute;
+        top: -40px;
+        left: 0;
+        padding: var(--space-sm) var(--space-md);
+        background: var(--primary);
+        color: white;
+        z-index: 100;
+        border-radius: var(--rounded);
+        transition: top 0.3s;
+    }
+    
+    .skip-link:focus {
+        top: var(--space-md);
+        outline: 2px solid var(--primary-dark);
+    }
+
+    /* Header */
+    .school-header {
+        display: flex;
+        align-items: center;
+        padding: var(--space-md) var(--space-xl);
+        background: white;
+        border-bottom: 1px solid var(--gray-200);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .school-logo {
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+        text-decoration: none;
+    }
+
+    .school-logo img {
+        height: 48px;
+        width: 48px;
+        object-fit: contain;
+    }
+
+    .school-name {
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 700;
+        font-size: var(--text-xl);
+        color: var(--dark);
+    }
+
+    /* Main Container */
+    .dashboard-container {
+        max-width: 1800px;
+        margin: 0 auto;
+        padding: var(--space-xl);
+    }
+
+    /* Dashboard Header */
+    .dashboard-header {
+        padding: var(--space-xl);
+        margin-bottom: var(--space-xl);
+        background: white;
+        border-radius: var(--rounded-xl);
+        box-shadow: var(--shadow);
+    }
+
+    .header-content {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-lg);
+    }
+
+    @media (min-width: 768px) {
+        .header-content {
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+        }
+    }
+
+    .dashboard-title {
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 700;
+        font-size: var(--text-2xl);
+        color: var(--dark);
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+    }
+
+    .breadcrumb {
+        display: flex;
+        align-items: center;
+        font-size: var(--text-sm);
+        color: var(--gray-500);
+    }
+
+    .breadcrumb-item {
+        color: var(--primary);
+        font-weight: 500;
+    }
+
+    .breadcrumb-item.active {
+        color: var(--dark);
+    }
+
+    .breadcrumb-divider {
+        margin: 0 var(--space-sm);
+    }
+
+    /* User Profile */
+    .user-profile {
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+    }
+
+    .notifications {
+        position: relative;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+        border-radius: var(--rounded-full);
+        box-shadow: var(--shadow-sm);
+        color: var(--gray-500);
+    }
+
+    .notification-badge {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        background: var(--danger);
+        color: white;
+        border-radius: var(--rounded-full);
+        width: 18px;
+        height: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.65rem;
+        font-weight: 700;
+    }
+
+    .profile-dropdown {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        padding: var(--space-sm);
+        background: white;
+        border-radius: var(--rounded-lg);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .profile-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: var(--rounded-full);
+        overflow: hidden;
+    }
+
+    .profile-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .user-name {
+        font-weight: 600;
+        font-size: var(--text-sm);
+    }
+
+    .user-role {
+        font-size: var(--text-sm);
+        color: var(--gray-500);
+    }
+
+    /* Metrics Section */
+    .metrics-section {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--space-md);
+        margin-bottom: var(--space-xl);
+    }
+
+    @media (min-width: 640px) {
+        .metrics-section {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .metrics-section {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
+    .metric-card {
+        background: white;
+        border-radius: var(--rounded-xl);
+        padding: var(--space-lg);
+        box-shadow: var(--shadow);
+        transition: var(--transition);
+        border-left: 4px solid var(--primary);
+    }
+
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .metric-content {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .metric-label {
+        font-size: var(--text-sm);
+        color: var(--gray-500);
+        margin-bottom: var(--space-xs);
+    }
+
+    .metric-value {
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 700;
+        font-size: var(--text-2xl);
+        color: var(--dark);
+        margin-bottom: var(--space-xs);
+    }
+
+    .metric-trend {
+        display: flex;
+        align-items: center;
+        gap: var(--space-xs);
+        font-size: var(--text-sm);
+        color: var(--success);
+    }
+
+    /* Quick Actions */
+    .actions-section {
+        background: white;
+        border-radius: var(--rounded-xl);
+        padding: var(--space-xl);
+        margin-bottom: var(--space-xl);
+        box-shadow: var(--shadow);
+    }
+
+    .action-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: var(--space-md);
+    }
+
+    .action-card {
+        background: white;
+        border-radius: var(--rounded-lg);
+        padding: var(--space-lg);
+        text-decoration: none;
+        transition: var(--transition);
+        border: 1px solid var(--gray-200);
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .action-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+        border-color: var(--primary-light);
+    }
+
+    .action-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--rounded);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: var(--space-md);
+        color: white;
+        font-size: 1.25rem;
+        background: var(--primary);
+    }
+
+    .action-card h3 {
+        font-size: var(--text-lg);
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: var(--space-xs);
+    }
+
+    .action-card p {
+        font-size: var(--text-sm);
+        color: var(--gray-500);
+    }
+
+    /* Bottom Section */
+    .bottom-section {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--space-xl);
+    }
+
+    @media (min-width: 1024px) {
+        .bottom-section {
+            grid-template-columns: 2fr 1fr;
+        }
+    }
+
+    /* Calendar */
+    .calendar-section {
+        background: white;
+        border-radius: var(--rounded-xl);
+        padding: var(--space-xl);
+        box-shadow: var(--shadow);
+    }
+
+    /* Activity */
+    .activity-section {
+        background: white;
+        border-radius: var(--rounded-xl);
+        padding: var(--space-xl);
+        box-shadow: var(--shadow);
+    }
+
+    .activity-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-md);
+    }
+
+    .activity-item {
+        display: flex;
+        gap: var(--space-md);
+        padding: var(--space-md);
+        border-radius: var(--rounded);
+        background: white;
+        border: 1px solid var(--gray-200);
+    }
+
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: var(--rounded-full);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .activity-content {
+        flex: 1;
+    }
+
+    .activity-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: var(--space-xs);
+    }
+
+    .activity-header h3 {
+        font-size: var(--text-base);
+        font-weight: 600;
+    }
+
+    .activity-time {
+        font-size: var(--text-sm);
+        color: var(--gray-500);
+    }
+
+    .activity-content p {
+        font-size: var(--text-sm);
+        color: var(--gray-500);
+    }
+
+    /* Buttons */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: var(--space-sm) var(--space-md);
+        border-radius: var(--rounded);
+        font-weight: 500;
+        cursor: pointer;
+        transition: var(--transition);
+        border: 1px solid transparent;
+        gap: var(--space-sm);
+    }
+
+    .btn-primary {
+        background: var(--primary);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: var(--primary-dark);
+    }
+
+    .btn-outline {
+        background: white;
+        border-color: var(--gray-200);
+    }
+
+    /* Focus styles */
+    :focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: 2px;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    .metric-card, .action-card, .activity-item {
+        animation: fadeIn 0.5s ease forwards;
+    }
+</style>
+
+<!-- Skip to content link -->
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<!-- School Header -->
+<div class="school-header">
+    <a href="#" class="school-logo">
+        <img src="adinkra.png" alt="School Logo">
+        <span class="school-name">Adinkra International School</span>
+    </a>
+</div>
+
+<!-- Main Content -->
+<div class="dashboard-container" id="main-content">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <div class="header-content">
+            <div>
+                <h1 class="dashboard-title">
+                    <i class="fas fa-chalkboard-teacher"></i> Educator Dashboard
+                </h1>
+                <nav class="breadcrumb">
+                    <span class="breadcrumb-item active">Dashboard</span>
+                    <span class="breadcrumb-divider">/</span>
+                    <span class="breadcrumb-item">Overview</span>
+                </nav>
+            </div>
+            
+            <div class="user-profile">
+                <div class="notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge">3</span>
+                </div>
+                
+                <div class="profile-dropdown" tabindex="0">
+                    <div class="profile-avatar">
+                        <img src="https://ui-avatars.com/api/?name=<?php echo urlencode($_SESSION['username'] ?? 'User'); ?>&background=random" alt="Profile">
+                    </div>
+                    <div>
+                        <div class="user-name"><?php echo $_SESSION['username'] ?? 'User'; ?></div>
+                        <div class="user-role">Facilitator</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="metrics-section">
+        <div class="metric-card">
+            <div class="metric-content">
+                <span class="metric-label">Total Students</span>
+                <?php
+                    $stmt = $conn->query("SELECT COUNT(name) as 'tstudents' FROM student");
+                    $row = $stmt->fetchArray(SQLITE3_ASSOC);
+                    $totalStudents = $row['tstudents'] ?? 0;
+                ?>
+                <span class="metric-value"><?php echo $totalStudents; ?></span>
+                <div class="metric-trend">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>5% from last term</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="metric-card">
+            <div class="metric-content">
+                <span class="metric-label">Active Classes</span>
+                <?php
+                    $stmt = $conn->query("SELECT COUNT(DISTINCT class) as 'tclasses' FROM student");
+                    $row = $stmt->fetchArray(SQLITE3_ASSOC);
+                    $totalClasses = $row['tclasses'] ?? 0;
+                ?>
+                <span class="metric-value"><?php echo $totalClasses; ?></span>
+                <div class="metric-trend">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>2 new this term</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="metric-card">
+            <div class="metric-content">
+                <span class="metric-label">Attendance Rate</span>
+                <span class="metric-value">94%</span>
+                <div class="metric-trend">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>3% improvement</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="actions-section">
+        <div class="action-grid">
+            <a href="logginn.php" class="action-card">
+                <div class="action-icon" style="background: var(--info);">
+                    <i class="fas fa-book-open"></i>
+                </div>
+                <h3>Lesson Notes</h3>
+                <p>Create and manage teaching materials</p>
+            </a>
+            
+            <a href="login.php" class="action-card">
+                <div class="action-icon" style="background: var(--success);">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <h3>Attendance</h3>
+                <p>Mark and track student attendance</p>
+            </a>
+            
+            <a href="logg.php" class="action-card">
+                <div class="action-icon" style="background: var(--warning);">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <h3>Assignments</h3>
+                <p>Create and grade assignments</p>
+            </a>
+            
+            <a href="email_login.php" class="action-card">
+                <div class="action-icon" style="background: var(--secondary);">
+                    <i class="fas fa-envelope"></i>
+                </div>
+                <h3>Emails</h3>
+                <p>Communicate with students/parents</p>
+            </a>
+            
+            <a href="subjects.php" class="action-card">
+                <div class="action-icon" style="background: #ec4899;">
+                    <i class="fas fa-book-open"></i>
+                </div>
+                <h3>Subjects</h3>
+                <p>Manage and assign subjects</p>
+            </a>
+            
+            <a href="exam_scores.php" class="action-card">
+                <div class="action-icon" style="background: #f97316;">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h3>Exam Scores</h3>
+                <p>View and input student scores</p>
+            </a>
+            
+            <a href="lo.php" class="action-card">
+                <div class="action-icon" style="background: #14b8a6;">
+                    <i class="fas fa-clipboard-list"></i>
+                </div>
+                <h3>Skill Evaluation</h3>
+                <p>Evaluate behavior and soft skills</p>
+            </a>
+        </div>
+    </div>
+
+    <!-- Calendar and Activity -->
+    <div class="bottom-section">
+        <div class="calendar-section">
+            <div id="calendar"></div>
+        </div>
+        
+        <div class="activity-section">
+            <h2>Recent Activity</h2>
+            <div class="activity-list">
+                <div class="activity-item">
+                    <div class="activity-icon" style="background: var(--success);">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-header">
+                            <h3>Attendance Marked</h3>
+                            <span class="activity-time">2h ago</span>
+                        </div>
+                        <p>Class 10A - Mathematics (32 students present)</p>
+                    </div>
+                </div>
+                
+                <div class="activity-item">
+                    <div class="activity-icon" style="background: var(--primary);">
+                        <i class="fas fa-upload"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-header">
+                            <h3>Lesson Notes Uploaded</h3>
+                            <span class="activity-time">1d ago</span>
+                        </div>
+                        <p>Week 5 materials for all classes</p>
+                    </div>
+                </div>
+                
+                <div class="activity-item">
+                    <div class="activity-icon" style="background: var(--info);">
+                        <i class="fas fa-comment-alt"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-header">
+                            <h3>New Message</h3>
+                            <span class="activity-time">2d ago</span>
+                        </div>
+                        <p>From Parent: Jane Doe (Regarding: Term Project)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php require_once "../include/footer.php"; ?>
+
+<!-- JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const calendarEl = document.getElementById('calendar');
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek'
+            },
+            events: [
+                {
+                    title: 'Parent Meeting',
+                    start: new Date(),
+                    color: '#4361ee'
+                },
+                {
+                    title: 'Term Assessment',
+                    start: new Date(new Date().setDate(new Date().getDate() + 5)),
+                    color: '#2a9d8f'
+                }
+            ]
+        });
+        calendar.render();
+    });
+
+    function showUnderDevelopmentMessage() {
+        alert("This feature is currently under development. Thank you for your patience!");
+    }
+</script>
+</body>
+</html>700;800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 
 <!-- Enhanced Design System with Sophisticated Color Palette -->
