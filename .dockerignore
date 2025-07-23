@@ -1,0 +1,24 @@
+# Ignore Git files
+.git
+.gitignore
+
+# Ignore Docker files (optional)
+Dockerfile
+.dockerignore
+
+# Ignore OS/editor-specific files
+*.log
+*.env
+*.DS_Store
+*.swp
+*.bak
+
+# Node (if you ever use it)
+node_modules
+
+# Composer (if vendor is generated inside container)
+vendor/
+
+# Ignore hidden files and test folders
+tests/
+*.test
