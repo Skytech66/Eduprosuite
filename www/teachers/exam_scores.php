@@ -1,4 +1,6 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 include 'config.php';
 
 function formatScore($value) {
@@ -41,13 +43,14 @@ $addErrors = [];
 $addSuccess = false;
 $errors = []; // for edit errors
 
+// Connect to PostgreSQL
+$conn = pg_connect("host=$dbHost dbname=$dbName user=$dbUser  password=$dbPass");
+
 // Handle delete request
 if (isset($_GET['delete_id'])) {
     $deleteId = intval($_GET['delete_id']);
-    $stmtDelete = $conn->prepare("DELETE FROM marks WHERE id = ?");
-    $stmtDelete->bind_param("i", $deleteId);
-    $stmtDelete->execute();
-    $stmtDelete->close();
+    $stmtDelete = pg_prepare($conn, "delete_query", "DELETE FROM marks WHERE id = $1");
+    pg_execute($conn, "delete_query", array($deleteId));
 
     $redirectUrl = strtok($_SERVER["REQUEST_URI"], '?');
     header("Location: $redirectUrl");
@@ -56,10 +59,10 @@ if (isset($_GET['delete_id'])) {
 
 // Fetch classes and subjects for dropdowns
 $classQuery = "SELECT DISTINCT class FROM marks";
-$classResult = $conn->query($classQuery);
+$classResult = pg_query($conn, $classQuery);
 
 $subjectQuery = "SELECT DISTINCT subject FROM marks";
-$subjectResult = $conn->query($subjectQuery);
+$subjectResult = pg_query($conn, $subjectQuery);
 
 // Handle add score form submission
 if ($_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POST['update_id'])) {
@@ -85,11 +88,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POST['update_id'])) {
     if ($position < 1) $addErrors[] = "Position must be a positive integer.";
 
     if (count($addErrors) === 0) {
-        $stmtInsert = $conn->prepare("INSERT INTO marks (student, admission_number, examname, class, subject, midterm, endterm, average, remarks, position) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmtInsert->bind_param("ssssssddsi", $student, $admission_number, $examname, $class, $subject, $midterm, $endterm, $average, $remarks, $position);
-        $executeResult = $stmtInsert->execute();
-        $stmtInsert->close();
-
+        $stmtInsert = pg_prepare($conn, "insert_query", "INSERT INTO marks (student, admission_number, examname, class, subject, midterm, endterm, average, remarks, position) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)");
+        $executeResult = pg_execute($conn, "insert_query", array($student, $admission_number, $examname, $class, $subject, $midterm, $endterm, $average, $remarks, $position));
+        
         if ($executeResult) {
             $redirectUrl = strtok($_SERVER["REQUEST_URI"], '?');
             header("Location: $redirectUrl");
@@ -105,16 +106,13 @@ $students = [];
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['class']) && isset($_POST['subject'])) {
     $class = $_POST['class'];
     $subject = $_POST['subject'];
-    $studentQuery = "SELECT DISTINCT student, admission_number FROM marks WHERE class = ? AND subject = ?";
-    $stmtStudents = $conn->prepare($studentQuery);
-    $stmtStudents->bind_param("ss", $class, $subject);
-    $stmtStudents->execute();
-    $resultStudents = $stmtStudents->get_result();
+    $studentQuery = "SELECT DISTINCT student, admission_number FROM marks WHERE class = $1 AND subject = $2";
+    $stmtStudents = pg_prepare($conn, "student_query", $studentQuery);
+    $resultStudents = pg_execute($conn, "student_query", array($class, $subject));
 
-    while ($row = $resultStudents->fetch_assoc()) {
+    while ($row = pg_fetch_assoc($resultStudents)) {
         $students[] = $row;
     }
-    $stmtStudents->close();
 }
 
 // Handle edit form submission (update)
@@ -142,10 +140,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['update_id'])) {
     if ($position < 1) $errors[] = "Position must be a positive integer.";
 
     if (count($errors) === 0) {
-        $stmtUpdate = $conn->prepare("UPDATE marks SET student = ?, admission_number = ?, midterm = ?, endterm = ?, average = ?, remarks = ?, position = ?, class = ?, subject = ?, examname = ? WHERE id = ?");
-        $stmtUpdate->bind_param("ssdddsisssi", $student, $admission_number, $midterm, $endterm, $average, $remarks, $position, $class, $subject, $examname, $updateId);
-        $stmtUpdate->execute();
-        $stmtUpdate->close();
+        $stmtUpdate = pg_prepare($conn, "update_query", "UPDATE marks SET student = $1, admission_number = $2, midterm = $3, endterm = $4, average = $5, remarks = $6, position = $7, class = $8, subject = $9, examname = $10 WHERE id = $11");
+        pg_execute($conn, "update_query", array($student, $admission_number, $midterm, $endterm, $average, $remarks, $position, $class, $subject, $examname, $updateId));
 
         // Redirect back to main page with filter params preserved if possible
         $redirectUrl = strtok($_SERVER["REQUEST_URI"], '?');
@@ -172,12 +168,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['update_id'])) {
 // Load score for editing if edit_id GET parameter set
 if (isset($_GET['edit_id'])) {
     $editId = intval($_GET['edit_id']);
-    $stmtEdit = $conn->prepare("SELECT * FROM marks WHERE id = ?");
-    $stmtEdit->bind_param("i", $editId);
-    $stmtEdit->execute();
-    $resultEdit = $stmtEdit->get_result();
-    $editScore = $resultEdit->fetch_assoc();
-    $stmtEdit->close();
+    $stmtEdit = pg_prepare($conn, "edit_query", "SELECT * FROM marks WHERE id = $1");
+    $resultEdit = pg_execute($conn, "edit_query", array($editId));
+    $editScore = pg_fetch_assoc($resultEdit);
 }
 
 // Handle viewing scores (filter) only if no active edit or add form
@@ -186,16 +179,13 @@ if ($editScore === null && $_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POS
     $selectedSubject = $_POST['subject'] ?? '';
 
     if ($selectedClass !== '' && $selectedSubject !== '') {
-        $scoreQuery = "SELECT * FROM marks WHERE class = ? AND subject = ?";
-        $stmt = $conn->prepare($scoreQuery);
-        $stmt->bind_param("ss", $selectedClass, $selectedSubject);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $scoreQuery = "SELECT * FROM marks WHERE class = $1 AND subject = $2";
+        $stmt = pg_prepare($conn, "score_query", $scoreQuery);
+        $result = pg_execute($conn, "score_query", array($selectedClass, $selectedSubject));
 
-        while ($row = $result->fetch_assoc()) {
+        while ($row = pg_fetch_assoc($result)) {
             $scores[] = $row;
         }
-        $stmt->close();
     }
 }
 ?>
@@ -515,7 +505,7 @@ if ($editScore === null && $_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POS
 
         .badge-danger {
             color: white;
-            background-            color: var(--danger);
+            background-color: var(--danger);
         }
 
         .alert {
@@ -744,7 +734,7 @@ if ($editScore === null && $_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POS
                             <label for="class">Class</label>
                             <select name="class" id="class" required>
                                 <option value="">Select Class</option>
-                                <?php while ($row = $classResult->fetch_assoc()): ?>
+                                <?php while ($row = pg_fetch_assoc($classResult)): ?>
                                     <option value="<?php echo htmlspecialchars($row['class']); ?>">
                                         <?php echo htmlspecialchars($row['class']); ?>
                                     </option>
@@ -758,7 +748,7 @@ if ($editScore === null && $_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POS
                             <label for="subject">Subject</label>
                             <select name="subject" id="subject" required>
                                 <option value="">Select Subject</option>
-                                <?php while ($row = $subjectResult->fetch_assoc()): ?>
+                                <?php while ($row = pg_fetch_assoc($subjectResult)): ?>
                                     <option value="<?php echo htmlspecialchars($row['subject']); ?>">
                                         <?php echo htmlspecialchars($row['subject']); ?>
                                     </option>
@@ -1003,8 +993,8 @@ if ($editScore === null && $_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POS
                             <select name="class" id="class" required>
                                 <option value="">Select Class</option>
                                 <?php
-                                $classResult->data_seek(0);
-                                while ($row = $classResult->fetch_assoc()): ?>
+                                pg_result_seek($classResult, 0);
+                                while ($row = pg_fetch_assoc($classResult)): ?>
                                     <option value="<?php echo htmlspecialchars($row['class']); ?>" 
                                         <?php echo ($row['class'] === $selectedClass) ? 'selected' : ''; ?>>
                                         <?php echo htmlspecialchars($row['class']); ?>
@@ -1020,8 +1010,8 @@ if ($editScore === null && $_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POS
                             <select name="subject" id="subject" required>
                                 <option value="">Select Subject</option>
                                 <?php
-                                $subjectResult->data_seek(0);
-                                while ($row = $subjectResult->fetch_assoc()): ?>
+                                pg_result_seek($subjectResult, 0);
+                                while ($row = pg_fetch_assoc($subjectResult)): ?>
                                     <option value="<?php echo htmlspecialchars($row['subject']); ?>" 
                                         <?php echo ($row['subject'] === $selectedSubject) ? 'selected' : ''; ?>>
                                         <?php echo htmlspecialchars($row['subject']); ?>
@@ -1031,9 +1021,9 @@ if ($editScore === null && $_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POS
                         </div>
                     </div>
                     
-                    <div class="form-col" style="align-self:flex-end;">
+                                       <div class="form-col" style="align-self:flex-end;">
                         <div class="form-group">
-                                                       <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-search"></i> Search
                             </button>
                         </div>
@@ -1113,6 +1103,6 @@ if ($editScore === null && $_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POS
         <?php endif; ?>
     </div>
 
-    <?php $conn->close(); ?>
+    <?php pg_close($conn); ?>
 </body>
 </html>
