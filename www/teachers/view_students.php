@@ -2,6 +2,11 @@
 include "../include/functions.php"; // Ensure this file contains necessary functions
 include 'config.php'; // Include the database configuration
 
+// PostgreSQL connection
+$conn = pg_connect("host={$db_host} dbname={$db_name} user={$db_user} password={$db_pass}");
+if (!$conn) {
+    die("Connection failed: " . pg_last_error());
+}
 ?>
 
 <!DOCTYPE html>
@@ -507,10 +512,10 @@ include 'config.php'; // Include the database configuration
                             <option value="">-- Select a class --</option>
                             <?php
                             $classQuery = "SELECT DISTINCT class FROM student WHERE class IS NOT NULL AND class != '' ORDER BY class";
-                            $classResult = $conn->query($classQuery);
+                            $classResult = pg_query($conn, $classQuery);
 
                             if ($classResult) {
-                                while ($row = $classResult->fetch_assoc()) {
+                                while ($row = pg_fetch_assoc($classResult)) {
                                     echo '<option value="' . htmlspecialchars($row['class']) . '">' . htmlspecialchars($row['class']) . '</option>';
                                 }
                             } else {
@@ -528,11 +533,8 @@ include 'config.php'; // Include the database configuration
                 <?php if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['class'])): ?>
                     <?php
                     $selectedClass = $_POST['class'];
-                    $studentQuery = "SELECT id, name, photo FROM student WHERE class = ? ORDER BY name";
-                    $stmt = $conn->prepare($studentQuery);
-                    $stmt->bind_param("s", $selectedClass);
-                    $stmt->execute();
-                                        $result = $stmt->get_result();
+                    $studentQuery = "SELECT id, name, photo FROM student WHERE class = $1 ORDER BY name";
+                    $result = pg_query_params($conn, $studentQuery, array($selectedClass));
                     $studentCount = 0;
                     ?>
 
@@ -545,9 +547,9 @@ include 'config.php'; // Include the database configuration
                             <span class="badge" id="studentCount">0 students</span>
                         </div>
 
-                        <?php if ($result && $result->num_rows > 0): ?>
+                        <?php if ($result && pg_num_rows($result) > 0): ?>
                             <form action="upload_image.php" method="POST" enctype="multipart/form-data" id="uploadForm">
-                                <input type="hidden" name="class" value="<?= htmlspecialchars($selectedClass) ?>">
+                                <input type="hidden" name="class" value="<?= htmlspecialchars($selectedClass)                                ?>">
 
                                 <div class="drag-drop-area" id="dragDropArea">
                                     <div class="drag-drop-icon">
@@ -564,7 +566,7 @@ include 'config.php'; // Include the database configuration
                                 </div>
 
                                 <div class="student-grid" id="studentGrid">
-                                    <?php while ($student = $result->fetch_assoc()): ?>
+                                    <?php while ($student = pg_fetch_assoc($result)): ?>
                                         <?php $studentCount++; ?>
                                         <div class="student-card">
                                             <img src="<?= htmlspecialchars($student['photo'] ? $student['photo'] : 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%23e5e7eb\'%3E%3Cpath d=\'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z\'/%3E%3C/svg%3E') ?>"
@@ -625,7 +627,22 @@ include 'config.php'; // Include the database configuration
     <div id="toast" class="toast"></div>
 
     <script>
-        // JS functions like previewImage, showToast, drag-drop and form submission handlers go here (same as in your original code)
+        // JS functions like previewImage, showToast, drag-drop and form submission handlers go here
+        function previewImage(input) {
+            const studentId = input.getAttribute('data-student-id');
+            const file = input.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('preview-' + studentId).src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+
+        // Additional JavaScript for handling drag-and-drop, toast notifications, etc.
     </script>
 </body>
 </html>
+
+<?php
+pg_close($conn);
+?>
