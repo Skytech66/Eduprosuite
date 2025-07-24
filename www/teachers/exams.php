@@ -22,15 +22,15 @@ $class = isset($_POST['class']) ? $_POST['class'] : '';
 $subject = isset($_POST['subject']) ? $_POST['subject'] : '';
 $totalStudents = 0;
 
-// SQL query to fetch students
-$sql = "SELECT * FROM student_entries WHERE year ILIKE $1 AND class ILIKE $2";
-$result = pg_prepare($conn, "retrieve_student_data", $sql);
+// Updated SQL query to fetch students with casting
+$sql = "SELECT * FROM student_entries WHERE year::text ILIKE $1 AND class ILIKE $2";
+$result = pg_prepare($conn, "fetch_students", $sql);
 
 if (!$result) {
     die("Error preparing statement: " . pg_last_error($conn));
 }
 
-$res = pg_execute($conn, "retrieve_student_data", array($year, $class));
+$res = pg_execute($conn, "fetch_students", array($year, $class));
 
 if (!$res) {
     echo "Error executing query: " . pg_last_error($conn);
