@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         pg_query($conn, "ROLLBACK");
         $_SESSION['message'] = "Error: " . $e->getMessage();
     }
-    header("Location: " . $_SERVER['PHP_SELF']);
+         header("Location: form.php");
     exit();
 }
 
@@ -180,12 +180,12 @@ function addRow() {
         <td>
             <select name="class[]" required>
                 <option value="">Select Class</option>
-                <option value="Basic 1">Basic 1</option>
-                <option value="Basic 2">Basic 2</option>
-                <option value="Basic 3">Basic 3</option>
+                <option value="Basic 1">Basic One B</option>
+                <option value="Basic 2">Basic 3B</option>
+                <option value="Basic 3">Basic 3A</option>
                 <option value="Basic 4">Basic 4</option>
                 <option value="Basic 5">Basic 5</option>
-                <option value="Basic 6">Basic 6</option>
+                <option value="Basic 6">Basic Six A</option>
                 <option value="Basic 7">Basic 7</option>
                 <option value="Basic 8">Basic 8</option>
                 <option value="Basic 9">Basic 9</option>
@@ -194,7 +194,6 @@ function addRow() {
         <td>
             <select name="year[]" required>
                 <option value="">Select Year</option>
-                <option value="2024">2024</option>
                 <option value="2025">2025</option>
                 <option value="2026">2026</option>
             </select>
