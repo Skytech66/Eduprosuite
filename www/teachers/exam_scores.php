@@ -1,7 +1,7 @@
 <?php
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
-include 'config.php';
+include 'config.php'; // This should already set up $conn
 
 function formatScore($value) {
     return rtrim(rtrim(number_format($value, 2), '0'), '.');
@@ -17,18 +17,10 @@ function formatPosition($pos) {
         $suffix = "th";
     } else {
         switch ($lastDigit) {
-            case 1:
-                $suffix = "st";
-                break;
-            case 2:
-                $suffix = "nd";
-                break;
-            case 3:
-                $suffix = "rd";
-                break;
-            default:
-                $suffix = "th";
-                break;
+            case 1: $suffix = "st"; break;
+            case 2: $suffix = "nd"; break;
+            case 3: $suffix = "rd"; break;
+            default: $suffix = "th";
         }
     }
     return $pos . $suffix;
@@ -43,30 +35,26 @@ $addErrors = [];
 $addSuccess = false;
 $errors = []; // for edit errors
 
-// Connect to PostgreSQL
-$conn = pg_connect("host=$dbHost dbname=$dbName user=$dbUser  password=$dbPass");
+// Make sure $conn is valid
+if (!$conn) {
+    die("Database connection failed.");
+}
 
 // Handle delete request
 if (isset($_GET['delete_id'])) {
     $deleteId = intval($_GET['delete_id']);
     $stmtDelete = pg_prepare($conn, "delete_query", "DELETE FROM marks WHERE id = $1");
     pg_execute($conn, "delete_query", array($deleteId));
-
-    $redirectUrl = strtok($_SERVER["REQUEST_URI"], '?');
-    header("Location: $redirectUrl");
+    header("Location: " . strtok($_SERVER["REQUEST_URI"], '?'));
     exit;
 }
 
-// Fetch classes and subjects for dropdowns
-$classQuery = "SELECT DISTINCT class FROM marks";
-$classResult = pg_query($conn, $classQuery);
+// Fetch class and subject dropdown options
+$classResult = pg_query($conn, "SELECT DISTINCT class FROM marks");
+$subjectResult = pg_query($conn, "SELECT DISTINCT subject FROM marks");
 
-$subjectQuery = "SELECT DISTINCT subject FROM marks";
-$subjectResult = pg_query($conn, $subjectQuery);
-
-// Handle add score form submission
+// Handle adding a new score
 if ($_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POST['update_id'])) {
-    // Validate inputs
     $student = trim($_POST['student'] ?? '');
     $admission_number = trim($_POST['admission_number'] ?? '');
     $examname = trim($_POST['examname'] ?? '');
@@ -83,17 +71,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POST['update_id'])) {
     if ($examname === '') $addErrors[] = "Exam name is required.";
     if ($class === '') $addErrors[] = "Class is required.";
     if ($subject === '') $addErrors[] = "Subject is required.";
-    if ($midterm < 0) $addErrors[] = "Midterm score must be zero or positive.";
-    if ($endterm < 0) $addErrors[] = "Endterm score must be zero or positive.";
     if ($position < 1) $addErrors[] = "Position must be a positive integer.";
 
     if (count($addErrors) === 0) {
-        $stmtInsert = pg_prepare($conn, "insert_query", "INSERT INTO marks (student, admission_number, examname, class, subject, midterm, endterm, average, remarks, position) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)");
-        $executeResult = pg_execute($conn, "insert_query", array($student, $admission_number, $examname, $class, $subject, $midterm, $endterm, $average, $remarks, $position));
-        
-        if ($executeResult) {
-            $redirectUrl = strtok($_SERVER["REQUEST_URI"], '?');
-            header("Location: $redirectUrl");
+        pg_prepare($conn, "insert_query", "INSERT INTO marks (student, admission_number, examname, class, subject, midterm, endterm, average, remarks, position) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)");
+        $res = pg_execute($conn, "insert_query", [$student, $admission_number, $examname, $class, $subject, $midterm, $endterm, $average, $remarks, $position]);
+
+        if ($res) {
+            header("Location: " . strtok($_SERVER["REQUEST_URI"], '?'));
             exit;
         } else {
             $addErrors[] = "Database error: Could not insert new score.";
@@ -101,37 +86,30 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POST['update_id'])) {
     }
 }
 
-// Load distinct students based on selected class and subject
+// Load students if class and subject selected
 $students = [];
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['class']) && isset($_POST['subject'])) {
-    $class = $_POST['class'];
-    $subject = $_POST['subject'];
-    $studentQuery = "SELECT DISTINCT student, admission_number FROM marks WHERE class = $1 AND subject = $2";
-    $stmtStudents = pg_prepare($conn, "student_query", $studentQuery);
-    $resultStudents = pg_execute($conn, "student_query", array($class, $subject));
-
-    while ($row = pg_fetch_assoc($resultStudents)) {
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['class'], $_POST['subject'])) {
+    $stmt = pg_prepare($conn, "student_query", "SELECT DISTINCT student, admission_number FROM marks WHERE class = $1 AND subject = $2");
+    $result = pg_execute($conn, "student_query", [$_POST['class'], $_POST['subject']]);
+    while ($row = pg_fetch_assoc($result)) {
         $students[] = $row;
     }
 }
 
-// Handle edit form submission (update)
+// Handle update
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['update_id'])) {
     $updateId = intval($_POST['update_id']);
-    
-    // Validate inputs
-    $student = trim($_POST['student']) ?? '';
-    $admission_number = trim($_POST['admission_number']) ?? '';
+    $student = trim($_POST['student'] ?? '');
+    $admission_number = trim($_POST['admission_number'] ?? '');
     $midterm = floatval($_POST['midterm']);
     $endterm = floatval($_POST['endterm']);
     $average = floatval($_POST['average']);
-    $remarks = trim($_POST['remarks']) ?? '';
+    $remarks = trim($_POST['remarks'] ?? '');
     $position = intval($_POST['position']);
-    $class = trim($_POST['class']) ?? '';
-    $subject = trim($_POST['subject']) ?? '';
-    $examname = trim($_POST['examname']) ?? '';
+    $class = trim($_POST['class'] ?? '');
+    $subject = trim($_POST['subject'] ?? '');
+    $examname = trim($_POST['examname'] ?? '');
 
-    // Basic validation
     if ($student === '') $errors[] = "Student name is required.";
     if ($admission_number === '') $errors[] = "Admission number is required.";
     if ($class === '') $errors[] = "Class is required.";
@@ -140,55 +118,37 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['update_id'])) {
     if ($position < 1) $errors[] = "Position must be a positive integer.";
 
     if (count($errors) === 0) {
-        $stmtUpdate = pg_prepare($conn, "update_query", "UPDATE marks SET student = $1, admission_number = $2, midterm = $3, endterm = $4, average = $5, remarks = $6, position = $7, class = $8, subject = $9, examname = $10 WHERE id = $11");
-        pg_execute($conn, "update_query", array($student, $admission_number, $midterm, $endterm, $average, $remarks, $position, $class, $subject, $examname, $updateId));
-
-        // Redirect back to main page with filter params preserved if possible
-        $redirectUrl = strtok($_SERVER["REQUEST_URI"], '?');
-        header("Location: $redirectUrl");
+        pg_prepare($conn, "update_query", "UPDATE marks SET student=$1, admission_number=$2, midterm=$3, endterm=$4, average=$5, remarks=$6, position=$7, class=$8, subject=$9, examname=$10 WHERE id=$11");
+        pg_execute($conn, "update_query", [$student, $admission_number, $midterm, $endterm, $average, $remarks, $position, $class, $subject, $examname, $updateId]);
+        header("Location: " . strtok($_SERVER["REQUEST_URI"], '?'));
         exit;
     } else {
-        // If errors, refill editScore to show form with submitted data
-        $editScore = [
-            'id' => $updateId,
-            'student' => $student,
-            'admission_number' => $admission_number,
-            'midterm' => $midterm,
-            'endterm' => $endterm,
-            'average' => $average,
-            'remarks' => $remarks,
-            'position' => $position,
-            'class' => $class,
-            'subject' => $subject,
-            'examname' => $examname
-        ];
+        $editScore = compact('updateId', 'student', 'admission_number', 'midterm', 'endterm', 'average', 'remarks', 'position', 'class', 'subject', 'examname');
     }
 }
 
-// Load score for editing if edit_id GET parameter set
+// Load edit row
 if (isset($_GET['edit_id'])) {
     $editId = intval($_GET['edit_id']);
     $stmtEdit = pg_prepare($conn, "edit_query", "SELECT * FROM marks WHERE id = $1");
-    $resultEdit = pg_execute($conn, "edit_query", array($editId));
+    $resultEdit = pg_execute($conn, "edit_query", [$editId]);
     $editScore = pg_fetch_assoc($resultEdit);
 }
 
-// Handle viewing scores (filter) only if no active edit or add form
+// Fetch scores based on filters
 if ($editScore === null && $_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POST['student'])) {
     $selectedClass = $_POST['class'] ?? '';
     $selectedSubject = $_POST['subject'] ?? '';
-
-    if ($selectedClass !== '' && $selectedSubject !== '') {
-        $scoreQuery = "SELECT * FROM marks WHERE class = $1 AND subject = $2";
-        $stmt = pg_prepare($conn, "score_query", $scoreQuery);
-        $result = pg_execute($conn, "score_query", array($selectedClass, $selectedSubject));
-
+    if ($selectedClass && $selectedSubject) {
+        pg_prepare($conn, "score_query", "SELECT * FROM marks WHERE class = $1 AND subject = $2");
+        $result = pg_execute($conn, "score_query", [$selectedClass, $selectedSubject]);
         while ($row = pg_fetch_assoc($result)) {
             $scores[] = $row;
         }
     }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
