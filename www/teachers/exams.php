@@ -24,13 +24,13 @@ $totalStudents = 0;
 
 // SQL query to fetch students
 $sql = "SELECT * FROM student_entries WHERE year ILIKE $1 AND class ILIKE $2";
-$result = pg_prepare($conn, "fetch_students", $sql);
+$result = pg_prepare($conn, "retrieve_student_data", $sql);
 
 if (!$result) {
     die("Error preparing statement: " . pg_last_error($conn));
 }
 
-$res = pg_execute($conn, "fetch_students", array($year, $class));
+$res = pg_execute($conn, "retrieve_student_data", array($year, $class));
 
 if (!$res) {
     echo "Error executing query: " . pg_last_error($conn);
