@@ -16,10 +16,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exit();
     }
 
-    $conn->beginTransaction();
+    // Manual transaction handling for PostgreSQL
+    pg_query($conn, "BEGIN");
 
     try {
-        $stmt = $conn->prepare("INSERT INTO student_entries (name, class, admission_number, year) VALUES (:name, :class, :admission_number, :year)");
+        // Prepare the INSERT statement
+        $insert_query = "INSERT INTO student_entries (name, class, admission_number, year) VALUES ($1, $2, $3, $4)";
+        $insert_result = pg_prepare($conn, "insert_student", $insert_query);
+
         foreach ($names as $index => $name) {
             $name = trim($name);
             $class = $classes[$index] ?? '';
@@ -29,40 +33,45 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 throw new Exception("All fields are required for each student.");
             }
 
-            // Generate admission number prefix from name (first 3 letters uppercase)
+            // Generate unique admission number
             $baseAdmission = strtoupper(substr(preg_replace('/\s+/', '', $name), 0, 3));
             if ($baseAdmission === '') $baseAdmission = 'ADM';
 
-            // Ensure admission_number is unique by retrying if needed
             $admission_number = '';
             $attempt = 0;
+            $is_unique = false;
+
             do {
                 $randomNumber = rand(100, 999);
                 $admission_number = $baseAdmission . $randomNumber;
 
-                $checkStmt = $conn->prepare("SELECT COUNT(*) FROM student_entries WHERE admission_number = :admission_number");
-                $checkStmt->bindParam(':admission_number', $admission_number);
-                $checkStmt->execute();
-                $count = $checkStmt->fetchColumn();
-                $checkStmt->closeCursor();
+                $check_query = "SELECT COUNT(*) FROM student_entries WHERE admission_number = $1";
+                $check_result = pg_prepare($conn, "check_admission", $check_query);
+                $check_result = pg_execute($conn, "check_admission", array($admission_number));
+                $count = pg_fetch_result($check_result, 0, 0);
 
-                $attempt++;
-                if ($attempt > 10) {
-                    throw new Exception("Failed to generate unique admission number for student: $name");
+                if ($count == 0) {
+                    $is_unique = true;
+                } else {
+                    $attempt++;
+                    if ($attempt > 10) {
+                        throw new Exception("Failed to generate unique admission number for student: $name");
+                    }
                 }
-            } while ($count > 0);
+            } while (!$is_unique);
 
-            $stmt->bindParam(':name', $name);
-            $stmt->bindParam(':class', $class);
-            $stmt->bindParam(':admission_number', $admission_number);
-            $stmt->bindParam(':year', $year);
-            $stmt->execute();
+            // Execute the INSERT with the unique admission number
+            $insert_result = pg_execute($conn, "insert_student", array($name, $class, $admission_number, $year));
+            if (!$insert_result) {
+                throw new Exception("Error inserting student: " . pg_last_error());
+            }
         }
-        $conn->commit();
-        $_SESSION['message'] = "Students added successfully.";
+
+        pg_query($conn, "COMMIT");
+        $_SESSION['message'] = "Students added successfully!";
     } catch (Exception $e) {
-        $conn->rollBack();
-        $_SESSION['message'] = "Error adding students: " . $e->getMessage();
+        pg_query($conn, "ROLLBACK");
+        $_SESSION['message'] = "Error: " . $e->getMessage();
     }
     header("Location: " . $_SERVER['PHP_SELF']);
     exit();
@@ -78,179 +87,187 @@ if (isset($_SESSION['message'])) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Add Students</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Enrollment System</title>
 <style>
-  body {
-    font-family: 'Poppins', sans-serif;
-    background: #f3f4f6;
-    color: #111827;
-    padding: 2rem;
-    max-width: 900px;
-    margin: auto;
-  }
-  h1 {
-    text-align: center;
-    margin-bottom: 2rem;
-    color: #2563eb;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 1rem;
-    background: white;
-    box-shadow: 0 4px 12px rgb(0 0 0 / 0.05);
-    border-radius: 12px;
-    overflow: hidden;
-  }
-  th, td {
-    padding: 0.75rem 1rem;
-    text-align: left;
-  }
-  thead {
-    background: #2563eb;
-    color: white;
-  }
-  input[type="text"], select {
-    width: 100%;
-    padding: 0.4rem 0.6rem;
-    border: 1.5px solid #d1d5db;
-    border-radius: 8px;
-    font-size: 1rem;
-  }
-  input[type="text"]:focus, select:focus {
-    outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 0 4px #2563eba0;
-  }
-  button {
-    background: #2563eb;
-    border: none;
-    color: white;
-    padding: 0.6rem 1.4rem;
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 1rem;
-    transition: background-color 0.3s ease;
-  }
-  button:hover {
-    background: #1d4ed8;
-  }
-  button.remove-btn {
-    background: #ef4444;
-  }
-  button.remove-btn:hover {
-    background: #b91c1c;
-  }
-  .btn-inline {
-    margin-right: 0.5rem;
-  }
-  .message {
-    margin-bottom: 1rem;
-    font-weight: 600;
-    color: #15803d;
-  }
-  .error {
-    color: #b91c1c;
-  }
-  .back-link {
-    display: inline-block;
-    margin-top: 1rem;
-    color: #2563eb;
-    text-decoration: none;
-    font-weight: 600;
-  }
-  .back-link:hover {
-    text-decoration: underline;
-  }
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background-color: #f5f5f5;
+        padding: 20px;
+    }
+    .container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: white;
+        padding: 25px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+        color: #2c3e50;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+    th, td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    th {
+        background-color: #3498db;
+        color: white;
+    }
+    tr:nth-child(even) {
+        background-color: #f2f2f2;
+    }
+    input[type="text"], select {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+    .btn {
+        padding: 10px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+    .btn-primary {
+        background-color: #3498db;
+        color: white;
+    }
+    .btn-primary:hover {
+        background-color: #2980b9;
+    }
+    .btn-danger {
+        background-color: #e74c3c;
+        color: white;
+    }
+    .btn-danger:hover {
+        background-color: #c0392b;
+    }
+    .message {
+        padding: 10px;
+        margin-bottom: 20px;
+        border-radius: 4px;
+    }
+    .success {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    .error {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
 </style>
 <script>
 function addRow() {
     const table = document.getElementById("studentTable");
-    const rowCount = table.rows.length;
-    const row = table.insertRow(rowCount);
-
-    row.innerHTML = `
-    <td><input type="text" name="name[]" required autocomplete="off" placeholder="Student Name"></td>
-    <td>
-      <select name="class[]" required>
-        <option value="" disabled selected>Select Class</option>
-        <option value="Class 1">Class 1</option>
-        <option value="Class 2">Class 2</option>
-        <option value="Class 3">Class 3</option>
-        <option value="Class 4">Class 4</option>
-        <option value="Class 5">Class 5</option>
-      </select>
-    </td>
-    <td>
-      <select name="year[]" required>
-        <option value="" disabled selected>Select Year</option>
-        <option value="2025">2025</option>
-      </select>
-    </td>
-    <td><button type="button" class="remove-btn" onclick="removeRow(this)">Remove</button></td>
-    `;
-}
-
-function removeRow(btn) {
-    const row = btn.parentNode.parentNode;
-    row.parentNode.removeChild(row);
-}
-</script>
-</head>
-<body>
-    <h1>Add Students</h1>
-
-    <?php if ($message): ?>
-        <div class="message <?php echo strpos($message, 'Error') === 0 ? 'error' : ''; ?>">
-            <?php echo htmlspecialchars($message); ?>
-        </div>
-    <?php endif; ?>
-
-    <form method="POST" action="">
-      <table id="studentTable" aria-label="Students Entry Table">
-        <thead>
-          <tr>
-            <th scope="col">Student Name</th>
-            <th scope="col">Class</th>
-            <th scope="col">Year</th>
-            <th scope="col">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><input type="text" name="name[]" required autocomplete="off" placeholder="Student Name"></td>
-            <td>
-              <select name="class[]" required>
-                <option value="" disabled selected>Select Class</option>
-                <option value="Basic 1">Basic 1(B)</option>
-                <option value="Basic 2">Basic 6(A)</option>
-                <option value="Basic 3">Basic 3(A)</option>
-                <option value="Basic 4">Basic 3(B)</option>
+    const newRow = table.insertRow(-1);
+    
+    newRow.innerHTML = `
+        <td><input type="text" name="name[]" required placeholder="Student Name"></td>
+        <td>
+            <select name="class[]" required>
+                <option value="">Select Class</option>
+                <option value="Basic 1">Basic 1</option>
+                <option value="Basic 2">Basic 2</option>
+                <option value="Basic 3">Basic 3</option>
+                <option value="Basic 4">Basic 4</option>
                 <option value="Basic 5">Basic 5</option>
                 <option value="Basic 6">Basic 6</option>
                 <option value="Basic 7">Basic 7</option>
                 <option value="Basic 8">Basic 8</option>
                 <option value="Basic 9">Basic 9</option>
-              </select>
-            </td>
-            <td>
-              <select name="year[]" required>
-                <option value="" disabled selected>Select Year</option>
+            </select>
+        </td>
+        <td>
+            <select name="year[]" required>
+                <option value="">Select Year</option>
                 <option value="2024">2024</option>
                 <option value="2025">2025</option>
-              </select>
-            </td>
-            <td><button type="button" class="remove-btn" onclick="removeRow(this)">Remove</button></td>
-          </tr>
-        </tbody>
-      </table>
-      <button type="button" class="btn-inline" onclick="addRow()">Add Row</button>
-      <button type="submit">Submit</button>
-    </form>
+                <option value="2026">2026</option>
+            </select>
+        </td>
+        <td><button type="button" class="btn btn-danger" onclick="removeRow(this)">Remove</button></td>
+    `;
+}
 
-    <a href="dashboard.php" class="back-link">← Back to Dashboard</a>
+function removeRow(btn) {
+    const row = btn.closest('tr');
+    const table = document.getElementById("studentTable");
+    if (table.rows.length > 2) {  // Keep at least one row (header + one row)
+        row.remove();
+    } else {
+        alert("At least one student entry is required");
+    }
+}
+</script>
+</head>
+<body>
+    <div class="container">
+        <h1>Student Enrollment System</h1>
+        
+        <?php if ($message): ?>
+            <div class="message <?php echo strpos($message, 'Error') === 0 ? 'error' : 'success'; ?>">
+                <?php echo htmlspecialchars($message); ?>
+            </div>
+        <?php endif; ?>
+        
+        <form method="POST" action="">
+            <table id="studentTable">
+                <thead>
+                    <tr>
+                        <th>Student Name</th>
+                        <th>Class</th>
+                        <th>Year</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><input type="text" name="name[]" required placeholder="Student Name"></td>
+                        <td>
+                            <select name="class[]" required>
+                                <option value="">Select Class</option>
+                                <option value="Basic 1">Basic 1</option>
+                                <option value="Basic 2">Basic 2</option>
+                                <option value="Basic 3">Basic 3</option>
+                                <option value="Basic 4">Basic 4</option>
+                                <option value="Basic 5">Basic 5</option>
+                                <option value="Basic 6">Basic 6</option>
+                                <option value="Basic 7">Basic 7</option>
+                                <option value="Basic 8">Basic 8</option>
+                                <option value="Basic 9">Basic 9</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select name="year[]" required>
+                                <option value="">Select Year</option>
+                                <option value="2025">2025</option>
+                                <option value="2026">2026</option>
+                            </select>
+                        </td>
+                        <td><button type="button" class="btn btn-danger" onclick="removeRow(this)">Remove</button></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div style="margin-top: 20px;">
+                <button type="button" class="btn btn-primary" onclick="addRow()">Add Student</button>
+                <button type="submit" class="btn btn-primary">Submit All</button>
+            </div>
+        </form>
+    </div>
 </body>
 </html>
