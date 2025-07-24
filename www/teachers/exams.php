@@ -178,8 +178,8 @@ $totalStudents = count($students);
             <label for="classSelect">Class:</label>
             <select id="classSelect" name="class">
                 <option value="">Select Class</option>
-                <option value="Class 1">Class 1</option>
-                <option value="Class 2">Class 2</option>
+                <option value="Class 1">Basic Six A</option>
+                <option value="Class 2">Basic One A</option>
                 <!-- Add more classes as needed -->
             </select>
 
@@ -188,16 +188,6 @@ $totalStudents = count($students);
         <div id="studentDataContainer"></div>
     </div>
 </div>
-
-<?php 
-// Helper function to generate consistent color from name
-function generateColor($name) {
-    $colors = ['#4361ee', '#3f37c9', '#4895ef', '#4cc9f0', '#560bad', '#b5179e', '#f72585', '#7209b7'];
-    $hash = crc32($name) % count($colors);
-    return $colors[$hash];
-}
-?>
-
 <?php require_once "../include/footer.php"; ?>
 
 <script>
