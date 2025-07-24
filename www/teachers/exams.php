@@ -25,10 +25,16 @@ $totalStudents = 0;
 // SQL query to fetch students
 $sql = "SELECT * FROM students WHERE year ILIKE $1 AND class ILIKE $2";
 $result = pg_prepare($conn, "fetch_students", $sql);
+
+if (!$result) {
+    die("Error preparing statement: " . pg_last_error($conn));
+}
+
 $res = pg_execute($conn, "fetch_students", array($year, $class));
 
 if (!$res) {
     echo "Error executing query: " . pg_last_error($conn);
+    exit; // Exit if the query fails
 }
 
 $students = [];
@@ -459,10 +465,10 @@ document.addEventListener('DOMContentLoaded', function() {
     --danger: #f94144;
     --light: #f8f9fa;
     --light-gray: #f1f3f9;
-    --medium-gray: #e9ecef;
+        --medium-gray: #e9ecef;
     --dark-gray: #6c757d;
     --dark: #212529;
-        --white: #ffffff;
+    --white: #ffffff;
     --border-radius: 12px;
     --border-radius-sm: 8px;
     --box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
