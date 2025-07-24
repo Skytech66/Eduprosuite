@@ -16,6 +16,15 @@ if (!$conn) {
     die("Connection failed: " . pg_last_error());
 }
 
+// Fetching years, classes, and subjects
+$years = pg_query($conn, "SELECT DISTINCT year FROM student_entries ORDER BY year");
+$classes = pg_query($conn, "SELECT DISTINCT class FROM student_entries ORDER BY class");
+$subjects = pg_query($conn, "SELECT DISTINCT subject FROM student_entries ORDER BY subject");
+
+// Fetching current term
+$currentTermResult = pg_query($conn, "SELECT current_term FROM term LIMIT 1");
+$currentTerm = pg_fetch_result($currentTermResult, 0, 'current_term');
+
 $year = isset($_POST['year']) ? $_POST['year'] : '';
 $exam = isset($_POST['exam']) ? $_POST['exam'] : '';
 $class = isset($_POST['class']) ? $_POST['class'] : '';
@@ -185,15 +194,47 @@ $totalStudents = count($students);
     </form>
 </div>
 
-<!-- Modal for fetching student data -->
+<!-- Modal for selecting year, class, subject, and term -->
 <div id="studentDataModal" class="modal">
     <div class="modal-content">
         <span class="close-button">&times;</span>
-        <h2>Select Student</h2>
-        <select id="studentDropdown">
-            <option value="">Select a student</option>
-        </select>
-        <div id="studentDetails" style="margin-top: 20px;"></div>
+        <h2>Select Criteria</h2>
+        <form id="criteriaForm">
+            <div>
+                <label for="yearSelect">Year:</label>
+                <select id="yearSelect" name="year">
+                    <option value="">Select Year</option>
+                    <?php while ($row = pg_fetch_assoc($years)): ?>
+                        <option value="<?php echo htmlspecialchars($row['year']); ?>"><?php echo htmlspecialchars($row['year']); ?></option>
+                    <?php endwhile; ?>
+                </select>
+            </div>
+            <div>
+                <label for="classSelect">Class:</label>
+                <select id="classSelect" name="class">
+                    <option value="">Select Class</option>
+                    <?php while ($row = pg_fetch_assoc($classes)): ?>
+                        <option value="<?php echo htmlspecialchars($row['class']); ?>"><?php echo htmlspecialchars($row['class']); ?></option>
+                    <?php endwhile; ?>
+                </select>
+            </div>
+            <div>
+                <label for="subjectSelect">Subject:</label>
+                <select id="subjectSelect" name="subject">
+                    <option value="">Select Subject</option>
+                    <?php while ($row = pg_fetch_assoc($subjects)): ?>
+                        <option value="<?php echo htmlspecialchars($row['subject']); ?>"><?php echo htmlspecialchars($row['subject']); ?></option>
+                    <?php endwhile; ?>
+                </select>
+            </div>
+            <div>
+                <label for="termSelect">Term:</label>
+                <select id="termSelect" name="term">
+                    <option value=""><?php echo htmlspecialchars($currentTerm); ?></option>
+                </select>
+            </div>
+            <button type="button" id="submitCriteriaButton">Submit</button>
+        </form>
     </div>
 </div>
 
@@ -387,33 +428,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('fetchStudentDataButton').addEventListener('click', function() {
         // Open the modal
         document.getElementById('studentDataModal').style.display = 'block';
-
-        // Fetch student data
-        const year = '<?php echo $year; ?>'; // Get year from PHP
-        const className = '<?php echo $class; ?>'; // Get class from PHP
-
-        fetch('retrieve_student_data.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `year=${year}&class=${className}`
-        })
-        .then(response => response.json())
-        .then(data => {
-            const dropdown = document.getElementById('studentDropdown');
-            dropdown.innerHTML = '<option value="">Select a student</option>'; // Clear existing options
-
-            data.forEach(student => {
-                const option = document.createElement('option');
-                option.value = student.admission_number; // Assuming admission_number is the unique identifier
-                option.textContent = student.name; // Assuming name is the student's name
-                dropdown.appendChild(option);
-            });
-        })
-        .catch(error => {
-            console.error('Error fetching student data:', error);
-        });
     });
 
     // Close modal functionality
@@ -429,17 +443,32 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Display selected student details
-    document.getElementById('studentDropdown').addEventListener('change', function() {
-        const selectedValue = this.value;
-        const studentDetailsDiv = document.getElementById('studentDetails');
+    // Submit criteria button
+    document.getElementById('submitCriteriaButton').addEventListener('click', function() {
+        const year = document.getElementById('yearSelect').value;
+        const className = document.getElementById('classSelect').value;
+        const subject = document.getElementById('subjectSelect').value;
+                const term = document.getElementById('termSelect').value;
 
-        if (selectedValue) {
-            // Fetch and display student details based on selected value
-            studentDetailsDiv.innerHTML = `Selected Student ID: ${selectedValue}`; // Example display
-        } else {
-            studentDetailsDiv.innerHTML = '';
+        // Validate selections
+        if (!year || !className || !subject) {
+            alert("Please select Year, Class, and Subject.");
+            return;
         }
+
+        // Set the selected values to the hidden inputs in the form
+        document.querySelector('input[name="year"]').value = year;
+        document.querySelector('input[name="class"]').value = className;
+        document.querySelector('input[name="subject"]').value = subject;
+
+        // Optionally, you can also set the term if needed
+        // document.querySelector('input[name="term"]').value = term;
+
+        // Close the modal
+        document.getElementById('studentDataModal').style.display = 'none';
+
+        // Optionally, you can trigger a form submission or refresh the data
+        // document.getElementById('marksForm').submit(); // Uncomment if you want to submit the form
     });
 
     // Helper function for ordinal suffixes
@@ -465,7 +494,7 @@ document.addEventListener('DOMContentLoaded', function() {
     --danger: #f94144;
     --light: #f8f9fa;
     --light-gray: #f1f3f9;
-        --medium-gray: #e9ecef;
+    --medium-gray: #e9ecef;
     --dark-gray: #6c757d;
     --dark: #212529;
     --white: #ffffff;
@@ -937,10 +966,13 @@ body {
 
 .modal-content {
     background-color: #fefefe;
-    margin: 15% auto; /* 15% from the top and centered */
+    margin: 5% auto; /* 5% from the top and centered */
     padding: 20px;
     border: 1px solid #888;
-    width: 80%; /* Could be more or less, depending on screen size */
+    width: 60%; /* Increased width to 60% */
+    max-width: 800px; /* Set a maximum width */
+    border-radius: var(--border-radius); /* Optional: add border radius for rounded corners */
+    box-shadow: var(--box-shadow); /* Optional: add shadow for depth */
 }
 
 .close-button {
