@@ -8,12 +8,19 @@ $class = isset($_POST['class']) ? $_POST['class'] : '';
 $subject = isset($_POST['subject']) ? $_POST['subject'] : '';
 $totalStudents = 0;
 
+// Validate year and class
+if (!is_numeric($year) || !is_numeric($class) || empty($year) || empty($class)) {
+    echo "Invalid year or class.";
+    exit;
+}
+
 // SQL query to fetch students
-$sql = "SELECT * from student_entries where year = $1 and class = $2";
+$sql = "SELECT * FROM student_entries WHERE year = $1 AND class = $2";
 $res = pg_query_params($conn, $sql, array($year, $class));
 
 if (!$res) {
     echo "Error executing query: " . pg_last_error($conn);
+    exit; // Stop execution if the query fails
 }
 
 $students = [];
