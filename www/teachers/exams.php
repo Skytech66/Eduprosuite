@@ -67,6 +67,12 @@ $totalStudents = count($students);
         </div>
     </div>
 
+    <div class="action-bar">
+        <button type="button" id="fetchStudentDataButton" class="btn btn-primary">
+            <i class="fas fa-user-graduate"></i> Fetch Student Data
+        </button>
+    </div>
+
     <form id="marksForm" action="submit_scores.php" method="POST" enctype="multipart/form-data">
         <div class="action-bar">
             <div class="search-box">
@@ -160,6 +166,18 @@ $totalStudents = count($students);
             </div>
         </div>
     </form>
+</div>
+
+<!-- Modal for fetching student data -->
+<div id="studentDataModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <h2>Select Student</h2>
+        <select id="studentDropdown">
+            <option value="">Select a student</option>
+        </select>
+        <div id="studentDetails" style="margin-top: 20px;"></div>
+    </div>
 </div>
 
 <?php 
@@ -345,7 +363,66 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.classList.remove('success');
         }, 2000);
     });
-    
+
+    // Fetch Student Data Button
+    document.getElementById('fetchStudentDataButton').addEventListener('click', function() {
+        // Open the modal
+        document.getElementById('studentDataModal').style.display = 'block';
+
+        // Fetch student data
+        const year = '<?php echo $year; ?>'; // Get year from PHP
+        const className = '<?php echo $class; ?>'; // Get class from PHP
+
+        fetch('retrieve_student_data.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `year=${year}&class=${className}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            const dropdown = document.getElementById('studentDropdown');
+            dropdown.innerHTML = '<option value="">Select a student</option>'; // Clear existing options
+
+            data.forEach(student => {
+                const option = document.createElement('option');
+                option.value = student.admission_number; // Assuming admission_number is the unique identifier
+                option.textContent = student.name; // Assuming name is the student's name
+                dropdown.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching student data:', error);
+        });
+    });
+
+    // Close modal functionality
+    document.querySelector('.close-button').addEventListener('click', function() {
+        document.getElementById('studentDataModal').style.display = 'none';
+    });
+
+    // Close modal when clicking outside of it
+    window.addEventListener('click', function(event) {
+        const modal = document.getElementById('studentDataModal');
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+
+    // Display selected student details
+    document.getElementById('studentDropdown').addEventListener('change', function() {
+        const selectedValue = this.value;
+        const studentDetailsDiv = document.getElementById('studentDetails');
+
+        if (selectedValue) {
+            // Fetch and display student details based on selected value
+            studentDetailsDiv.innerHTML = `Selected Student ID: ${selectedValue}`; // Example display
+        } else {
+            studentDetailsDiv.innerHTML = '';
+        }
+    });
+
     // Helper function for ordinal suffixes
     function getOrdinalSuffix(num) {
         const j = num % 10, k = num % 100;
@@ -387,7 +464,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background-color: #f8fafc;
+    background-color:    #f8fafc;
     color: var(--dark);
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
@@ -524,7 +601,7 @@ body {
 
 .search-box i {
     position: absolute;
-        left: 16px;
+    left: 16px;
     top: 50%;
     transform: translateY(-50%);
     color: var(--dark-gray);
@@ -823,6 +900,42 @@ body {
 
 .empty-state p {
     font-size: 14px;
+}
+
+/* Modal Styles */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1000; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%; /* Could be more or less, depending on screen size */
+}
+
+.close-button {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
 }
 
 @media (max-width: 768px) {
