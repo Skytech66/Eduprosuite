@@ -16,10 +16,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exit();
     }
 
-    $conn->begin_transaction();
+    $conn->beginTransaction();
 
     try {
-        $stmt = $conn->prepare("INSERT INTO student_entries (name, class, admission_number, year) VALUES (?, ?, ?, ?)");
+        $stmt = $conn->prepare("INSERT INTO student_entries (name, class, admission_number, year) VALUES (:name, :class, :admission_number, :year)");
         foreach ($names as $index => $name) {
             $name = trim($name);
             $class = $classes[$index] ?? '';
@@ -40,12 +40,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $randomNumber = rand(100, 999);
                 $admission_number = $baseAdmission . $randomNumber;
 
-                $checkStmt = $conn->prepare("SELECT COUNT(*) FROM student_entries WHERE admission_number = ?");
-                $checkStmt->bind_param("s", $admission_number);
+                $checkStmt = $conn->prepare("SELECT COUNT(*) FROM student_entries WHERE admission_number = :admission_number");
+                $checkStmt->bindParam(':admission_number', $admission_number);
                 $checkStmt->execute();
-                $checkStmt->bind_result($count);
-                $checkStmt->fetch();
-                $checkStmt->close();
+                $count = $checkStmt->fetchColumn();
+                $checkStmt->closeCursor();
 
                 $attempt++;
                 if ($attempt > 10) {
@@ -53,13 +52,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 }
             } while ($count > 0);
 
-            $stmt->bind_param("sssi", $name, $class, $admission_number, $year);
+            $stmt->bindParam(':name', $name);
+            $stmt->bindParam(':class', $class);
+            $stmt->bindParam(':admission_number', $admission_number);
+            $stmt->bindParam(':year', $year);
             $stmt->execute();
         }
         $conn->commit();
         $_SESSION['message'] = "Students added successfully.";
     } catch (Exception $e) {
-        $conn->rollback();
+        $conn->rollBack();
         $_SESSION['message'] = "Error adding students: " . $e->getMessage();
     }
     header("Location: " . $_SERVER['PHP_SELF']);
@@ -223,18 +225,16 @@ function removeRow(btn) {
             <td>
               <select name="class[]" required>
                 <option value="" disabled selected>Select Class</option>
-                                
-                  <option value="Basic 1">Basic 1(B)</option>
-                  <option value="Basic 2">Basic 6(A)</option>
-                  <option value="Basic 3">Basic 3(A)</option>
-                  <option value="Basic 4">Basic 3(B)</option>
-                  <option value="Basic 5">Basic 5</option>
-                  <option value="Basic 6">Basic 6</option>
-                  <option value="Basic 7">Basic 7</option>
-                  <option value="Basic 8">Basic 8</option>
-                  <option value="Basic 9">Basic 9</option>
-                </select>
-
+                <option value="Basic 1">Basic 1(B)</option>
+                <option value="Basic 2">Basic 6(A)</option>
+                <option value="Basic 3">Basic 3(A)</option>
+                <option value="Basic 4">Basic 3(B)</option>
+                <option value="Basic 5">Basic 5</option>
+                <option value="Basic 6">Basic 6</option>
+                <option value="Basic 7">Basic 7</option>
+                <option value="Basic 8">Basic 8</option>
+                <option value="Basic 9">Basic 9</option>
+              </select>
             </td>
             <td>
               <select name="year[]" required>
