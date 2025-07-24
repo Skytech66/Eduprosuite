@@ -9,18 +9,16 @@ $subject = isset($_POST['subject']) ? $_POST['subject'] : '';
 $totalStudents = 0;
 
 // SQL query to fetch students
-$sql = "SELECT * FROM students WHERE `year` LIKE ? AND `class` LIKE ?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("ss", $year, $class); // Bind parameters
-$stmt->execute();
-$res = $stmt->get_result();
+$sql = "SELECT * FROM students WHERE year ILIKE $1 AND class ILIKE $2";
+$result = pg_prepare($conn, "fetch_students", $sql);
+$result = pg_execute($conn, "fetch_students", array($year, $class));
 
-if (!$res) {
-    echo "Error executing query: " . $conn->error;
+if (!$result) {
+    echo "Error executing query: " . pg_last_error($conn);
 }
 
 $students = [];
-while ($row = $res->fetch_assoc()) {
+while ($row = pg_fetch_assoc($result)) {
     $students[] = $row;
 }
 
@@ -527,7 +525,7 @@ body {
     top: 50%;
     transform: translateY(-50%);
     color: var(--dark-gray);
-    font-size: 14px;
+    font-size    : 14px;
 }
 
 #searchInput {
