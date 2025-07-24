@@ -23,7 +23,7 @@ $subject = isset($_POST['subject']) ? $_POST['subject'] : '';
 $totalStudents = 0;
 
 // SQL query to fetch students
-$sql = "SELECT * FROM students WHERE year ILIKE $1 AND class ILIKE $2";
+$sql = "SELECT * FROM student_entries WHERE year ILIKE $1 AND class ILIKE $2";
 $result = pg_prepare($conn, "fetch_students", $sql);
 
 if (!$result) {
