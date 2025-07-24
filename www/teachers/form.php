@@ -224,10 +224,10 @@ function removeRow(btn) {
               <select name="class[]" required>
                 <option value="" disabled selected>Select Class</option>
                                 
-                  <option value="Basic 1">Basic 1</option>
-                  <option value="Basic 2">Basic 2</option>
-                  <option value="Basic 3">Basic 3</option>
-                  <option value="Basic 4">Basic 4</option>
+                  <option value="Basic 1">Basic 1(B)</option>
+                  <option value="Basic 2">Basic 6(A)</option>
+                  <option value="Basic 3">Basic 3(A)</option>
+                  <option value="Basic 4">Basic 3(B)</option>
                   <option value="Basic 5">Basic 5</option>
                   <option value="Basic 6">Basic 6</option>
                   <option value="Basic 7">Basic 7</option>
