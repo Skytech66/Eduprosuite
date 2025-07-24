@@ -182,10 +182,12 @@ $totalStudents = count($students);
 
 <?php 
 // Helper function to generate consistent color from name
-function generateColor($name) {
-    $colors = ['#4361ee', '#3f37c9', '#4895ef', '#4cc9f0', '#560bad', '#b5179e', '#f72585', '#7209b7'];
-    $hash = crc32($name) % count($colors);
-    return $colors[$hash];
+if (!function_exists('generateColor')) {
+    function generateColor($name) {
+        $colors = ['#4361ee', '#3f37c9', '#4895ef', '#4cc9f0', '#560bad', '#b5179e', '#f72585', '#7209b7'];
+        $hash = crc32($name) % count($colors);
+        return $colors[$hash];
+    }
 }
 ?>
 
@@ -463,8 +465,8 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background-color:    #f8fafc;
+    font-family    'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: #f8fafc;
     color: var(--dark);
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
