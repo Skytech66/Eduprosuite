@@ -407,7 +407,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Visual feedback
         const btn = this;
-        btn.innerHTML = '<i class="fas fa-check-circle"></i> Analysis Complete';
+                btn.innerHTML = '<i class="fas fa-check-circle"></i> Analysis Complete';
         btn.classList.add('success');
         
         setTimeout(() => {
@@ -429,10 +429,43 @@ document.addEventListener('DOMContentLoaded', function() {
         const subject = document.getElementById('subjectSelect').value;
 
         if (year && className && subject) {
-            // Perform the search operation (you can implement the logic to fetch the marksheet)
-            document.getElementById('studentDetails').innerHTML = `Searching for marksheet for Year: ${year}, Class: ${className}, Subject: ${subject}`;
-            
-            // Here you can add the AJAX call to fetch the marksheet data based on the selected criteria
+            // Perform the AJAX request to retrieve student data
+            fetch('retrieve_student_data.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `year=${year}&class=${className}`
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Clear previous results
+                const studentDetailsDiv = document.getElementById('studentDetails');
+                studentDetailsDiv.innerHTML = '';
+
+                // Check if any students were returned
+                if (data.length > 0) {
+                    // Create a list of students
+                    const studentList = document.createElement('ul');
+                    data.forEach(student => {
+                        const listItem = document.createElement('li');
+                        listItem.textContent = `${student.name} - ${subject}`;
+                        studentList.appendChild(listItem);
+                    });
+                    studentDetailsDiv.appendChild(studentList);
+                } else {
+                    studentDetailsDiv.innerHTML = '<p>No students found for the selected criteria.</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching student data:', error);
+                document.getElementById('studentDetails').innerHTML = '<p>Error retrieving student data.</p>';
+            });
         } else {
             alert('Please select all criteria.');
         }
@@ -458,8 +491,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (selectedValue) {
             // Fetch and display student details based on selected value
-            studentDetailsDiv.innerHTML = `Selected Student ID: ${selectedValue}`
-            // Example display
+            studentDetailsDiv.innerHTML = `Selected Student ID: ${selectedValue}`; // Example display
         } else {
             studentDetailsDiv.innerHTML = '';
         }
@@ -1033,3 +1065,4 @@ body {
     }
 }
 </style>
+
