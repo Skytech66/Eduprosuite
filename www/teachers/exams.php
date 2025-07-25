@@ -185,14 +185,47 @@ $totalStudents = count($students);
     </form>
 </div>
 
-<!-- Modal for fetching student data -->
+<!-- Modal for selecting year, class, and subject -->
 <div id="studentDataModal" class="modal">
     <div class="modal-content">
         <span class="close-button">&times;</span>
-        <h2>Select Student</h2>
-        <select id="studentDropdown">
-            <option value="">Select a student</option>
-        </select>
+        <h2>Select Criteria</h2>
+        
+        <div class="form-group">
+            <label for="yearSelect">Select Year:</label>
+            <select id="yearSelect">
+                <option value="">Select Year</option>
+                <option value="2025">2025</option>
+                <option value="2024">2024</option>
+                <option value="2023">2023</option>
+                <!-- Add more years as needed -->
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="classSelect">Select Class:</label>
+            <select id="classSelect">
+                <option value="">Select Class</option>
+                <option value="Class 1">Class 1</option>
+                <option value="Class 2">Class 2</option>
+                <option value="Class 3">Class 3</option>
+                <!-- Add more classes as needed -->
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="subjectSelect">Select Subject:</label>
+            <select id="subjectSelect">
+                <option value="">Select Subject</option>
+                <option value="Math">Math</option>
+                <option value="Science">Science</option>
+                <option value="English">English</option>
+                <!-- Add more subjects as needed -->
+            </select>
+        </div>
+        
+        <button id="searchMarksButton" class="btn btn-primary">Search Marksheet</button>
+        
         <div id="studentDetails" style="margin-top: 20px;"></div>
     </div>
 </div>
@@ -387,33 +420,22 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('fetchStudentDataButton').addEventListener('click', function() {
         // Open the modal
         document.getElementById('studentDataModal').style.display = 'block';
+    });
 
-        // Fetch student data
-        const year = '<?php echo $year; ?>'; // Get year from PHP
-        const className = '<?php echo $class; ?>'; // Get class from PHP
+    // Search Marks Button
+    document.getElementById('searchMarksButton').addEventListener('click', function() {
+        const year = document.getElementById('yearSelect').value;
+        const className = document.getElementById('classSelect').value;
+        const subject = document.getElementById('subjectSelect').value;
 
-        fetch('retrieve_student_data.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `year=${year}&class=${className}`
-        })
-        .then(response => response.json())
-        .then(data => {
-            const dropdown = document.getElementById('studentDropdown');
-            dropdown.innerHTML = '<option value="">Select a student</option>'; // Clear existing options
-
-            data.forEach(student => {
-                const option = document.createElement('option');
-                option.value = student.admission_number; // Assuming admission_number is the unique identifier
-                option.textContent = student.name; // Assuming name is the student's name
-                dropdown.appendChild(option);
-            });
-        })
-        .catch(error => {
-            console.error('Error fetching student data:', error);
-        });
+        if (year && className && subject) {
+            // Perform the search operation (you can implement the logic to fetch the marksheet)
+            document.getElementById('studentDetails').innerHTML = `Searching for marksheet for Year: ${year}, Class: ${className}, Subject: ${subject}`;
+            
+            // Here you can add the AJAX call to fetch the marksheet data based on the selected criteria
+        } else {
+            alert('Please select all criteria.');
+        }
     });
 
     // Close modal functionality
@@ -436,56 +458,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (selectedValue) {
             // Fetch and display student details based on selected value
-            studentDetailsDiv.innerHTML = `Selected Student ID: ${selectedValue}`; // Example display
+            studentDetailsDiv.innerHTML = `Selected Student ID: ${selectedValue}`
+            // Example display
         } else {
             studentDetailsDiv.innerHTML = '';
         }
-    });
-
-    // Helper function for ordinal suffixes
-    function getOrdinalSuffix(num) {
-        const j = num % 10, k = num % 100;
-        if (j == 1 && k != 11) return 'st';
-        if (j == 2 && k != 12) return 'nd';
-        if (j == 3 && k != 13) return 'rd';
-        return 'th';
-    }
-});
-</script>
-
-<style>
-:root {
-    --primary: #4361ee;
-    --primary-dark: #3a56d4;
-    --primary-light: #e0e7ff;
-    --secondary: #3f37c9;
-    --success: #4cc9f0;
-    --success-dark: #3ab7dc;
-    --warning: #f8961e;
-    --danger: #f94144;
-    --light: #f8f9fa;
-    --light-gray: #f1f3f9;
-            const term = document.getElementById('termSelect').value;
-
-        // Validate selections
-        if (!year || !className || !subject) {
-            alert("Please select Year, Class, and Subject.");
-            return;
-        }
-
-        // Set the selected values to the hidden inputs in the form
-        document.querySelector('input[name="year"]').value = year;
-        document.querySelector('input[name="class"]').value = className;
-        document.querySelector('input[name="subject"]').value = subject;
-
-        // Optionally, you can also set the term if needed
-        // document.querySelector('input[name="term"]').value = term;
-
-        // Close the modal
-        document.getElementById('studentDataModal').style.display = 'none';
-
-        // Optionally, you can trigger a form submission or refresh the data
-        // document.getElementById('marksForm').submit(); // Uncomment if you want to submit the form
     });
 
     // Helper function for ordinal suffixes
@@ -983,13 +960,10 @@ body {
 
 .modal-content {
     background-color: #fefefe;
-    margin: 5% auto; /* 5% from the top and centered */
+    margin: 15% auto; /* 15% from the top and centered */
     padding: 20px;
     border: 1px solid #888;
-    width: 60%; /* Increased width to 60% */
-    max-width: 800px; /* Set a maximum width */
-    border-radius: var(--border-radius); /* Optional: add border radius for rounded corners */
-    box-shadow: var(--box-shadow); /* Optional: add shadow for depth */
+    width: 80%; /* Could be more or less, depending on screen size */
 }
 
 .close-button {
@@ -1004,6 +978,23 @@ body {
     color: black;
     text-decoration: none;
     cursor: pointer;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-group select {
+    width: 100%;
+    padding: 10px;
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--medium-gray);
 }
 
 @media (max-width: 768px) {
