@@ -4,7 +4,6 @@ ini_set('display_errors', 1);
 require_once "../include/functions.php";
 
 
-
 // Check session
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -40,24 +39,37 @@ $conn = db_conn();
     
     <style>
         :root {
-            /* Light Mode Colors */
-            --primary: #3f37c9;
-            --primary-light: rgba(63, 55, 201, 0.1);
-            --primary-lighter: rgba(63, 55, 201, 0.05);
-            --primary-dark: #312ba5;
+            /* Color System */
+            --primary: #4f46e5;
+            --primary-light: #6366f1;
+            --primary-lighter: #a5b4fc;
+            --primary-dark: #4338ca;
+            --primary-darker: #3730a3;
+            
             --secondary: #7c3aed;
-            --secondary-light: rgba(124, 58, 237, 0.1);
+            --secondary-light: #8b5cf6;
+            --secondary-lighter: #c4b5fd;
+            
             --success: #10b981;
-            --success-light: rgba(16, 185, 129, 0.1);
+            --success-light: #34d399;
+            --success-lighter: #a7f3d0;
+            
             --info: #0ea5e9;
-            --info-light: rgba(14, 165, 233, 0.1);
+            --info-light: #38bdf8;
+            --info-lighter: #bae6fd;
+            
             --warning: #f59e0b;
-            --warning-light: rgba(245, 158, 11, 0.1);
+            --warning-light: #fbbf24;
+            --warning-lighter: #fde68a;
+            
             --danger: #ef4444;
-            --danger-light: rgba(239, 68, 68, 0.1);
+            --danger-light: #f87171;
+            --danger-lighter: #fecaca;
+            
             --light: #f8fafc;
             --dark: #1e293b;
             --darker: #0f172a;
+            
             --gray-50: #f8fafc;
             --gray-100: #f1f5f9;
             --gray-200: #e2e8f0;
@@ -70,36 +82,32 @@ $conn = db_conn();
             --gray-900: #0f172a;
             
             /* Dark Mode Colors */
-            --dark-primary: #8b85f1;
-            --dark-primary-light: rgba(139, 133, 241, 0.1);
-            --dark-primary-dark: #6d67d9;
-            --dark-secondary: #9d7af0;
-            --dark-success: #34d399;
-            --dark-info: #60a5fa;
-            --dark-warning: #fbbf24;
-            --dark-danger: #f87171;
+            --dark-primary: #818cf8;
+            --dark-primary-light: rgba(129, 140, 248, 0.1);
+            --dark-primary-dark: #6366f1;
+            
             --dark-bg: #0f172a;
             --dark-card: #1e293b;
             --dark-text: #f8fafc;
             --dark-border: #334155;
             
-            /* Shadows */
-            --shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.03);
-            --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px 0 rgba(15, 23, 42, 0.03);
-            --shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.05), 0 2px 4px -1px rgba(15, 23, 42, 0.03);
-            --shadow-md: 0 10px 15px -3px rgba(15, 23, 42, 0.05), 0 4px 6px -2px rgba(15, 23, 42, 0.03);
-            --shadow-lg: 0 20px 25px -5px rgba(15, 23, 42, 0.05), 0 10px 10px -5px rgba(15, 23, 42, 0.01);
-            --shadow-xl: 0 25px 50px -12px rgba(15, 23, 42, 0.12);
-            --shadow-2xl: 0 35px 60px -15px rgba(15, 23, 42, 0.15);
-            --shadow-primary: 0 4px 14px 0 rgba(63, 55, 201, 0.25);
+            /* Elevation */
+            --shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+            --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.1), 0 1px 2px 0 rgba(15, 23, 42, 0.06);
+            --shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.1), 0 2px 4px -1px rgba(15, 23, 42, 0.06);
+            --shadow-md: 0 10px 15px -3px rgba(15, 23, 42, 0.1), 0 4px 6px -2px rgba(15, 23, 42, 0.05);
+            --shadow-lg: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 10px 10px -5px rgba(15, 23, 42, 0.04);
+            --shadow-xl: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+            --shadow-2xl: 0 35px 60px -15px rgba(15, 23, 42, 0.3);
+            --shadow-primary: 0 4px 14px 0 rgba(79, 70, 229, 0.3);
             
             /* Border Radius */
-            --rounded-xs: 2px;
-            --rounded-sm: 4px;
-            --rounded: 6px;
-            --rounded-md: 8px;
-            --rounded-lg: 12px;
-            --rounded-xl: 16px;
+            --rounded-xs: 4px;
+            --rounded-sm: 6px;
+            --rounded: 8px;
+            --rounded-md: 12px;
+            --rounded-lg: 16px;
+            --rounded-xl: 20px;
             --rounded-2xl: 24px;
             --rounded-3xl: 32px;
             --rounded-full: 9999px;
@@ -110,13 +118,14 @@ $conn = db_conn();
             --transition-bounce: all 0.5s cubic-bezier(0.68, -0.6, 0.32, 1.6);
             
             /* Sidebar */
-            --sidebar-width: 280px;
-            --sidebar-collapsed-width: 80px;
-            --sidebar-bg: #1e293b;
+            --sidebar-width: 300px;
+            --sidebar-collapsed-width: 90px;
+            --sidebar-bg: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
             --sidebar-text: #f8fafc;
-            --sidebar-active-bg: rgba(63, 55, 201, 0.2);
-            --sidebar-active-border: #3f37c9;
-            --sidebar-hover-bg: rgba(63, 55, 201, 0.1);
+            --sidebar-active-bg: rgba(79, 70, 229, 0.2);
+            --sidebar-active-border: #4f46e5;
+            --sidebar-hover-bg: rgba(79, 70, 229, 0.1);
+            --sidebar-logo-size: 120px;
         }
 
         /* Dark Mode Variables */
@@ -124,14 +133,11 @@ $conn = db_conn();
             --primary: var(--dark-primary);
             --primary-light: var(--dark-primary-light);
             --primary-dark: var(--dark-primary-dark);
-            --secondary: var(--dark-secondary);
-            --success: var(--dark-success);
-            --info: var(--dark-info);
-            --warning: var(--dark-warning);
-            --danger: var(--dark-danger);
+            
             --light: var(--dark-bg);
             --dark: var(--dark-text);
             --darker: var(--dark-text);
+            
             --gray-50: var(--dark-bg);
             --gray-100: var(--dark-card);
             --gray-200: var(--dark-border);
@@ -189,18 +195,19 @@ $conn = db_conn();
             outline-offset: 2px;
         }
 
-        /* Sidebar Styles */
+        /* Sidebar Styles - Premium Redesign */
         #sidebar {
             width: var(--sidebar-width);
             min-width: var(--sidebar-width);
             background: var(--sidebar-bg);
             color: var(--sidebar-text);
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             z-index: 1000;
             height: 100vh;
             overflow-y: auto;
             box-shadow: var(--shadow-xl);
+            border-right: 1px solid var(--dark-border);
         }
 
         #sidebar.collapsed {
@@ -217,7 +224,7 @@ $conn = db_conn();
 
         #sidebar.collapsed .nav-link {
             justify-content: center;
-            padding: 12px 0;
+            padding: 14px 0;
         }
 
         #sidebar.collapsed .nav-item {
@@ -231,77 +238,107 @@ $conn = db_conn();
             top: 50%;
             transform: translateY(-50%);
             background: var(--sidebar-bg);
-            padding: 8px 16px;
+            padding: 10px 18px;
             border-radius: var(--rounded-md);
-            margin-left: 10px;
+            margin-left: 12px;
             white-space: nowrap;
-            box-shadow: var(--shadow-md);
+            box-shadow: var(--shadow-lg);
             z-index: 1000;
+            font-size: 14px;
+            font-weight: 500;
         }
 
         .sidebar-header {
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.1);
+            padding: 30px 20px;
             text-align: center;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
         }
 
-        .sidebar-header .circle {
-            width: 80px;
-            height: 80px;
+        .sidebar-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 20px;
+            right: 20px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(79, 70, 229, 0.5), transparent);
+        }
+
+        .sidebar-logo {
+            width: var(--sidebar-logo-size);
+            height: var(--sidebar-logo-size);
             border-radius: 50%;
-            margin: 0 auto 15px;
+            margin: 0 auto 20px;
             background-size: cover;
             background-position: center;
-            border: 3px solid rgba(255, 255, 255, 0.2);
-            transition: var(--transition);
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+            transition: var(--transition-slow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background-color: white;
         }
 
-        .sidebar-header .circle:hover {
-            transform: scale(1.05);
-            border-color: var(--primary);
+        .sidebar-logo img {
+            width: 90%;
+            height: 90%;
+            object-fit: contain;
         }
 
         .sidebar-header h4 {
             color: white;
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             font-weight: 700;
             margin-bottom: 0;
+            font-family: 'Space Grotesk', sans-serif;
+            letter-spacing: -0.5px;
+            background: linear-gradient(90deg, #fff 0%, #c7d2fe 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
         }
 
         .sidebar-header h4 span {
-            color: #ffc107;
+            color: #a5b4fc;
         }
 
         .sidebar-content {
-            padding: 20px 0;
+            padding: 25px 0;
         }
 
         .nav-item {
             position: relative;
-            margin-bottom: 5px;
+            margin-bottom: 2px;
         }
 
         .nav-link {
             color: var(--sidebar-text);
-            padding: 12px 20px;
+            padding: 14px 25px;
             display: flex;
             align-items: center;
             text-decoration: none;
             transition: var(--transition);
-            opacity: 0.8;
+            opacity: 0.9;
             font-weight: 500;
+            font-size: 15px;
+            margin: 0 10px;
+            border-radius: var(--rounded-md);
         }
 
         .nav-link:hover {
             opacity: 1;
             background: var(--sidebar-hover-bg);
+            transform: translateX(4px);
         }
 
         .nav-link.active {
             background: var(--sidebar-active-bg);
             opacity: 1;
             border-left: 4px solid var(--sidebar-active-border);
+            font-weight: 600;
         }
 
         .nav-link i {
@@ -309,11 +346,20 @@ $conn = db_conn();
             font-size: 1.1rem;
             width: 24px;
             text-align: center;
+            color: #a5b4fc;
+        }
+
+        .nav-link.active i {
+            color: var(--primary-light);
         }
 
         .dropdown-toggle::after {
             margin-left: auto;
             transition: transform 0.2s;
+            border-top: 0.35em solid;
+            border-right: 0.35em solid transparent;
+            border-left: 0.35em solid transparent;
+            color: #a5b4fc;
         }
 
         .nav-item.show .dropdown-toggle::after {
@@ -329,8 +375,10 @@ $conn = db_conn();
         }
 
         .nav.flex-column .nav .nav-link {
-            padding: 8px 20px;
+            padding: 10px 20px;
             font-size: 0.9rem;
+            margin: 0;
+            border-radius: var(--rounded-sm);
         }
 
         .footer {
@@ -346,8 +394,14 @@ $conn = db_conn();
         }
 
         .footer a {
-            color: #ffc107;
+            color: #a5b4fc;
             text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .footer a:hover {
+            color: var(--primary-light);
         }
 
         /* Main Content Area */
@@ -356,11 +410,12 @@ $conn = db_conn();
             overflow-y: auto;
             height: 100vh;
             transition: margin-left 0.3s ease;
+            background-color: var(--gray-50);
         }
 
-        /* Top Navigation Bar */
+        /* Premium Top Navigation Bar */
         .top-navbar {
-            height: 70px;
+            height: 80px;
             background: white;
             box-shadow: var(--shadow-sm);
             display: flex;
@@ -370,10 +425,12 @@ $conn = db_conn();
             position: sticky;
             top: 0;
             z-index: 900;
+            border-bottom: 1px solid var(--gray-200);
         }
 
         [data-theme="dark"] .top-navbar {
             background: var(--dark-card);
+            border-bottom-color: var(--dark-border);
         }
 
         .navbar-left {
@@ -384,13 +441,18 @@ $conn = db_conn();
         .sidebar-toggle {
             background: none;
             border: none;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             color: var(--gray-600);
             cursor: pointer;
             margin-right: 20px;
-            padding: 8px;
+            padding: 10px;
             border-radius: var(--rounded-full);
             transition: var(--transition);
+            width: 42px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         [data-theme="dark"] .sidebar-toggle {
@@ -400,6 +462,7 @@ $conn = db_conn();
         .sidebar-toggle:hover {
             background: var(--gray-100);
             color: var(--primary);
+            transform: rotate(90deg);
         }
 
         [data-theme="dark"] .sidebar-toggle:hover {
@@ -430,7 +493,7 @@ $conn = db_conn();
         }
 
         .breadcrumb-divider {
-            margin: 0 8px;
+            margin: 0 10px;
             color: var(--gray-400);
             font-size: 12px;
             opacity: 0.6;
@@ -442,7 +505,7 @@ $conn = db_conn();
             gap: 20px;
         }
 
-        /* User Profile Section */
+        /* Premium User Profile Section */
         .user-profile {
             display: flex;
             align-items: center;
@@ -603,7 +666,7 @@ $conn = db_conn();
             transform: rotate(180deg);
         }
 
-        /* Dashboard Content */
+        /* Premium Dashboard Content */
         .dashboard-container {
             padding: 30px;
             max-width: 1800px;
@@ -617,13 +680,13 @@ $conn = db_conn();
             }
         }
 
-        /* Dashboard Header */
+        /* Premium Dashboard Header */
         .dashboard-header {
-            padding: 28px 32px;
+            padding: 30px;
             margin-bottom: 32px;
             position: relative;
             overflow: hidden;
-            border-radius: var(--rounded-2xl);
+            border-radius: var(--rounded-xl);
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
@@ -678,13 +741,17 @@ $conn = db_conn();
             letter-spacing: -0.75px;
             line-height: 1.3;
             color: var(--darker);
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
         }
 
-        /* Metrics Section */
+        /* Premium Metrics Section */
         .metrics-section {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 28px;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
             margin-bottom: 40px;
         }
 
@@ -697,7 +764,7 @@ $conn = db_conn();
 
         .metric-card {
             background: white;
-            border-radius: var(--rounded-2xl);
+            border-radius: var(--rounded-xl);
             padding: 28px;
             transition: var(--transition-slow);
             display: flex;
@@ -708,6 +775,7 @@ $conn = db_conn();
             border: none;
             box-shadow: var(--shadow);
             cursor: pointer;
+            border-left: 4px solid transparent;
         }
 
         [data-theme="dark"] .metric-card {
@@ -720,30 +788,30 @@ $conn = db_conn();
         }
 
         .student-card {
-            background: linear-gradient(135deg, var(--primary-lighter) 0%, rgba(255,255,255,1) 100%);
-            border-left: 4px solid var(--primary);
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.05) 0%, rgba(255,255,255,1) 100%);
+            border-left-color: var(--primary);
         }
 
         [data-theme="dark"] .student-card {
-            background: linear-gradient(135deg, var(--dark-primary-light) 0%, var(--dark-card) 100%);
+            background: linear-gradient(135deg, rgba(129, 140, 248, 0.1) 0%, var(--dark-card) 100%);
         }
 
         .classes-card {
-            background: linear-gradient(135deg, var(--info-light) 0%, rgba(255,255,255,1) 100%);
-            border-left: 4px solid var(--info);
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.05) 0%, rgba(255,255,255,1) 100%);
+            border-left-color: var(--info);
         }
 
         [data-theme="dark"] .classes-card {
-            background: linear-gradient(135deg, rgba(14, 165, 233, 0.1) 0%, var(--dark-card) 100%);
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, var(--dark-card) 100%);
         }
 
         .attendance-card {
-            background: linear-gradient(135deg, var(--success-light) 0%, rgba(255,255,255,1) 100%);
-            border-left: 4px solid var(--success);
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(255,255,255,1) 100%);
+            border-left-color: var(--success);
         }
 
         [data-theme="dark"] .attendance-card {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, var(--dark-card) 100%);
+            background: linear-gradient(135deg, rgba(52, 211, 153, 0.1) 0%, var(--dark-card) 100%);
         }
 
         .metric-wave {
@@ -784,8 +852,8 @@ $conn = db_conn();
         }
 
         .icon-bg {
-            width: 56px;
-            height: 56px;
+            width: 60px;
+            height: 60px;
             border-radius: var(--rounded-lg);
             display: flex;
             align-items: center;
@@ -856,7 +924,7 @@ $conn = db_conn();
             font-size: 15px;
         }
 
-        /* Section Headers */
+        /* Premium Section Headers */
         .section-header {
             display: flex;
             justify-content: space-between;
@@ -887,33 +955,36 @@ $conn = db_conn();
             gap: 16px;
         }
 
-        /* Quick Actions Section */
+        /* Premium Quick Actions Section */
         .actions-section {
             background: white;
-            border-radius: var(--rounded-2xl);
-            padding: 32px;
+            border-radius: var(--rounded-xl);
+            padding: 30px;
             margin-bottom: 40px;
             box-shadow: var(--shadow);
             transition: var(--transition-slow);
+            border: 1px solid var(--gray-200);
         }
 
         [data-theme="dark"] .actions-section {
             background: var(--dark-card);
+            border-color: var(--dark-border);
         }
 
         .actions-section:hover {
             box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
         }
 
         .action-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 24px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
         }
 
         @media (max-width: 768px) {
             .action-grid {
-                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             }
         }
 
@@ -925,7 +996,7 @@ $conn = db_conn();
 
         .action-card {
             background: white;
-            border-radius: var(--rounded-xl);
+            border-radius: var(--rounded-lg);
             padding: 28px;
             text-decoration: none;
             transition: var(--transition-slow);
@@ -973,8 +1044,8 @@ $conn = db_conn();
         }
 
         .action-icon {
-            width: 56px;
-            height: 56px;
+            width: 60px;
+            height: 60px;
             border-radius: var(--rounded-lg);
             display: flex;
             align-items: center;
@@ -1073,11 +1144,11 @@ $conn = db_conn();
             transform: translateY(-2px);
         }
 
-        /* Bottom Section Layout */
+        /* Premium Bottom Section Layout */
         .bottom-section {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 32px;
+            gap: 24px;
         }
 
         @media (max-width: 1200px) {
@@ -1086,22 +1157,25 @@ $conn = db_conn();
             }
         }
 
-        /* Calendar Section */
+        /* Premium Calendar Section */
         .calendar-section {
             background: white;
-            border-radius: var(--rounded-2xl);
-            padding: 32px;
+            border-radius: var(--rounded-xl);
+            padding: 30px;
             margin-bottom: 0;
             box-shadow: var(--shadow);
             transition: var(--transition-slow);
+            border: 1px solid var(--gray-200);
         }
 
         [data-theme="dark"] .calendar-section {
             background: var(--dark-card);
+            border-color: var(--dark-border);
         }
 
         .calendar-section:hover {
             box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
         }
 
         .fc {
@@ -1162,7 +1236,7 @@ $conn = db_conn();
         }
 
         [data-theme="dark"] .fc .fc-daygrid-day.fc-day-today {
-            background-color: rgba(63, 55, 201, 0.2);
+            background-color: rgba(79, 70, 229, 0.2);
         }
 
         .fc .fc-daygrid-event {
@@ -1177,21 +1251,24 @@ $conn = db_conn();
             display: none;
         }
 
-        /* Activity Section */
+        /* Premium Activity Section */
         .activity-section {
             background: white;
-            border-radius: var(--rounded-2xl);
-            padding: 32px;
+            border-radius: var(--rounded-xl);
+            padding: 30px;
             box-shadow: var(--shadow);
             transition: var(--transition-slow);
+            border: 1px solid var(--gray-200);
         }
 
         [data-theme="dark"] .activity-section {
             background: var(--dark-card);
+            border-color: var(--dark-border);
         }
 
         .activity-section:hover {
             box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
         }
 
         .view-all {
@@ -1215,7 +1292,7 @@ $conn = db_conn();
         .activity-list {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 16px;
         }
 
         .activity-item {
@@ -1254,7 +1331,7 @@ $conn = db_conn();
 
         .activity-icon.success {
             background-color: var(--success);
-            box-shadow: var(--shadow-success);
+            box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.3);
         }
 
         .activity-icon.primary {
@@ -1264,12 +1341,12 @@ $conn = db_conn();
 
         .activity-icon.info {
             background-color: var(--info);
-            box-shadow: var(--shadow-info);
+            box-shadow: 0 4px 14px 0 rgba(14, 165, 233, 0.3);
         }
 
         .activity-icon.warning {
             background-color: var(--warning);
-            box-shadow: var(--shadow-warning);
+            box-shadow: 0 4px 14px 0 rgba(245, 158, 11, 0.3);
         }
 
         .activity-content {
@@ -1326,12 +1403,12 @@ $conn = db_conn();
             transition: width 0.6s ease;
         }
 
-        /* Buttons */
+        /* Premium Buttons */
         .btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 12px 20px;
+            padding: 12px 24px;
             border-radius: var(--rounded-md);
             font-size: 16px;
             font-weight: 600;
@@ -1345,7 +1422,7 @@ $conn = db_conn();
         }
 
         .btn-sm {
-            padding: 10px 16px;
+            padding: 10px 18px;
             font-size: 15px;
             min-height: 40px;
         }
@@ -1362,7 +1439,7 @@ $conn = db_conn();
             border-color: var(--primary-dark);
             box-shadow: var(--shadow-md);
             outline: none;
-            transform: translateY(-1px);
+            transform: translateY(-2px);
         }
 
         .btn-primary:active {
@@ -1380,7 +1457,7 @@ $conn = db_conn();
             background-color: var(--gray-100);
             color: var(--dark);
             outline: none;
-            transform: translateY(-1px);
+            transform: translateY(-2px);
             box-shadow: var(--shadow-sm);
         }
 
@@ -1388,20 +1465,21 @@ $conn = db_conn();
             transform: translateY(0);
         }
 
-        /* Event Modal */
+        /* Premium Event Modal */
         .event-modal {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             background: white;
-            border-radius: var(--rounded-2xl);
+            border-radius: var(--rounded-xl);
             padding: 32px;
             width: 90%;
             max-width: 520px;
             z-index: 1001;
             box-shadow: var(--shadow-2xl);
             animation: modalFadeIn 0.3s ease-out;
+            border: 1px solid var(--gray-200);
         }
 
         @keyframes modalFadeIn {
@@ -1502,7 +1580,7 @@ $conn = db_conn();
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(255, 255, 255, 0.9);
+            background-color: rgba(255, 255, 255, 0.95);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -1592,10 +1670,15 @@ $conn = db_conn();
             
             #sidebar.collapsed {
                 transform: translateX(0);
+                width: 80px;
             }
             
             #main-content {
                 margin-left: 0;
+            }
+            
+            .top-navbar {
+                padding: 0 20px;
             }
         }
 
@@ -1621,6 +1704,11 @@ $conn = db_conn();
             
             .activity-item {
                 padding: 16px;
+            }
+            
+            .sidebar-logo {
+                width: 80px;
+                height: 80px;
             }
         }
 
@@ -1668,10 +1756,12 @@ $conn = db_conn();
 <!-- Skip to content link for keyboard users -->
 <a href="#main-content" class="skip-link">Skip to main content</a>
 
-<!-- Sidebar -->
+<!-- Premium Sidebar -->
 <nav id="sidebar">
     <div class="sidebar-header">
-        <a href="#" class="circle" style="background-image: url('log.jpg');"></a>
+        <div class="sidebar-logo">
+            <img src="adinkra.png" alt="Adinkra International School Crest">
+        </div>
         <h4>EduPro Suite <span>2.0</span></h4>
     </div>
 
@@ -1781,7 +1871,7 @@ $conn = db_conn();
 
 <!-- Main Content -->
 <div id="main-content">
-    <!-- Top Navigation Bar -->
+    <!-- Premium Top Navigation Bar -->
     <div class="top-navbar">
         <div class="navbar-left">
             <button class="sidebar-toggle">
@@ -1813,7 +1903,7 @@ $conn = db_conn();
         </div>
     </div>
 
-    <!-- Dashboard Content -->
+    <!-- Premium Dashboard Content -->
     <div class="dashboard-container">
         <!-- Dashboard Header with Glassmorphism Effect -->
         <div class="dashboard-header glass-card">
@@ -2153,8 +2243,8 @@ $conn = db_conn();
                 {
                     title: 'Parent-Teacher Meeting',
                     start: new Date(),
-                    backgroundColor: '#2C3E50',
-                    borderColor: '#2C3E50',
+                    backgroundColor: '#4f46e5',
+                    borderColor: '#4f46e5',
                     extendedProps: {
                         description: 'Quarterly parent-teacher conference',
                         location: 'School Conference Room',
@@ -2164,8 +2254,8 @@ $conn = db_conn();
                 {
                     title: 'Term Assessment',
                     start: new Date(new Date().setDate(new Date().getDate() + 5)),
-                    backgroundColor: '#27AE60',
-                    borderColor: '#27AE60',
+                    backgroundColor: '#10b981',
+                    borderColor: '#10b981',
                     extendedProps: {
                         description: 'Mid-term examinations',
                         location: 'Classrooms',
@@ -2176,8 +2266,8 @@ $conn = db_conn();
                     title: 'Staff Development Day',
                     start: new Date(new Date().setDate(new Date().getDate() + 10)),
                     end: new Date(new Date().setDate(new Date().getDate() + 11)),
-                    backgroundColor: '#F39C12',
-                    borderColor: '#F39C12',
+                    backgroundColor: '#f59e0b',
+                    borderColor: '#f59e0b',
                     allDay: true,
                     extendedProps: {
                         description: 'Professional development workshops',
