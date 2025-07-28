@@ -528,6 +528,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             font-weight: 500;
         }
         
+        /* Back to Top Button */
+        .back-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: none;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            z-index: 1000;
+        }
+        .back-to-top:hover {
+            background-color: var(--primary-light);
+        }
+
         @media (max-width: 1200px) {
             .container {
                 padding-left: 1.5rem;
@@ -541,7 +562,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
             
             .table tbody td {
-                padding: 1rem 0.75rem;
+                padding: 1rem                 0.75rem;
             }
         }
         
@@ -667,10 +688,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <a class="nav-link active" href="dashboard.php"><i class="fas fa-tachometer-alt me-1"></i> Dashboard</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="form.php"><i class="fas fa-users me-1"></i> add student</a>
+                        <a class="nav-link" href="form.php"><i class="fas fa-users me-1"></i> Add Student</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="Exam_scores.php"><i class="fas fa-chart-line me-1"></i> Exam scores</a>
+                        <a class="nav-link" href="Exam_scores.php"><i class="fas fa-chart-line me-1"></i> Exam Scores</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#"><i class="fas fa-cog me-1"></i> Settings</a>
@@ -895,6 +916,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </div>
     </div>
 
+    <!-- Back to Top Button -->
+    <button class="back-to-top" id="backToTop"><i class="fas fa-chevron-up"></i></button>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
@@ -907,10 +931,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 var winHeight = $(this).height();
                 var progress = (scrollTop / (docHeight - winHeight)) * 100;
                 $('#progressBar').width(progress + '%');
+
+                // Show or hide the back to top button
+                if (scrollTop > 200) {
+                    $('#backToTop').fadeIn();
+                } else {
+                    $('#backToTop').fadeOut();
+                }
             });
         }
         initProgressBar();
         
+        // Back to Top button functionality
+        $('#backToTop').on('click', function() {
+            $('html, body').animate({ scrollTop: 0 }, 500);
+        });
+
         // Notification function
         function showNotification(type, message) {
             const notification = $('#notification');
@@ -982,7 +1018,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             updatePositions();
         });
 
-        // Function to calculate and update student positions
+        // Function to calculate
+                // Function to calculate and update student positions
         function updatePositions() {
             const rows = $('#scoresTable tbody tr').get();
             
