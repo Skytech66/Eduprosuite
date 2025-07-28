@@ -1,1066 +1,1052 @@
-<?php 
-require_once "header.php"; 
-require_once "config.php"; // Include the database configuration
-
-// Database connection parameters
+<?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+// config.php
 $host = "dpg-d20bls6mcj7s73avna10-a.oregon-postgres.render.com";
 $port = "5432";
 $dbname = "school_523q";
 $user = "school_523q_user";
 $password = "05A4cQnogC1qETghafnFsKNYUxYIRwrv";
 
-// Establishing the connection
-$conn = pg_connect("host=$host port=$port dbname=$dbname user=$user password=$password");
-
-if (!$conn) {
-    die("Connection failed: " . pg_last_error());
+try {
+    $conn = new PDO("pgsql:host=$host;port=$port;dbname=$dbname", $user, $password);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    die("Connection failed: " . $e->getMessage());
 }
 
-$year = isset($_POST['year']) ? $_POST['year'] : '';
-$exam = isset($_POST['exam']) ? $_POST['exam'] : '';
-$class = isset($_POST['class']) ? $_POST['class'] : '';
-$subject = isset($_POST['subject']) ? $_POST['subject'] : '';
-$totalStudents = 0;
-
-// Updated SQL query to fetch students with casting
-$sql = "SELECT * FROM student_entries WHERE year::text ILIKE $1 AND class ILIKE $2";
-$result = pg_prepare($conn, "fetch_students", $sql);
-
-if (!$result) {
-    die("Error preparing statement: " . pg_last_error($conn));
-}
-
-$res = pg_execute($conn, "fetch_students", array($year, $class));
-
-if (!$res) {
-    echo "Error executing query: " . pg_last_error($conn);
-    exit; // Exit if the query fails
-}
-
+$classSelected = '';
+$subjectSelected = '';
+$yearSelected = '';
+$examName = '';
 $students = [];
-while ($row = pg_fetch_assoc($res)) {
-    $students[] = $row;
-}
 
-$totalStudents = count($students);
-?>
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    if (isset($_POST['submit_marks'])) {
+        $examName = $_POST['examname'] ?? '';
+        $classSelected = $_POST['class'] ?? '';
+        $subjectSelected = $_POST['subject'] ?? '';
+        $yearSelected = $_POST['year'] ?? '';
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+        foreach ($_POST['students'] as $studentId => $data) {
+            $classScore = $data['class_score'] ?? 0;
+            $examScore = $data['exam_score'] ?? 0;
+            $totalScore = $classScore + $examScore;
+            $admissionNumber = $data['admission_number'] ?? '';
+            $position = $data['position'] ?? null;
 
-<div class="marks-dashboard">
-    <div class="dashboard-header">
-        <div class="header-content">
-            <div class="header-left">
-                <h1 class="dashboard-title">
-                    <i class="fas fa-clipboard-check"></i> 
-                    <?php echo htmlspecialchars($subject); ?> Mark Sheet
-                </h1>
-                <div class="breadcrumb">
-                    <span><?php echo htmlspecialchars($year); ?></span>
-                    <i class="fas fa-chevron-right"></i>
-                    <span><?php echo htmlspecialchars($class); ?></span>
-                    <i class="fas fa-chevron-right"></i>
-                    <span><?php echo htmlspecialchars($exam); ?></span>
-                </div>
-            </div>
-            <div class="header-right">
-                <div class="stats-card">
-                    <div class="stat-item">
-                        <span class="stat-label">Total Students</span>
-                        <span class="stat-value"><?php echo $totalStudents; ?></span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Completion</span>
-                        <div class="progress-container">
-                            <div class="progress-track">
-                                <div class="progress-thumb" id="progressFill" style="width: 0%"></div>
-                            </div>
-                            <span id="studentCount" class="progress-count">0%</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="action-bar">
-        <button type="button" id="fetchStudentDataButton" class="btn btn-primary">
-            <i class="fas fa-user-graduate"></i> Fetch Student Data
-        </button>
-    </div>
-
-    <form id="marksForm" action="submit_scores.php" method="POST" enctype="multipart/form-data">
-        <div class="action-bar">
-            <div class="search-box">
-                <i class="fas fa-search"></i>
-                <input type="text" id="searchInput" placeholder="Search students by name or ID..." onkeyup="searchStudent()" />
-                <div class="search-border"></div>
-            </div>
-            
-            <div class="action-buttons">
-                <button type="button" id="analyzePositionsButton" class="btn btn-analytics">
-                    <i class="fas fa-chart-pie"></i> Analyze
-                </button>
-                <button type="button" id="submitMarksButton" class="btn btn-primary">
-                    <i class="fas fa-paper-plane"></i> Submit Marks
-                </button>
-            </div>
-        </div>
-
-        <input type="hidden" name="uuser" value="<?php echo $session_id; ?>" />
-        <input type="hidden" name="year" value="<?php echo $year; ?>" />
-        <input type="hidden" name="exam" value="<?php echo $exam; ?>" />
-        <input type="hidden" name="class" value="<?php echo $class; ?>" />
-        <input type="hidden" name="subject" value="<?php echo $subject; ?>" />
-        
-        <div class="data-table-container">
-            <div class="table-responsive">
-                <table id="pager" class="data-table">
-                    <thead>
-                        <tr>
-                            <th class="col-serial">#</th>
-                            <th class="col-student">Student</th>
-                            <th class="col-id">Student ID</th>
-                            <th class="col-score">Class Score <span>(50 max)</span></th>
-                            <th class="col-score">Exam Score <span>(50 max)</span></th>
-                            <th class="col-position">Position</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if ($totalStudents === 0): ?>
-                            <tr class="no-data">
-                                <td colspan="6">
-                                    <div class="empty-state">
-                                        <i class="fas fa-user-graduate"></i>
-                                        <h3>No Students Found</h3>
-                                        <p>No students match the selected criteria</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        <?php else: ?>
-                            <?php foreach ($students as $index => $row): ?>
-                            <tr class="student-row">
-                                <td class="col-serial"><?php echo $index + 1; ?></td>
-                                <td class="col-student">
-                                    <div class="student-info">
-                                        <input type="hidden" name="jina[]" value="<?php echo htmlspecialchars($row['name']); ?>" />
-                                        <div class="student-avatar" style="background-color: <?php echo generateColor($row['name']); ?>">
-                                            <?php echo strtoupper(substr($row['name'], 0, 1)); ?>
-                                        </div>
-                                        <div class="student-details">
-                                            <span class="student-name"><?php echo htmlspecialchars($row['name']); ?></span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="col-id">
-                                    <input type="hidden" name="regno[]" value="<?php echo htmlspecialchars($row['admission_number']); ?>" />
-                                    <span class="student-id"><?php echo htmlspecialchars($row['admission_number']); ?></span>
-                                </td>
-                                <td class="col-score">
-                                    <div class="score-input-container">
-                                        <input type="number" class="score-input" name="midterm[]" max="50" placeholder="0-50" />
-                                        <div class="input-state"></div>
-                                    </div>
-                                </td>
-                                <td class="col-score">
-                                    <div class="score-input-container">
-                                        <input type="number" class="score-input" name="endterm[]" max="50" placeholder="0-50" />
-                                        <div class="input-state"></div>
-                                    </div>
-                                </td>
-                                <td class="col-position">
-                                    <div class="position-container">
-                                        <input type="number" class="position-input" name="position[]" min="1" readonly />
-                                        <span class="ordinal-suffix"></span>
-                                    </div>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </form>
-</div>
-
-<!-- Modal for selecting year, class, and subject -->
-<div id="studentDataModal" class="modal">
-    <div class="modal-content">
-        <span class="close-button">&times;</span>
-        <h2>Select Criteria</h2>
-        
-        <div class="form-group">
-            <label for="yearSelect">Select Year:</label>
-            <select id="yearSelect">
-                <option value="">Select Year</option>
-                <option value="2025">2025</option>
-                <!-- Add more years as needed -->
-            </select>
-        </div>
-        
-        <div class="form-group">
-            <label for="classSelect">Select Class:</label>
-            <select id="classSelect">
-                <option value="">Select Class</option>
-                <option value="Class 1">Basic Six A</option>
-                <option value="Class 2">Class 2</option>
-                <option value="Class 3">Class 3</option>
-                <!-- Add more classes as needed -->
-            </select>
-        </div>
-        
-        <div class="form-group">
-            <label for="subjectSelect">Select Subject:</label>
-            <select id="subjectSelect">
-                <option value="">Select Subject</option>
-                <option value="Math">Math</option>
-                <option value="Science">Science</option>
-                <option value="English">English</option>
-                <!-- Add more subjects as needed -->
-            </select>
-        </div>
-        
-        <button id="searchMarksButton" class="btn btn-primary">Search Marksheet</button>
-        
-        <div id="studentDetails" style="margin-top: 20px;"></div>
-    </div>
-</div>
-
-<?php 
-// Helper function to generate consistent color from name
-if (!function_exists('generateColor')) {
-    function generateColor($name) {
-        $colors = ['#4361ee', '#3f37c9', '#4895ef', '#4cc9f0', '#560bad', '#b5179e', '#f72585', '#7209b7'];
-        $hash = crc32($name) % count($colors);
-        return $colors[$hash];
-    }
-}
-?>
-
-<?php require_once "../include/footer.php"; ?>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Enhanced mark input validation
-    function validateMark(input) {
-        const value = parseFloat(input.value) || 0;
-        const max = parseFloat(input.max) || 50;
-        const container = input.closest('.score-input-container');
-        
-        // Reset all classes
-        container.classList.remove('valid', 'warning', 'error', 'empty');
-        
-        if (input.value === "") {
-            container.classList.add('empty');
-        } else if (value > max) {
-            container.classList.add('warning');
-        } else if (value < 0) {
-            container.classList.add('error');
-        } else {
-            container.classList.add('valid');
-        }
-        
-        updateProgress();
-    }
-
-    // Progress tracking
-    function updateProgress() {
-        const inputs = document.querySelectorAll('.score-input');
-        let filled = 0;
-        
-        inputs.forEach(input => {
-            if (input.value !== "") filled++;
-        });
-        
-        const total = inputs.length;
-        const percentage = total > 0 ? Math.round((filled / total) * 100) : 0;
-        
-        document.getElementById('progressFill').style.width = `${percentage}%`;
-        document.getElementById('studentCount').textContent = `${percentage}%`;
-        
-        // Update progress bar color based on completion
-        const progressFill = document.getElementById('progressFill');
-        progressFill.classList.remove('low', 'medium', 'high');
-        
-        if (percentage < 30) {
-            progressFill.classList.add('low');
-        } else if (percentage < 70) {
-            progressFill.classList.add('medium');
-        } else {
-            progressFill.classList.add('high');
-        }
-    }
-
-    // Attach validation to all mark inputs
-    document.querySelectorAll('.score-input').forEach(input => {
-        input.addEventListener('input', function() {
-            validateMark(this);
-        });
-        
-        // Initial validation
-        validateMark(input);
-    });
-
-    // Enhanced search functionality
-    window.searchStudent = function() {
-        const input = document.getElementById('searchInput');
-        const filter = input.value.toLowerCase();
-        const rows = document.querySelectorAll('.student-row');
-        
-        rows.forEach(row => {
-            const name = row.querySelector('.student-name').textContent.toLowerCase();
-            const id = row.querySelector('.student-id').textContent.toLowerCase();
-            
-            if (name.includes(filter) || id.includes(filter)) {
-                row.style.display = '';
+            if ($totalScore >= 80) {
+                $remarks = 'A';
+            } elseif ($totalScore >= 70) {
+                $remarks = 'B';
+            } elseif ($totalScore >= 60) {
+                $remarks = 'C';
+            } elseif ($totalScore >= 50) {
+                $remarks = 'D';
+            } elseif ($totalScore >= 40) {
+                $remarks = 'E';
             } else {
-                row.style.display = 'none';
+                $remarks = 'F';
             }
-        });
-    };
 
-    // Improved keyboard navigation
-    document.querySelectorAll('.score-input, .position-input').forEach(input => {
-        input.addEventListener('keydown', function(e) {
-            const row = this.closest('tr');
-            const allInputs = Array.from(document.querySelectorAll('.score-input, .position-input'));
-            const currentIndex = allInputs.indexOf(this);
-            
-            switch(e.key) {
-                case 'ArrowDown':
-                    e.preventDefault();
-                    if (currentIndex < allInputs.length - 1) allInputs[currentIndex + 1].focus();
-                    break;
-                case 'ArrowUp':
-                    e.preventDefault();
-                    if (currentIndex > 0) allInputs[currentIndex - 1].focus();
-                    break;
-                case 'ArrowRight':
-                    e.preventDefault();
-                    const nextInRow = row.querySelectorAll('.score-input, .position-input');
-                    const rowIndex = Array.from(nextInRow).indexOf(this);
-                    if (rowIndex < nextInRow.length - 1) nextInRow[rowIndex + 1].focus();
-                    break;
-                case 'ArrowLeft':
-                    e.preventDefault();
-                    const prevInRow = row.querySelectorAll('.score-input, .position-input');
-                    const prevRowIndex = Array.from(prevInRow).indexOf(this);
-                    if (prevRowIndex > 0) prevInRow[prevRowIndex - 1].focus();
-                    break;
-            }
-        });
-    });
-
-    // Submit Marks Button
-    document.getElementById('submitMarksButton').addEventListener('click', function() {
-        const emptyInputs = Array.from(document.querySelectorAll('.score-input')).filter(i => i.value === "");
-        
-        if (emptyInputs.length > 0) {
-            if (confirm(`${emptyInputs.length} marks are empty. Submit anyway?`)) {
-                document.getElementById('marksForm').submit();
-            }
-        } else {
-            document.getElementById('marksForm').submit();
+            $stmt = $conn->prepare("INSERT INTO marks (examname, class, class_score, exam_score, subject, student, admission_number, average, remarks, position, created_at) 
+                                   VALUES (:examname, :class, :class_score, :exam_score, :subject, :student, :admission_number, :average, :remarks, :position, CURRENT_TIMESTAMP)");
+            $stmt->execute([
+                'examname' => $examName,
+                'class' => $classSelected,
+                'class_score' => $classScore,
+                'exam_score' => $examScore,
+                'subject' => $subjectSelected,
+                'student' => $data['student_name'],
+                'admission_number' => $admissionNumber,
+                'average' => $totalScore / 2,
+                'remarks' => $remarks,
+                'position' => $position
+            ]);
         }
-    });
+        echo "<script>document.addEventListener('DOMContentLoaded', function() { showNotification('success', 'Marks submitted successfully!'); });</script>";
+    } else {
+        $classSelected = $_POST['class'] ?? '';
+        $subjectSelected = $_POST['subject'] ?? '';
+        $yearSelected = $_POST['year'] ?? '';
+        $examName = $_POST['examname'] ?? '';
 
-    // Analyze Positions Button
-    document.getElementById('analyzePositionsButton').addEventListener('click', function() {
-        const rows = document.querySelectorAll('.student-row:not(.no-data)');
-        const scores = [];
+        if ($classSelected && $yearSelected) {
+            $stmt = $conn->prepare("SELECT * FROM student_entries WHERE class = :class AND year = :year");
+            $stmt->execute(['class' => $classSelected, 'year' => $yearSelected]);
+            $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+    }
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Scores Management | Academic Portal</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --primary-light: #4895ef;
+            --secondary-color: #3f37c9;
+            --accent-color: #4cc9f0;
+            --success-color: #4ade80;
+            --warning-color: #fbbf24;
+            --danger-color: #f87171;
+            --light-color: #f8fafc;
+            --dark-color: #1e293b;
+            --gray-light: #f1f5f9;
+            --gray-medium: #cbd5e1;
+            --gray-dark: #64748b;
+            --border-radius: 12px;
+            --box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --sidebar-width: 280px;
+            --max-content-width: 1400px;
+        }
         
-        rows.forEach(row => {
-            const admno = row.querySelector('.col-id input').value;
-            const midterm = parseFloat(row.querySelector('input[name="midterm[]"]').value) || 0;
-            const endterm = parseFloat(row.querySelector('input[name="endterm[]"]').value) || 0;
-            
-            scores.push({ admno, total: midterm + endterm });
-        });
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: var(--dark-color);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
         
-        // Sort by total score descending
-        scores.sort((a, b) => b.total - a.total);
+        .navbar {
+            background-color: white;
+            box-shadow: var(--box-shadow);
+            padding: 1rem 1.5rem;
+        }
         
-        // Assign positions (handling ties)
-        let currentPosition = 1;
-        scores.forEach((score, index) => {
-            if (index > 0 && score.total < scores[index - 1].total) {
-                currentPosition = index + 1;
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            font-size: 1.25rem;
+        }
+        
+        .navbar-brand img {
+            height: 36px;
+            margin-right: 12px;
+        }
+        
+        .container {
+            max-width: var(--max-content-width);
+            padding-left: 2rem;
+            padding-right: 2rem;
+        }
+        
+        .card {
+            border: none;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
+            margin-bottom: 2rem;
+            background-color: white;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .card-title {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+            font-size: 1.25rem;
+        }
+        
+        .card-title i {
+            margin-right: 12px;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+        
+        .btn {
+            border-radius: var(--border-radius);
+            padding: 0.625rem 1.25rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            transition: var(--transition);
+            border-width: 2px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-light);
+            border-color: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.25);
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+            padding: 0.875rem 1.75rem;
+            font-size: 1rem;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(74, 222, 128, 0.25);
+        }
+        
+        .badge {
+            font-weight: 500;
+            padding: 0.5rem 0.875rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            letter-spacing: 0.5px;
+        }
+        
+        .table-responsive {
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+        
+        .table {
+            margin-bottom: 0;
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+            min-width: 900px;
+        }
+        
+        .table thead th {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            white-space: nowrap;
+        }
+        
+        .table tbody tr {
+            transition: var(--transition);
+            background-color: white;
+        }
+        
+        .table tbody tr:hover {
+            background-color: rgba(67, 97, 238, 0.03);
+            transform: translateX(4px);
+        }
+        
+        .table tbody td {
+            padding: 1.25rem 1rem;
+            vertical-align: middle;
+            border-top: 1px solid rgba(0, 0, 0, 0.03);
+            font-size: 0.9375rem;
+        }
+        
+        .form-control, .form-select {
+            border-radius: var(--border-radius);
+            padding: 0.625rem 0.875rem;
+            border: 2px solid var(--gray-medium);
+            transition: var(--transition);
+            font-size: 0.9375rem;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+        }
+        
+        .score-input {
+            width: 80px;
+            text-align: center;
+            font-weight: 600;
+            padding: 0.625rem;
+            font-size: 0.9375rem;
+        }
+        
+        .valid-score {
+            background-color: rgba(74, 222, 128, 0.1);
+            border-color: var(--success-color);
+        }
+        
+        .invalid-score {
+            background-color: rgba(248, 113, 113, 0.1);
+            border-color: var(--danger-color);
+        }
+        
+        .subject-header {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 1.75rem;
+            align-items: center;
+            background-color: white;
+            padding: 1.25rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+        
+        .notification {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            padding: 1rem 1.5rem;
+            border-radius: var(--border-radius);
+            color: white;
+            font-weight: 500;
+            box-shadow: var(--box-shadow);
+            z-index: 9999;
+            display: none;
+            animation: fadeIn 0.4s, fadeOut 0.4s 2.5s;
+            min-width: 300px;
+            backdrop-filter: blur(10px);
+            background-color: rgba(0, 0, 0, 0.8);
+            border-left: 4px solid transparent;
+        }
+        
+        .notification.success {
+            border-left-color: var(--success-color);
+        }
+        
+        .notification.error {
+            border-left-color: var(--danger-color);
+        }
+        
+        .position-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: var(--transition);
+        }
+        
+        .position-1 {
+            background-color: #ffd700;
+            color: #333;
+            box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.3);
+        }
+        
+        .position-2 {
+            background-color: #c0c0c0;
+            color: #333;
+            box-shadow: 0 0 0 3px rgba(192, 192, 192, 0.3);
+        }
+        
+        .position-3 {
+            background-color: #cd7f32;
+            color: white;
+            box-shadow: 0 0 0 3px rgba(205, 127, 50, 0.3);
+        }
+        
+        .position-other {
+            background-color: var(--gray-light);
+            color: var(--dark-color);
+        }
+        
+        .remarks-badge {
+            padding: 0.5rem 0.75rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.8125rem;
+            min-width: 36px;
+            text-align: center;
+            display: inline-block;
+        }
+        
+        .remarks-A {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .remarks-B {
+            background-color: #38bdf8;
+            color: white;
+        }
+        
+        .remarks-C {
+            background-color: var(--warning-color);
+            color: #333;
+        }
+        
+        .remarks-D {
+            background-color: #f97316;
+            color: white;
+        }
+        
+        .remarks-E {
+            background-color: #d946ef;
+            color: white;
+        }
+        
+        .remarks-F {
+            background-color: var(--danger-color);
+            color: white;
+        }
+        
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background-color: transparent;
+            z-index: 9998;
+        }
+        
+        .progress-bar {
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .student-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1rem;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        
+        .student-name {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+        }
+        
+        .empty-state {
+            padding: 3rem 1rem;
+            text-align: center;
+            background-color: white;
+            border-radius: var(--border-radius);
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            color: var(--gray-medium);
+            margin-bottom: 1.5rem;
+            opacity: 0.7;
+        }
+        
+        .empty-state h5 {
+            color: var(--dark-color);
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .empty-state p {
+            color: var(--gray-dark);
+            margin-bottom: 1.75rem;
+            font-size: 0.9375rem;
+        }
+        
+        .modal-content {
+            border: none;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .modal-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1.5rem;
+            border-bottom: none;
+        }
+        
+        .modal-title {
+            font-weight: 600;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .modal-title i {
+            margin-right: 12px;
+        }
+        
+        .modal-body {
+            padding: 2rem;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark-color);
+            font-size: 0.9375rem;
+        }
+        
+        .total-cell {
+            font-weight: 700;
+            color: var(--primary-color);
+            font-size: 1rem;
+        }
+        
+        .breadcrumb {
+            background-color: transparent;
+            padding: 0;
+            font-size: 0.875rem;
+        }
+        
+        .breadcrumb-item.active {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        
+        @media (max-width: 1200px) {
+            .container {
+                padding-left: 1.5rem;
+                padding-right: 1.5rem;
+            }
+        }
+        
+        @media (max-width: 992px) {
+            .card-header {
+                padding: 1.25rem;
             }
             
-            // Update the position in the UI
-            const row = Array.from(rows).find(r => 
-                r.querySelector('.col-id input').value === score.admno
-            );
-            
-            if (row) {
-                const positionInput = row.querySelector('.position-input');
-                const ordinalSpan = row.querySelector('.ordinal-suffix');
-                
-                positionInput.value = currentPosition;
-                ordinalSpan.textContent = getOrdinalSuffix(currentPosition);
+            .table tbody td {
+                padding: 1rem 0.75rem;
             }
-        });
+        }
         
-        // Visual feedback
-        const btn = this;
-                btn.innerHTML = '<i class="fas fa-check-circle"></i> Analysis Complete';
-        btn.classList.add('success');
+        @media (max-width: 768px) {
+            .container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            
+            .navbar {
+                padding: 0.875rem 1rem;
+            }
+            
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+                padding: 1.25rem 1rem;
+            }
+            
+            .subject-header {
+                padding: 1rem;
+            }
+            
+            .modal-body {
+                padding: 1.5rem;
+            }
+            
+            .table-responsive {
+                border: none;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .empty-state {
+                padding: 2rem 1rem;
+            }
+            
+            .empty-state i {
+                font-size: 2.5rem;
+            }
+            
+            .notification {
+                min-width: 280px;
+                right: 1rem;
+                left: 1rem;
+                margin: 0 auto;
+                max-width: 100%;
+            }
+        }
         
-        setTimeout(() => {
-            btn.innerHTML = '<i class="fas fa-chart-pie"></i> Analyze';
-            btn.classList.remove('success');
-        }, 2000);
-    });
+        @media (max-width: 576px) {
+            .container {
+                padding-left: 0.75rem;
+                padding-right: 0.75rem;
+            }
+            
+            .modal-body {
+                padding: 1.25rem;
+            }
+            
+            .score-input {
+                width: 70px;
+                padding: 0.5rem;
+            }
+            
+            .student-avatar {
+                width: 36px;
+                height: 36px;
+                margin-right: 8px;
+            }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-20px); }
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--gray-light);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-light);
+        }
+    </style>
+</head>
+<body>
+    <!-- Progress Bar -->
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <img src="logo.png" alt="Logo">
+                Edupro suite 2.0
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="dashboard.php"><i class="fas fa-tachometer-alt me-1"></i> Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="form.php"><i class="fas fa-users me-1"></i> add student</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="Exam_scores.php"><i class="fas fa-chart-line me-1"></i> Exam scores</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-cog me-1"></i> Settings</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
-    // Fetch Student Data Button
-    document.getElementById('fetchStudentDataButton').addEventListener('click', function() {
-        // Open the modal
-        document.getElementById('studentDataModal').style.display = 'block';
-    });
+    <div class="container py-4">
+        <div class="row mb-4">
+            <div class="col-lg-8">
+                <h2 class="fw-bold mb-2"><i class="fas fa-clipboard-check me-2"></i>Exam Scores Management</h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="#">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="#">Examinations</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Scores Entry</li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#marksheetModal">
+                    <i class="fas fa-plus-circle me-2"></i>New Marksheet
+                </button>
+            </div>
+        </div>
 
-    // Search Marks Button
-    document.getElementById('searchMarksButton').addEventListener('click', function() {
-        const year = document.getElementById('yearSelect').value;
-        const className = document.getElementById('classSelect').value;
-        const subject = document.getElementById('subjectSelect').value;
+        <?php if ($classSelected && $subjectSelected): ?>
+        <div class="subject-header animate__animated animate__fadeIn">
+            <h5 class="mb-0 me-3">Results for:</h5>
+            <span class="badge bg-primary">
+                <i class="fas fa-users me-1"></i> <?= htmlspecialchars($classSelected) ?>
+            </span>
+            <span class="badge bg-info">
+                <i class="fas fa-book me-1"></i> <?= htmlspecialchars($subjectSelected) ?>
+            </span>
+            <span class="badge bg-dark">
+                <i class="fas fa-calendar me-1"></i> <?= htmlspecialchars($yearSelected) ?>
+            </span>
+            <span class="badge bg-warning text-dark">
+                <i class="fas fa-clipboard-list me-1"></i> <?= htmlspecialchars($examName) ?>
+            </span>
+        </div>
+        <?php endif; ?>
 
-        if (year && className && subject) {
-            // Perform the AJAX request to retrieve student data
-            fetch('retrieve_student_data.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `year=${year}&class=${className}`
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                // Clear previous results
-                const studentDetailsDiv = document.getElementById('studentDetails');
-                studentDetailsDiv.innerHTML = '';
+        <div class="card animate__animated animate__fadeInUp">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <i class="fas fa-table me-2"></i>Student Scores
+                </h5>
+                <?php if ($classSelected && $subjectSelected): ?>
+                <div class="d-flex align-items-center">
+                    <span class="badge bg-light text-dark me-2">
+                        <i class="fas fa-user-graduate me-1"></i> <?= count($students) ?> Students
+                    </span>
+                    <span class="badge bg-light text-dark">
+                        <i class="fas fa-percentage me-1"></i> Max Score: 100
+                    </span>
+                </div>
+                <?php endif; ?>
+            </div>
+            <div class="card-body p-0">
+                <form method="POST" action="">
+                    <input type="hidden" name="class" value="<?= htmlspecialchars($classSelected) ?>">
+                    <input type="hidden" name="subject" value="<?= htmlspecialchars($subjectSelected) ?>">
+                    <input type="hidden" name="year" value="<?= htmlspecialchars($yearSelected) ?>">
+                    <input type="hidden" name="examname" value="<?= htmlspecialchars($examName) ?>">
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="scoresTable">
+                            <thead>
+                                <tr>
+                                    <th width="50">#</th>
+                                    <th>Student</th>
+                                    <th width="140">Admission No.</th>
+                                    <th width="140">Class (50%)</th>
+                                    <th width="140">Exam (50%)</th>
+                                    <th width="100">Total</th>
+                                    <th width="100">Position</th>
+                                    <th width="100">Grade</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (!empty($students)): ?>
+                                    <?php foreach ($students as $index => $row): ?>
+                                        <tr>
+                                            <td data-label="#"><?= $index + 1 ?></td>
+                                            <td data-label="Student">
+                                                <div class="student-name">
+                                                    <div class="student-avatar">
+                                                        <?= substr(htmlspecialchars($row['name']), 0, 1) ?>
+                                                    </div>
+                                                    <?= htmlspecialchars($row['name']) ?>
+                                                </div>
+                                            </td>
+                                            <td data-label="Admission No."><?= htmlspecialchars($row['admission_number']) ?></td>
+                                            <td data-label="Class (50%)">
+                                                <input type="number" class="form-control class-score score-input" 
+                                                    name="students[<?= $row['id'] ?>][class_score]" 
+                                                    data-student-id="<?= $row['id'] ?>" 
+                                                    max="50" min="0" placeholder="0-50">
+                                            </td>
+                                            <td data-label="Exam (50%)">
+                                                <input type="number" class="form-control exam-score score-input" 
+                                                    name="students[<?= $row['id'] ?>][exam_score]" 
+                                                    data-student-id="<?= $row['id'] ?>" 
+                                                    max="50" min="0" placeholder="0-50">
+                                            </td>
+                                            <td data-label="Total" class="total-cell fw-bold">0</td>
+                                            <td data-label="Position" class="position-cell">
+                                                <span class="position-badge position-other">-</span>
+                                            </td>
+                                            <td data-label="Grade" class="remarks-cell">
+                                                <span class="remarks-badge">-</span>
+                                            </td>
+                                            <input type="hidden" name="students[<?= $row['id'] ?>][admission_number]" value="<?= htmlspecialchars($row['admission_number']) ?>">
+                                            <input type="hidden" name="students[<?= $row['id'] ?>][student_name]" value="<?= htmlspecialchars($row['name']) ?>">
+                                            <input type="hidden" name="students[<?= $row['id'] ?>][position]" class="position-input" value="">
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr>
+                                        <td colspan="8">
+                                            <div class="empty-state">
+                                                <i class="fas fa-clipboard-list"></i>
+                                                <h5>No students found</h5>
+                                                <p>Select class, subject, and year to view students</p>
+                                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#marksheetModal">
+                                                    <i class="fas fa-plus-circle me-2"></i>Select Criteria
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <?php if (!empty($students)): ?>
+                    <div class="p-4 border-top">
+                        <button type="submit" name="submit_marks" class="btn btn-success w-100 py-3">
+                            <i class="fas fa-save me-2"></i>Submit Exam Scores
+                        </button>
+                    </div>
+                    <?php endif; ?>
+                </form>
+            </div>
+        </div>
+    </div>
 
-                // Check if any students were returned
-                if (data.length > 0) {
-                    // Create a list of students
-                    const studentList = document.createElement('ul');
-                    data.forEach(student => {
-                        const listItem = document.createElement('li');
-                        listItem.textContent = `${student.name} - ${subject}`;
-                        studentList.appendChild(listItem);
-                    });
-                    studentDetailsDiv.appendChild(studentList);
-                } else {
-                    studentDetailsDiv.innerHTML = '<p>No students found for the selected criteria.</p>';
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching student data:', error);
-                document.getElementById('studentDetails').innerHTML = '<p>Error retrieving student data.</p>';
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="marksheetModal" tabindex="-1" aria-labelledby="marksheetModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="marksheetModalLabel">
+                        <i class="fas fa-filter me-2"></i>Select Criteria
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="marksheetForm" method="POST" action="">
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Class</label>
+                            <select class="form-select" name="class" required>
+                                <option value="">Select Class</option>
+                                <?php
+                                $classes = $conn->query("SELECT DISTINCT class FROM student_entries");
+                                while ($class = $classes->fetch(PDO::FETCH_ASSOC)) {
+                                    echo "<option value='{$class['class']}'".($class['class'] == $classSelected ? ' selected' : '').">{$class['class']}</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Subject</label>
+                            <select class="form-select" name="subject" required>
+                                <option value="">Select Subject</option>
+                                <?php
+                                $subjects = $conn->query("SELECT name FROM subject");
+                                while ($subject = $subjects->fetch(PDO::FETCH_ASSOC)) {
+                                    echo "<option value='{$subject['name']}'".($subject['name'] == $subjectSelected ? ' selected' : '').">{$subject['name']}</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Exam Name</label>
+                            <select class="form-select" name="examname" required>
+                                <option value="">Select Exam</option>
+                                <option value="Term One" <?= $examName == 'Term One' ? 'selected' : '' ?>>Term One</option>
+                                <option value="Term Two" <?= $examName == 'Term Two' ? 'selected' : '' ?>>Term Two</option>
+                                <option value="Term Three" <?= $examName == 'Term Three' ? 'selected' : '' ?>>Term Three</option>
+                                <option value="Mid-Term" <?= $examName == 'Mid-Term' ? 'selected' : '' ?>>Mid-Term</option>
+                                <option value="Final Exam" <?= $examName == 'Final Exam' ? 'selected' : '' ?>>Final Exam</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Academic Year</label>
+                            <select class="form-select" name="year" required>
+                                <option value="">Select Year</option>
+                                <?php
+                                $years = $conn->query("SELECT DISTINCT year FROM student_entries");
+                                while ($year = $years->fetch(PDO::FETCH_ASSOC)) {
+                                    echo "<option value='{$year['year']}'".($year['year'] == $yearSelected ? ' selected' : '').">{$year['year']}</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg py-3">
+                                <i class="fas fa-search me-2"></i>Generate Marksheet
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+    $(document).ready(function() {
+        // Initialize progress bar
+        function initProgressBar() {
+            $(window).on('scroll', function() {
+                var scrollTop = $(this).scrollTop();
+                var docHeight = $(document).height();
+                var winHeight = $(this).height();
+                var progress = (scrollTop / (docHeight - winHeight)) * 100;
+                $('#progressBar').width(progress + '%');
             });
-        } else {
-            alert('Please select all criteria.');
         }
-    });
-
-    // Close modal functionality
-    document.querySelector('.close-button').addEventListener('click', function() {
-        document.getElementById('studentDataModal').style.display = 'none';
-    });
-
-    // Close modal when clicking outside of it
-    window.addEventListener('click', function(event) {
-        const modal = document.getElementById('studentDataModal');
-        if (event.target === modal) {
-            modal.style.display = 'none';
+        initProgressBar();
+        
+        // Notification function
+        function showNotification(type, message) {
+            const notification = $('#notification');
+            notification.removeClass('success error').addClass(type).text(message).fadeIn();
+            
+            setTimeout(function() {
+                notification.fadeOut();
+            }, 3000);
         }
-    });
+        
+        // Handle score input validation and calculations
+        $('#scoresTable').on('input', '.class-score, .exam-score', function() {
+            const $input = $(this);
+            const maxScore = 50;
+            let value = parseInt($input.val()) || 0;
+            
+            // Validate score doesn't exceed maximum
+            if (value > maxScore) {
+                $input.val(maxScore);
+                value = maxScore;
+                $input.addClass('invalid-score').removeClass('valid-score');
+                showNotification('error', 'Maximum score is 50');
+            } else if (value < 0) {
+                $input.val(0);
+                value = 0;
+                $input.addClass('invalid-score').removeClass('valid-score');
+                showNotification('error', 'Score cannot be negative');
+            } else {
+                $input.addClass('valid-score').removeClass('invalid-score');
+            }
 
-    // Display selected student details
-    document.getElementById('studentDropdown').addEventListener('change', function() {
-        const selectedValue = this.value;
-        const studentDetailsDiv = document.getElementById('studentDetails');
+            // Calculate total for this row
+            const $row = $input.closest('tr');
+            const classScore = parseInt($row.find('.class-score').val()) || 0;
+            const examScore = parseInt($row.find('.exam-score').val()) || 0;
+            const total = classScore + examScore;
+            
+            $row.find('.total-cell').text(total);
+            
+            // Update remarks based on total score
+            let remarks = '-';
+            let remarksClass = '';
+            if (total >= 80) {
+                remarks = 'A';
+                remarksClass = 'remarks-A';
+            } else if (total >= 70) {
+                remarks = 'B';
+                remarksClass = 'remarks-B';
+            } else if (total >= 60) {
+                remarks = 'C';
+                remarksClass = 'remarks-C';
+            } else if (total >= 50) {
+                remarks = 'D';
+                remarksClass = 'remarks-D';
+            } else if (total >= 40) {
+                remarks = 'E';
+                remarksClass = 'remarks-E';
+            } else if (total > 0) {
+                remarks = 'F';
+                remarksClass = 'remarks-F';
+            }
+            
+            $row.find('.remarks-cell span')
+                .text(remarks)
+                .removeClass()
+                .addClass('remarks-badge ' + remarksClass);
 
-        if (selectedValue) {
-            // Fetch and display student details based on selected value
-            studentDetailsDiv.innerHTML = `Selected Student ID: ${selectedValue}`; // Example display
-        } else {
-            studentDetailsDiv.innerHTML = '';
+            // Update all positions based on new totals
+            updatePositions();
+        });
+
+        // Function to calculate and update student positions
+        function updatePositions() {
+            const rows = $('#scoresTable tbody tr').get();
+            
+            // Create array of objects with total scores and row elements
+            const studentScores = rows.map((row) => {
+                return {
+                    element: row,
+                    total: parseInt($(row).find('.total-cell').text()) || 0
+                };
+            });
+            
+            // Sort by total score descending
+            studentScores.sort((a, b) => b.total - a.total);
+            
+            // Update position numbers and styling
+            studentScores.forEach((student, index) => {
+                const position = index + 1;
+                const $positionBadge = $(student.element).find('.position-cell span');
+                const $positionInput = $(student.element).find('.position-input');
+                
+                $positionBadge.text(position);
+                $positionInput.val(position);
+                
+                // Update position badge styling
+                $positionBadge.removeClass('position-1 position-2 position-3 position-other');
+                
+                if (position === 1) {
+                    $positionBadge.addClass('position-1');
+                } else if (position === 2) {
+                    $positionBadge.addClass('position-2');
+                } else if (position === 3) {
+                    $positionBadge.addClass('position-3');
+                } else {
+                    $positionBadge.addClass('position-other');
+                }
+            });
         }
+        
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Show success notification if marks were submitted
+        <?php if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_marks'])): ?>
+        $(document).ready(function() {
+            showNotification('success', 'Marks submitted successfully!');
+        });
+        <?php endif; ?>
+        
+        // Focus first input when modal is shown
+        $('#marksheetModal').on('shown.bs.modal', function () {
+            $(this).find('select[name="class"]').focus();
+        });
+        
+        // Add smooth scrolling to anchor links
+        $('a[href^="#"]').on('click', function(event) {
+            event.preventDefault();
+            $('html, body').animate({
+                scrollTop: $($(this).attr('href')).offset().top - 20
+            }, 500);
+        });
     });
-
-    // Helper function for ordinal suffixes
-    function getOrdinalSuffix(num) {
-        const j = num % 10, k = num % 100;
-        if (j == 1 && k != 11) return 'st';
-        if (j == 2 && k != 12) return 'nd';
-        if (j == 3 && k != 13) return 'rd';
-        return 'th';
-    }
-});
-</script>
-
-<style>
-:root {
-    --primary: #4361ee;
-    --primary-dark: #3a56d4;
-    --primary-light: #e0e7ff;
-    --secondary: #3f37c9;
-    --success: #4cc9f0;
-    --success-dark: #3ab7dc;
-    --warning: #f8961e;
-    --danger: #f94144;
-    --light: #f8f9fa;
-    --light-gray: #f1f3f9;
-    --medium-gray: #e9ecef;
-    --dark-gray: #6c757d;
-    --dark: #212529;
-    --white: #ffffff;
-    --border-radius: 12px;
-    --border-radius-sm: 8px;
-    --box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
-    --transition: all 0.25s cubic-bezier(0.645, 0.045, 0.355, 1);
-}
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background-color: #f8fafc;
-    color: var(--dark);
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
-}
-
-.marks-dashboard {
-    max-width: 1440px;
-    margin: 0 auto;
-    padding: 0 24px;
-}
-
-.dashboard-header {
-    background: var(--white);
-    border-radius: var(--border-radius);
-    padding: 24px;
-    margin: 24px 0;
-    box-shadow: var(--box-shadow);
-}
-
-.header-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    gap: 24px;
-}
-
-.header-left {
-    flex: 1;
-    min-width: 300px;
-}
-
-.dashboard-title {
-    font-size: 28px;
-    font-weight: 600;
-    color: var(--primary);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 8px;
-}
-
-.dashboard-title i {
-    font-size: 32px;
-}
-
-.breadcrumb {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--dark-gray);
-    font-size: 14px;
-}
-
-.breadcrumb i {
-    font-size: 10px;
-    opacity: 0.6;
-}
-
-.header-right {
-    min-width: 280px;
-}
-
-.stats-card {
-    background: var(--light-gray);
-    border-radius: var(--border-radius-sm);
-    padding: 16px;
-    display: flex;
-    gap: 24px;
-}
-
-.stat-item {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.stat-label {
-    font-size: 13px;
-    color: var(--dark-gray);
-    font-weight: 500;
-}
-
-.stat-value {
-    font-size: 24px;
-    font-weight: 600;
-    color: var(--primary);
-}
-
-.progress-container {
-    width: 100%;
-}
-
-.progress-track {
-    width: 100%;
-    height: 6px;
-    background: var(--medium-gray);
-    border-radius: 3px;
-    overflow: hidden;
-    margin-bottom: 4px;
-}
-
-.progress-thumb {
-    height: 100%;
-    border-radius: 3px;
-    transition: var(--transition);
-}
-
-.progress-thumb.low { background: var(--danger); }
-.progress-thumb.medium { background: var(--warning); }
-.progress-thumb.high { background: var(--success); }
-
-.progress-count {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--dark);
-}
-
-.action-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-bottom: 24px;
-}
-
-.search-box {
-    position: relative;
-    flex: 1;
-    min-width: 300px;
-    max-width: 500px;
-}
-
-.search-box i {
-    position: absolute;
-    left: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--dark-gray);
-    font-size: 14px;
-}
-
-#searchInput {
-    width: 100%;
-    padding: 12px 16px 12px 44px;
-    border: none;
-    border-radius: var(--border-radius-sm);
-    font-size: 14px;
-    transition: var(--transition);
-    background: var(--white);
-    box-shadow: 0 0 0 1px var(--medium-gray);
-}
-
-#searchInput:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px var(--primary);
-}
-
-.search-border {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background: var(--medium-gray);
-    border-radius: 0 0 2px 2px;
-}
-
-#searchInput:focus ~ .search-border {
-    background: var(--primary);
-}
-
-.action-buttons {
-    display: flex;
-    gap: 12px;
-}
-
-.btn {
-    padding: 12px 20px;
-    border: none;
-    border-radius: var(--border-radius-sm);
-    font-weight: 500;
-    font-size: 14px;
-    cursor: pointer;
-    transition: var(--transition);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.btn-primary {
-    background: var(--primary);
-    color: var(--white);
-    box-shadow: 0 2px 6px rgba(67, 97, 238, 0.3);
-}
-
-.btn-primary:hover {
-    background: var(--primary-dark);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(67, 97, 238, 0.4);
-}
-
-.btn-analytics {
-    background: var(--white);
-    color: var(--primary);
-    box-shadow: 0 0 0 1px var(--medium-gray);
-}
-
-.btn-analytics:hover {
-    background: var(--light-gray);
-    transform: translateY(-2px);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.btn-analytics.success {
-    background: var(--success);
-    color: var(--white);
-    box-shadow: 0 2px 6px rgba(76, 201, 240, 0.3);
-}
-
-.data-table-container {
-    background: var(--white);
-    border-radius: var(--border-radius);
-    overflow: hidden;
-    box-shadow: var(--box-shadow);
-    margin-bottom: 40px;
-}
-
-.table-responsive {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-}
-
-.data-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-}
-
-.data-table thead {
-    background: var(--primary);
-    color: var(--white);
-}
-
-.data-table th {
-    padding: 16px;
-    font-weight: 500;
-    text-align: left;
-    font-size: 14px;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}
-
-.data-table th span {
-    font-weight: 400;
-    opacity: 0.8;
-    font-size: 12px;
-}
-
-.data-table td {
-    padding: 16px;
-    border-bottom: 1px solid var(--light-gray);
-    font-size: 14px;
-    transition: var(--transition);
-}
-
-.student-row:hover {
-    background: rgba(67, 97, 238, 0.03);
-}
-
-.col-serial {
-    width: 50px;
-    text-align: center;
-    color: var(--dark-gray);
-    font-weight: 500;
-}
-
-.col-student {
-    min-width: 200px;
-}
-
-.student-info {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.student-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    color: var(--white);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    flex-shrink: 0;
-}
-
-.student-details {
-    display: flex;
-    flex-direction: column;
-}
-
-.student-name {
-    font-weight: 500;
-    color: var(--dark);
-}
-
-.student-id {
-    font-size: 12px;
-    color: var(--dark-gray);
-    font-family: 'Roboto Mono', monospace;
-}
-
-.col-id {
-    min-width: 120px;
-}
-
-.col-score, .col-position {
-    text-align: center;
-    min-width: 150px;
-}
-
-.score-input-container {
-    position: relative;
-    max-width: 120px;
-    margin: 0 auto;
-}
-
-.score-input {
-    width: 100%;
-    padding: 12px;
-    border: none;
-    border-radius: var(--border-radius-sm);
-    font-size: 14px;
-    text-align: center;
-    background: var(--light-gray);
-    transition: var(--transition);
-    box-shadow: 0 0 0 1px var(--medium-gray);
-}
-
-.score-input:focus {
-    outline: none;
-    background: var(--white);
-    box-shadow: 0 0 0 2px var(--primary);
-}
-
-.input-state {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background: var(--medium-gray);
-    transition: var(--transition);
-    border-radius: 0 0 2px 2px;
-}
-
-.score-input:focus ~ .input-state {
-    height: 2px;
-    background: var(--primary);
-}
-
-.score-input-container.valid .input-state {
-    background: var(--success);
-}
-
-.score-input-container.warning .input-state {
-    background: var(--warning);
-}
-
-.score-input-container.error .input-state {
-    background: var(--danger);
-}
-
-.score-input-container.empty .input-state {
-    background: var(--medium-gray);
-}
-
-.position-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-}
-
-.position-input {
-    width: 50px;
-    padding: 12px;
-    border: none;
-    border-radius: var(--border-radius-sm);
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--primary);
-    background: var(--light-gray);
-    text-align: center;
-}
-
-.ordinal-suffix {
-    font-size: 12px;
-    color: var(--dark-gray);
-}
-
-.no-data td {
-    padding: 60px 20px;
-    text-align: center;
-}
-
-.empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    max-width: 300px;
-    margin: 0 auto;
-    color: var(--dark-gray);
-}
-
-.empty-state i {
-    font-size: 48px;
-    color: var(--medium-gray);
-    margin-bottom: 8px;
-}
-
-.empty-state h3 {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--dark);
-}
-
-.empty-state p {
-    font-size: 14px;
-}
-
-/* Modal Styles */
-.modal {
-    display: none; /* Hidden by default */
-    position: fixed; /* Stay in place */
-    z-index: 1000; /* Sit on top */
-    left: 0;
-    top: 0;
-    width: 100%; /* Full width */
-    height: 100%; /* Full height */
-    overflow: auto; /* Enable scroll if needed */
-    background-color: rgb(0,0,0); /* Fallback color */
-    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-}
-
-.modal-content {
-    background-color: #fefefe;
-    margin: 15% auto; /* 15% from the top and centered */
-    padding: 20px;
-    border: 1px solid #888;
-    width: 80%; /* Could be more or less, depending on screen size */
-}
-
-.close-button {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-}
-
-.close-button:hover,
-.close-button:focus {
-    color: black;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-.form-group {
-    margin-bottom: 15px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
-}
-
-.form-group select {
-    width: 100%;
-    padding: 10px;
-    border-radius: var(--border-radius-sm);
-    border: 1px solid var(--medium-gray);
-}
-
-@media (max-width: 768px) {
-    .dashboard-header {
-        padding: 20px;
-    }
-    
-    .header-content {
-        flex-direction: column;
-    }
-    
-    .stats-card {
-        width: 100%;
-        justify-content: space-between;
-    }
-    
-    .action-bar {
-        flex-direction: column;
-    }
-    
-    .search-box {
-        min-width: 100%;
-    }
-    
-    .action-buttons {
-        width: 100%;
-    }
-    
-    .btn {
-        flex: 1;
-        justify-content: center;
-    }
-    
-    .data-table {
-        min-width: 700px;
-    }
-}
-</style>
-
+    </script>
+</body>
+</html>
