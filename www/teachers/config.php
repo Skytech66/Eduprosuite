@@ -5,9 +5,10 @@ $dbname = "school_523q";
 $user = "school_523q_user";
 $password = "05A4cQnogC1qETghafnFsKNYUxYIRwrv";
 
-$conn = pg_connect("host=$host port=$port dbname=$dbname user=$user password=$password");
-
-if (!$conn) {
-    die("Connection failed: " . pg_last_error());
+try {
+    $conn = new PDO("pgsql:host=$host;port=$port;dbname=$dbname", $user, $password);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    die("Connection failed: " . $e->getMessage());
 }
 ?>
