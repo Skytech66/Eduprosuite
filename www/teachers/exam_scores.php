@@ -11,9 +11,7 @@ try {
 } catch (PDOException $e) {
     die("Connection failed: " . $e->getMessage());
 }
-?>
 
-<?php
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 include 'config.php'; // This should already set up $conn
@@ -545,17 +543,23 @@ if ($editScore === null && $_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POS
             color: var(--dark);
         }
 
-        /* Modern toggle switch for form visibility */
-        .toggle-container {
-            display: flex;
-            align-items: center;
-            margin-bottom: 1.5rem;
+        /* Back button styles */
+        .back-button {
+            margin-bottom: 1rem;
+            display: inline-block;
+            padding: 0.625rem 1.25rem;
+            border-radius: var(--border-radius);
+            background-color: var(--gray-light);
+            color: var(--dark);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
         }
 
-        .toggle-label {
-            margin-left: 0.5rem;
-            font-weight: 500;
-            font-size: 0.875rem;
+        .back-button:hover {
+            background-color: #d1d5db;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
         }
 
         /* Responsive adjustments */
@@ -688,6 +692,11 @@ if ($editScore === null && $_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POS
     </header>
 
     <div class="container">
+        <!-- Back Button -->
+        <a href="dashboard.php" class="back-button">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+
         <!-- Add Score Button -->
         <div class="toggle-container">
             <button class="btn btn-primary" onclick="toggleAddForm()">
@@ -1008,7 +1017,7 @@ if ($editScore === null && $_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POS
                     </div>
                     
                     <div class="form-col" style="align-self:flex-end;">
-                        <div class="form-group">
+                                                <div class="form-group">
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-search"></i> Search
                             </button>
