@@ -74,6 +74,13 @@ include 'config.php'; // Include the database configuration
             }
         }
 
+        .dashboard {
+            display: flex;
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+            justify-content: space-between;
+            gap: 2rem;
+        }
+
         .dashboard-card {
             background: white;
             border-radius: var(--border-radius);
@@ -81,6 +88,8 @@ include 'config.php'; // Include the database configuration
             overflow: hidden;
             margin: 2rem 0;
             border: 1px solid rgba(0, 0, 0, 0.05);
+            flex: 1 1 300px; /* Allow cards to grow and shrink */
+            min-width: 300px; /* Minimum width for cards */
         }
 
         .card-header {
@@ -227,116 +236,225 @@ include 'config.php'; // Include the database configuration
             margin-bottom: 0.5rem;
             color: var(--dark);
         }
+
+        @media (max-width: 768px) {
+            .card-header {
+                padding: 1rem;
+            }
+
+            .card-body {
+                padding: 1rem;
+            }
+
+            .btn {
+                width: 100%; /* Full width buttons on mobile */
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="dashboard-card">
-            <div class="card-header">
-                <h1 class="card-title">
-                    <i class="fas fa-users-class"></i> Class Roster Management
-                </h1>
-                <p class="card-subtitle">View and manage student information and photos</p>
-            </div>
-            
-            <div class="card-body">
-                <form method="POST" action="">
-                    <div class="form-group">
-                        <label for="class" class="form-label">
-                            <i class="fas fa-chalkboard"></i> Select Class
-                        </label>
-                        <select name="class" id="class" class="form-select" required>
-                            <option value="">-- Select a class --</option>
-                            <?php
-                            // Fetch distinct classes from the marks table
-                            $classQuery = "SELECT DISTINCT class FROM marks WHERE class IS NOT NULL AND class != '' ORDER BY class";
-                            $classResult = $conn->query($classQuery);
-
-                            if ($classResult) {
-                                while ($row = $classResult->fetch(PDO::FETCH_ASSOC)) {
-                                    echo '<option value="' . htmlspecialchars($row['class']) . '">' . htmlspecialchars($row['class']) . '</option>';
-                                }
-                            } else {
-                                echo '<option value="">No classes available</option>';
-                            }
-                            ?>
-                        </select>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary btn-lg">
-                        <i class="fas fa-search mr-1"></i> View Class Roster
-                    </button>
-                </form>
+        <div class="dashboard">
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h1 class="card-title">
+                        <i class="fas fa-users-class"></i> Class Roster Management
+                    </h1>
+                    <p class="card-subtitle">View and manage student information and photos</p>
+                </div>
                 
-                <?php if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['class'])): ?>
-                    <?php
-                    $selectedClass = $_POST['class'];
-                    // Fetch students from the marks table based on the selected class
-                    $studentQuery = "SELECT DISTINCT student, photo FROM marks WHERE class = :class ORDER BY student";
-                    $stmt = $conn->prepare($studentQuery);
-                    $stmt->bindParam(':class', $selectedClass);
-                    $stmt->execute();
-                    $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                    $studentCount = count($students);
-                    ?>
+                <div class="card-body">
+                    <form method="POST" action="">
+                        <div class="form-group">
+                            <label for="class" class="form-label">
+                                <i class="fas fa-chalkboard"></i> Select Class
+                            </label>
+                            <select name="class" id="class" class="form-select" required>
+                                <option value="">-- Select a class --</option>
+                                <?php
+                                // Fetch distinct classes from the marks table
+                                $classQuery = "SELECT DISTINCT class FROM marks WHERE class IS NOT NULL AND class != '' ORDER BY class";
+                                $classResult = $conn->query($classQuery);
 
-                    <div class="mt-6">
-                        <h2 class="section-title">
-                            <i class="fas fa-user-graduate"></i>
-                            <?= htmlspecialchars($selectedClass) ?> Roster
-                        </h2>
-                        <span class="badge" id="studentCount"><?= $studentCount ?> student<?= $studentCount !== 1 ? 's' : '' ?></span>
+                                if ($classResult) {
+                                    while ($row = $classResult->fetch(PDO::FETCH_ASSOC)) {
+                                        echo '<option value="' . htmlspecialchars($row['class']) . '">' . htmlspecialchars($row['class']) . '</option>';
+                                    }
+                                } else {
+                                    echo '<option value="">No classes available</option>';
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-search mr-1"></i> View Class Roster
+                        </button>
+                    </form>
+                    
+                    <?php if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['class'])): ?>
+                        <?php
+                        $selectedClass = $_POST['class'];
+                        // Fetch students from the marks table based on the selected class
+                        $studentQuery = "SELECT DISTINCT student, photo FROM marks WHERE class = :class ORDER BY student";
+                        $stmt = $conn->prepare($studentQuery);
+                        $stmt->bindParam(':class', $selectedClass);
+                        $stmt->execute();
+                        $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                        $studentCount = count($students);
+                        ?>
 
-                        <?php if ($studentCount > 0): ?>
-                            <form action="upload_image.php" method="POST" enctype="multipart/form-data" id="uploadForm">
-                                <input type="hidden" name="class" value="<?= htmlspecialchars($selectedClass) ?>">
+                        <div class="mt-6">
+                            <h2 class="section-title">
+                                <i class="fas fa-user-graduate"></i>
+                                <?= htmlspecialchars($selectedClass) ?> Roster
+                            </h2>
+                            <span class="badge" id="studentCount"><?= $studentCount ?> student<?= $studentCount !== 1 ? 's' : '' ?></span>
 
-                                <div class="student-grid" id="studentGrid">
-                                    <?php foreach ($students as $student): ?>
-                                        <div class="student-card">
-                                            <img src="<?= htmlspecialchars($student['photo'] ? $student['photo'] : 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%23e5e7eb\'%3E%3Cpath d=\'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z\'/%3E%3C/svg%3E') ?>"
-                                                 alt="<?= htmlspecialchars($student['student']) ?>"
-                                                 class="student-avatar"
-                                                 id="preview-<?= htmlspecialchars($student['student']) ?>">
-                                            <div class="student-info">
-                                                <h3 class="student-name"><?= htmlspecialchars($student['student']) ?></h3>
+                            <?php if ($studentCount > 0): ?>
+                                <form action="upload_image.php" method="POST" enctype="multipart/form-data" id="uploadForm">
+                                    <input type="hidden" name="class" value="<?= htmlspecialchars($selectedClass) ?>">
 
-                                                <div class="file-input-wrapper">
-                                                    <label for="file-<?= htmlspecialchars($student['student']) ?>" class="file-input-label">
-                                                        <i class="fas fa-camera mr-2"></i> Update Photo
-                                                    </label>
-                                                    <input type="file"
-                                                           id="file-<?= htmlspecialchars($student['student']) ?>"
-                                                           name="images[]"
-                                                           accept="image/*"
-                                                           class="file-input"
-                                                           data-student-id="<?= htmlspecialchars($student['student']) ?>"
-                                                           onchange="previewImage(this)">
-                                                    <input type="hidden" name="iduser[]" value="<?= htmlspecialchars($student['student']) ?>">
+                                    <div class="student-grid" id="studentGrid">
+                                        <?php foreach ($students as $student): ?>
+                                            <div class="student-card">
+                                                <img src="<?= htmlspecialchars($student['photo'] ? $student['photo'] : 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%23e5e7eb\'%3E%3Cpath d=\'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z\'/%3E%3C/svg%3E') ?>"
+                                                     alt="<?= htmlspecialchars($student['student']) ?>"
+                                                     class="student-avatar"
+                                                     id="preview-<?= htmlspecialchars($student['student']) ?>">
+                                                <div class="student-info">
+                                                    <h3 class="student-name"><?= htmlspecialchars($student['student']) ?></h3>
+
+                                                    <div class="file-input-wrapper">
+                                                        <label for="file-<?= htmlspecialchars($student['student']) ?>" class="file-input-label">
+                                                            <i class="fas fa-camera mr-2"></i> Update Photo
+                                                        </label>
+                                                        <input type="file"
+                                                               id="file-<?= htmlspecialchars($student['student']) ?>"
+                                                               name="images[]"
+                                                               accept="image/*"
+                                                               class="file-input"
+                                                               data-student-id="<?= htmlspecialchars($student['student']) ?>"
+                                                               onchange="previewImage(this)">
+                                                        <input type="hidden" name="iduser[]" value="<?= htmlspecialchars($student['student']) ?>">
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    <?php endforeach; ?>
-                                </div>
+                                        <?php endforeach; ?>
+                                    </div>
 
-                                <div class="text-center mt-6">
-                                    <button type="submit" class="btn btn-primary btn-lg">
-                                        <i class="fas fa-upload mr-2"></i> Upload Selected Photos
+                                    <div class="text-center mt-6">
+                                        <button type="submit" class="btn btn-primary btn-lg">
+                                            <i class="fas fa-upload mr-2"></i> Upload Selected Photos
+                                        </button>
+                                    </div>
+                                </form>
+                            <?php else: ?>
+                                <div class="empty-state mt-8">
+                                    <i class="fas fa-user-slash"></i>
+                                    <h3>No Students Found</h3>
+                                    <p>There are currently no students registered in this class.</p>
+                                    <button class="btn btn-outline mt-4" onclick="history.back()">
+                                        <i class="fas fa-arrow-left mr-2"></i> Back to Class Selection
                                     </button>
                                 </div>
-                            </form>
-                        <?php else: ?>
-                            <div class="empty-state mt-8">
-                                <i class="fas fa-user-slash"></i>
-                                <h3>No Students Found</h3>
-                                <p>There are currently no students registered in this class.</p>
-                                <button class="btn btn-outline mt-4" onclick="history.back()">
-                                    <i class="fas fa-arrow-left mr-2"></i> Back to Class Selection
-                                </button>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                <?php endif; ?>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- New View Student List Section -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h1 class="card-title">
+                        <i class="fas fa-list"></i> View Student List
+                    </h1>
+                    <p class="card-subtitle">Select year and class to view students</p>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="">
+                        <div class="form-group">
+                            <label for="year" class="form-label">Select Year</label>
+                            <select name="year" id="year" class="form-select" required>
+                                <option value="">-- Select a year --</option>
+                                <?php
+                                // Fetch distinct years from the student_entries table
+                                $yearQuery = "SELECT DISTINCT year FROM student_entries WHERE year IS NOT NULL AND year != '' ORDER BY year";
+                                $yearResult = $conn->query($yearQuery);
+
+                                if ($yearResult) {
+                                    while ($row = $yearResult->fetch(PDO::FETCH_ASSOC)) {
+                                        echo '<option value="' . htmlspecialchars($row['year']) . '">' . htmlspecialchars($row['year']) . '</option>';
+                                    }
+                                } else {
+                                    echo '<option value="">No years available</option>';
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="class" class="form-label">Select Class</label>
+                            <select name="class" id="class" class="form-select" required>
+                                <option value="">-- Select a class --</option>
+                                <?php
+                                // Fetch distinct classes from the student_entries table
+                                $classQuery = "SELECT DISTINCT class FROM student_entries WHERE class IS NOT NULL AND class != '' ORDER BY class";
+                                $classResult = $conn->query($classQuery);
+
+                                if ($classResult) {
+                                    while ($row = $classResult->fetch(PDO::FETCH_ASSOC)) {
+                                        echo '<option value="' . htmlspecialchars($row['class']) . '">' . htmlspecialchars($row['class']) . '</option>';
+                                    }
+                                } else {
+                                    echo '<option value="">No classes available</option>';
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-eye mr-1"></i> View Student List
+                        </button>
+                    </form>
+
+                    <?php if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['year']) && isset($_POST['class'])): ?>
+                        <?php
+                        $selectedYear = $_POST['year'];
+                        $selectedClass = $_POST['class'];
+
+                        // Fetch students from the student_entries table based on the selected year and class
+                        $studentListQuery = "SELECT name FROM student_entries WHERE year = :year AND class = :class ORDER BY name";
+                        $stmt = $conn->prepare($studentListQuery);
+                        $stmt->bindParam(':year', $selectedYear);
+                        $stmt->bindParam(':class', $selectedClass);
+                        $stmt->execute();
+                        $studentsList = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                        $studentsCount = count($studentsList);
+                        ?>
+
+                        <div class="mt-6">
+                            <h2 class="section-title">
+                                <i class="fas fa-user-graduate"></i>
+                                <?= htmlspecialchars($selectedClass) ?> - <?= htmlspecialchars($selectedYear) ?> Student List
+                            </h2>
+                            <span class="badge" id="studentCount"><?= $studentsCount ?> student<?= $studentsCount !== 1 ? 's' : '' ?></span>
+
+                            <?php if ($studentsCount > 0): ?>
+                                <ul>
+                                    <?php foreach ($studentsList as $student): ?>
+                                        <li><?= htmlspecialchars($student['name']) ?></li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            <?php else: ?>
+                                <div class="empty-state mt-8">
+                                    <i class="fas fa-user-slash"></i>
+                                    <h3>No Students Found</h3>
+                                    <p>There are currently no students registered for this year and class.</p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
     </div>
