@@ -368,6 +368,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <option value="Basic 6">Basic Six A</option>
                             <option value="Basic 3A">Basic Three A</option>
                             <option value="Basic 3B">Basic Three B</option>
+                             <option value="KG2">KG2</option>
+
                         </select>
                     </div>
                     <div class="w-full">
