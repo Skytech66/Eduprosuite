@@ -1,72 +1,50 @@
 <?php
-include "../include/functions.php"; // Include your functions file
-$conn = db_conn(); // Establish the database connection
+// upload_image.php
+$host = "dpg-d20bls6mcj7s73avna10-a.oregon-postgres.render.com";
+$port = "5432";
+$dbname = "school_523q";
+$user = "school_523q_user";
+$password = "05A4cQnogC1qETghafnFsKNYUxYIRwrv";
 
-$response = ['success' => false, 'message' => ''];
+try {
+    $conn = new PDO("pgsql:host=$host;port=$port;dbname=$dbname", $user, $password);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    die("Connection failed: " . $e->getMessage());
+}
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['images']) && isset($_POST['iduser'])) {
-    $studentIds = $_POST['iduser'];
-    $uploadDir = 'uploads/'; // Directory where images will be stored
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-    // Check if the uploads directory exists, if not, create it
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['images']) && isset($_POST['iduser'])) {
+    $images = $_FILES['images'];
+    $students = $_POST['iduser'];
+
+    $uploadDir = 'uploads/';
     if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0755, true);
+        mkdir($uploadDir, 0777, true);
     }
 
-    foreach ($_FILES['images']['tmp_name'] as $index => $tmpName) {
-        if ($_FILES['images']['error'][$index] === UPLOAD_ERR_OK) {
-            $studentId = $studentIds[$index];
-            $imageFileType = strtolower(pathinfo($_FILES['images']['name'][$index], PATHINFO_EXTENSION));
+    foreach ($students as $index => $studentId) {
+        if (!empty($images['tmp_name'][$index])) {
+            $tmpName = $images['tmp_name'][$index];
+            $originalName = basename($images['name'][$index]);
+            $ext = pathinfo($originalName, PATHINFO_EXTENSION);
+            $newFileName = uniqid('img_') . '.' . $ext;
+            $destination = $uploadDir . $newFileName;
 
-            // Validate the uploaded file
-            $check = getimagesize($tmpName);
-            if ($check === false) {
-                $response['message'] = "File is not an image for student ID: $studentId.";
-                echo json_encode($response);
-                continue;
-            }
-
-            // Check file size (limit to 9MB or adjust as needed)
-            if ($_FILES['images']['size'][$index] > 9000000) {
-                $response['message'] = "Sorry, your file is too large for student ID: $studentId.";
-                echo json_encode($response);
-                continue;
-            }
-
-            // Allow certain file formats
-            if (!in_array($imageFileType, ['jpg', 'jpeg', 'png', 'gif'])) {
-                $response['message'] = "Sorry, only JPG, JPEG, PNG & GIF files are allowed for student ID: $studentId.";
-                echo json_encode($response);
-                continue;
-            }
-
-            // Generate a unique filename
-            $newFileName = uniqid($studentId . '_', true) . '.' . $imageFileType;
-            $uploadFile = $uploadDir . $newFileName;
-
-            // Attempt to move the uploaded file to the uploads directory
-            if (move_uploaded_file($tmpName, $uploadFile)) {
-                // Prepare the SQL statement to update the student's photo path
-                $updateQuery = "UPDATE student SET photo = :photo WHERE id = :id";
-                $stmt = $conn->prepare($updateQuery);
-                $stmt->bindValue(':photo', $uploadFile, SQLITE3_TEXT);
-                $stmt->bindValue(':id', $studentId, SQLITE3_INTEGER);
-
-                if ($stmt->execute()) {
-                    $response['success'] = true;
-                    $response['message'] = "The file has been uploaded and the database has been updated for student ID: $studentId.";
-                } else {
-                    $response['message'] = "Database update failed for student ID: $studentId.";
-                }
-            } else {
-                $response['message'] = "Sorry, there was an error uploading your file for student ID: $studentId.";
+            if (move_uploaded_file($tmpName, $destination)) {
+                $stmt = $conn->prepare("UPDATE marks SET photo = :photo WHERE student = :student");
+                $stmt->execute([
+                    'photo' => $destination,
+                    'student' => $studentId
+                ]);
             }
         }
     }
-} else {
-    $response['message'] = "Invalid request.";
-}
 
-echo json_encode($response);
-$conn->close();
+    echo "<script>alert('Images uploaded successfully.'); window.location.href='view_students.php';</script>";
+} else {
+    echo "<script>alert('Invalid submission. Please try again.'); window.location.href='view_students.php';</script>";
+}
 ?>
