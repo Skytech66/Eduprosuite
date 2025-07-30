@@ -6,45 +6,42 @@ $dbname = "school_523q";
 $user = "school_523q_user";
 $password = "05A4cQnogC1qETghafnFsKNYUxYIRwrv";
 
-try {
-    $conn = new PDO("pgsql:host=$host;port=$port;dbname=$dbname", $user, $password);
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    die("Connection failed: " . $e->getMessage());
-}
-
-include "../include/functions.php"; // Ensure this file contains necessary functions
-include 'config.php'; // Include the database configuration
+// Start output buffering for smooth loading
+ob_start();
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Management | Class Roster</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* CSS styles */
         :root {
             --primary: #4f46e5;
             --primary-dark: #4338ca;
+            --primary-light: #e0e7ff;
             --secondary: #6366f1;
             --accent: #7c3aed;
-            --dark: rgb(12, 18, 29);
-            --light: #f9fafb;
+            --dark: #111827;
+            --darker: #0f172a;
+            --light: #f8fafc;
+            --lighter: #f9fafb;
             --gray: #6b7280;
-            --light-gray: #f3f4f6;
+            --light-gray: #e5e7eb;
+            --lighter-gray: #f3f4f6;
             --success: #10b981;
             --warning: #f59e0b;
             --error: #ef4444;
             --border-radius: 12px;
             --border-radius-sm: 8px;
+            --border-radius-xs: 4px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
             --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
@@ -56,81 +53,190 @@ include 'config.php'; // Include the database configuration
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: var(--light);
+            background-color: var(--lighter);
             color: var(--dark);
             line-height: 1.5;
             -webkit-font-smoothing: antialiased;
+            opacity: 0;
+            animation: fadeIn 0.5s ease-in-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 0 1.5rem;
         }
 
-        @media (max-width: 768px) {
-            .container {
-                padding: 0 1rem;
-            }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--lighter);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--primary-light);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        .loading-text {
+            font-size: 1rem;
+            color: var(--gray);
+            font-weight: 500;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            margin-bottom: 1rem;
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--dark);
         }
 
         .dashboard {
-            display: flex;
-            flex-wrap: wrap; /* Allow wrapping on smaller screens */
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: 1fr;
             gap: 2rem;
+            padding: 1rem 0 3rem;
         }
 
-        .dashboard-card {
+        @media (min-width: 1024px) {
+            .dashboard {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .tab-container {
+            display: flex;
+            border-bottom: 1px solid var(--light-gray);
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--gray);
+            border-bottom: 2px solid transparent;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .tab:hover:not(.active) {
+            color: var(--dark);
+            background-color: var(--lighter-gray);
+        }
+
+        .card {
             background: white;
             border-radius: var(--border-radius);
             box-shadow: var(--shadow-md);
             overflow: hidden;
-            margin: 2rem 0;
             border: 1px solid rgba(0, 0, 0, 0.05);
-            flex: 1 1 300px; /* Allow cards to grow and shrink */
-            min-width: 300px; /* Minimum width for cards */
+            transition: var(--transition);
+            opacity: 0;
+            transform: translateY(20px);
+            animation: cardEntry 0.5s ease forwards;
+            animation-delay: 0.3s;
+        }
+
+        @keyframes cardEntry {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-lg);
         }
 
         .card-header {
             background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
             color: white;
-            padding: 1.5rem 2rem;
+            padding: 1.25rem 1.5rem;
             position: relative;
         }
 
         .card-title {
-            font-size: 1.5rem;
-            font-weight: 700;
+            font-size: 1.1rem;
+            font-weight: 600;
             display: flex;
             align-items: center;
             gap: 0.75rem;
         }
 
+        .card-subtitle {
+            font-size: 0.8125rem;
+            opacity: 0.9;
+            margin-top: 0.25rem;
+        }
+
         .card-body {
-            padding: 2rem;
+            padding: 1.5rem;
         }
 
         .form-group {
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.25rem;
         }
 
         .form-label {
             display: block;
             margin-bottom: 0.5rem;
-            font-weight: 600;
+            font-weight: 500;
             color: var(--dark);
-            font-size: 0.9375rem;
+            font-size: 0.875rem;
         }
 
-        .form-select {
+        .form-select, .form-input {
             width: 100%;
             padding: 0.75rem 1rem;
             border: 1px solid var(--light-gray);
             border-radius: var(--border-radius-sm);
-            font-size: 1rem;
+            font-size: 0.9375rem;
             transition: var(--transition);
-            appearance: none;
+            background-color: white;
+        }
+
+        .form-select:focus, .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
         }
 
         .btn {
@@ -142,7 +248,7 @@ include 'config.php'; // Include the database configuration
             border: none;
             border-radius: var(--border-radius-sm);
             font-size: 0.9375rem;
-            font-weight: 600;
+            font-weight: 500;
             cursor: pointer;
             transition: var(--transition);
             text-decoration: none;
@@ -154,44 +260,119 @@ include 'config.php'; // Include the database configuration
             box-shadow: var(--shadow);
         }
 
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: white;
+            color: var(--primary);
+            border: 1px solid var(--light-gray);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--lighter-gray);
+        }
+
+        .btn-danger {
+            background-color: var(--error);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.8125rem;
+        }
+
+        .btn-lg {
+            padding: 0.875rem 1.75rem;
+            font-size: 1rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.35rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border-radius: var(--border-radius-xs);
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--darker);
+        }
+
         .student-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 1.5rem;
-            margin-top: 2rem;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.25rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 640px) {
+            .student-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
         }
 
         .student-card {
             background: white;
             border-radius: var(--border-radius);
-            box-shadow: var(--card-shadow);
+            box-shadow: var(--shadow-sm);
             overflow: hidden;
             transition: var(--transition);
             border: 1px solid rgba(0, 0, 0, 0.05);
         }
 
+        .student-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
         .student-avatar {
             width: 100%;
-            height: 180px;
+            height: 140px;
             object-fit: cover;
             border-bottom: 1px solid var(--light-gray);
             background-color: #f8fafc;
         }
 
+        @media (max-width: 640px) {
+            .student-avatar {
+                height: 120px;
+            }
+        }
+
         .student-info {
-            padding: 1.25rem;
+            padding: 1rem;
         }
 
         .student-name {
-            font-weight: 700;
-            font-size: 1.0625rem;
-            margin-bottom: 0.25rem;
+            font-weight: 600;
+            font-size: 0.9375rem;
+            margin-bottom: 0.75rem;
             color: var(--dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .file-input-wrapper {
             position: relative;
-            margin-top: 0.75rem;
+            margin-top: 0.5rem;
         }
 
         .file-input-label {
@@ -199,15 +380,20 @@ include 'config.php'; // Include the database configuration
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            background-color: var(--light);
+            padding: 0.5rem 0.75rem;
+            background-color: var(--lighter);
             border-radius: var(--border-radius-sm);
-            font-size: 0.8125rem;
+            font-size: 0.75rem;
             cursor: pointer;
             transition: var(--transition);
             border: 1px dashed var(--light-gray);
             font-weight: 500;
             color: var(--gray);
+        }
+
+        .file-input-label:hover {
+            background-color: var(--lighter-gray);
+            border-color: var(--gray);
         }
 
         .file-input {
@@ -221,41 +407,167 @@ include 'config.php'; // Include the database configuration
 
         .empty-state {
             text-align: center;
-            padding: 3rem 1rem;
+            padding: 2rem 1rem;
             color: var(--gray);
         }
 
         .empty-state i {
-            font-size: 3rem;
-            margin-bottom: 1.25rem;
-            color: #e5e7eb;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--light-gray);
+            opacity: 0.7;
         }
 
         .empty-state h3 {
             font-weight: 600;
             margin-bottom: 0.5rem;
             color: var(--dark);
+            font-size: 1.1rem;
+        }
+
+        .empty-state p {
+            margin-bottom: 1.5rem;
+            font-size: 0.875rem;
+        }
+
+        .student-list {
+            list-style: none;
+            margin-top: 1.5rem;
+        }
+
+        .student-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .student-list-item:last-child {
+            border-bottom: none;
+        }
+
+        .student-list-item:hover {
+            background-color: var(--lighter-gray);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            padding: 0.875rem 1.25rem;
+            background-color: var(--dark);
+            color: white;
+            border-radius: var(--border-radius-sm);
+            box-shadow: var(--shadow-lg);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: var(--transition);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            max-width: 90%;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast i {
+            font-size: 1.1rem;
+        }
+
+        .toast.success {
+            background-color: var(--success);
+        }
+
+        .toast.error {
+            background-color: var(--error);
+        }
+
+        .toast.warning {
+            background-color: var(--warning);
         }
 
         @media (max-width: 768px) {
+            .container {
+                padding: 0 1rem;
+            }
+            
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
             .card-header {
                 padding: 1rem;
             }
-
+            
             .card-body {
-                padding: 1rem;
+                padding: 1.25rem;
             }
-
+            
+            .action-buttons {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            
             .btn {
-                width: 100%; /* Full width buttons on mobile */
+                width: 100%;
+            }
+            
+            .toast {
+                bottom: 1rem;
+                right: 1rem;
+                left: 1rem;
+                max-width: calc(100% - 2rem);
             }
         }
     </style>
 </head>
 <body>
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading Student Management System</div>
+    </div>
+
     <div class="container">
+        <!-- Header with navigation -->
+        <div class="header">
+            <h1 class="header-title">
+                <i class="fas fa-users-class"></i> STUDENT PHOTO & LIST
+            </h1>
+            <div>
+                <a href="dashboard.php" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left mr-1"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+
+        <!-- Tab navigation for mobile -->
+        <div class="tab-container">
+            <div class="tab active" data-tab="roster">
+                <i class="fas fa-users-class mr-1"></i> Class Roster
+            </div>
+            <div class="tab" data-tab="list">
+                <i class="fas fa-list-check mr-1"></i> Student List
+            </div>
+        </div>
+
+        <!-- Main dashboard content -->
         <div class="dashboard">
-            <div class="dashboard-card">
+            <!-- Class Roster Management Card -->
+            <div class="card" id="rosterCard">
                 <div class="card-header">
                     <h1 class="card-title">
                         <i class="fas fa-users-class"></i> Class Roster Management
@@ -267,21 +579,27 @@ include 'config.php'; // Include the database configuration
                     <form method="POST" action="">
                         <div class="form-group">
                             <label for="class" class="form-label">
-                                <i class="fas fa-chalkboard"></i> Select Class
+                                <i class="fas fa-chalkboard mr-1"></i> Select Class
                             </label>
                             <select name="class" id="class" class="form-select" required>
                                 <option value="">-- Select a class --</option>
                                 <?php
-                                // Fetch distinct classes from the marks table
-                                $classQuery = "SELECT DISTINCT class FROM marks WHERE class IS NOT NULL AND class != '' ORDER BY class";
-                                $classResult = $conn->query($classQuery);
+                                try {
+                                    $conn = new PDO("pgsql:host=$host;port=$port;dbname=$dbname", $user, $password);
+                                    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                                    
+                                    $classQuery = "SELECT DISTINCT class FROM marks WHERE class IS NOT NULL AND class != '' ORDER BY class";
+                                    $classResult = $conn->query($classQuery);
 
-                                if ($classResult) {
-                                    while ($row = $classResult->fetch(PDO::FETCH_ASSOC)) {
-                                        echo '<option value="' . htmlspecialchars($row['class']) . '">' . htmlspecialchars($row['class']) . '</option>';
+                                    if ($classResult) {
+                                        while ($row = $classResult->fetch(PDO::FETCH_ASSOC)) {
+                                            echo '<option value="' . htmlspecialchars($row['class']) . '">' . htmlspecialchars($row['class']) . '</option>';
+                                        }
+                                    } else {
+                                        echo '<option value="">No classes available</option>';
                                     }
-                                } else {
-                                    echo '<option value="">No classes available</option>';
+                                } catch (PDOException $e) {
+                                    echo '<option value="">Error loading classes</option>';
                                 }
                                 ?>
                             </select>
@@ -295,7 +613,6 @@ include 'config.php'; // Include the database configuration
                     <?php if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['class'])): ?>
                         <?php
                         $selectedClass = $_POST['class'];
-                        // Fetch students from the marks table based on the selected class
                         $studentQuery = "SELECT DISTINCT student, photo FROM marks WHERE class = :class ORDER BY student";
                         $stmt = $conn->prepare($studentQuery);
                         $stmt->bindParam(':class', $selectedClass);
@@ -309,7 +626,7 @@ include 'config.php'; // Include the database configuration
                                 <i class="fas fa-user-graduate"></i>
                                 <?= htmlspecialchars($selectedClass) ?> Roster
                             </h2>
-                            <span class="badge" id="studentCount"><?= $studentCount ?> student<?= $studentCount !== 1 ? 's' : '' ?></span>
+                            <span class="badge"><?= $studentCount ?> student<?= $studentCount !== 1 ? 's' : '' ?></span>
 
                             <?php if ($studentCount > 0): ?>
                                 <form action="upload_image.php" method="POST" enctype="multipart/form-data" id="uploadForm">
@@ -327,7 +644,7 @@ include 'config.php'; // Include the database configuration
 
                                                     <div class="file-input-wrapper">
                                                         <label for="file-<?= htmlspecialchars($student['student']) ?>" class="file-input-label">
-                                                            <i class="fas fa-camera mr-2"></i> Update Photo
+                                                            <i class="fas fa-camera mr-1"></i> Update Photo
                                                         </label>
                                                         <input type="file"
                                                                id="file-<?= htmlspecialchars($student['student']) ?>"
@@ -345,17 +662,17 @@ include 'config.php'; // Include the database configuration
 
                                     <div class="text-center mt-6">
                                         <button type="submit" class="btn btn-primary btn-lg">
-                                            <i class="fas fa-upload mr-2"></i> Upload Selected Photos
+                                            <i class="fas fa-upload mr-1"></i> Upload Selected Photos
                                         </button>
                                     </div>
                                 </form>
                             <?php else: ?>
-                                <div class="empty-state mt-8">
+                                <div class="empty-state">
                                     <i class="fas fa-user-slash"></i>
                                     <h3>No Students Found</h3>
                                     <p>There are currently no students registered in this class.</p>
-                                    <button class="btn btn-outline mt-4" onclick="history.back()">
-                                        <i class="fas fa-arrow-left mr-2"></i> Back to Class Selection
+                                    <button class="btn btn-secondary" onclick="history.back()">
+                                        <i class="fas fa-arrow-left mr-1"></i> Back to Class Selection
                                     </button>
                                 </div>
                             <?php endif; ?>
@@ -364,22 +681,23 @@ include 'config.php'; // Include the database configuration
                 </div>
             </div>
 
-            <!-- New View Student List Section -->
-            <div class="dashboard-card">
+            <!-- Student List Management Card -->
+            <div class="card" id="listCard" style="display: none;">
                 <div class="card-header">
                     <h1 class="card-title">
-                        <i class="fas fa-list"></i> View Student List
+                        <i class="fas fa-list-check"></i> Student List Management
                     </h1>
-                    <p class="card-subtitle">Select year and class to view students</p>
+                    <p class="card-subtitle">View and manage student entries by year and class</p>
                 </div>
                 <div class="card-body">
                     <form method="POST" action="">
                         <div class="form-group">
-                            <label for="year" class="form-label">Select Year</label>
+                            <label for="year" class="form-label">
+                                <i class="fas fa-calendar-alt mr-1"></i> Select Year
+                            </label>
                             <select name="year" id="year" class="form-select" required>
                                 <option value="">-- Select a year --</option>
                                 <?php
-                                // Fetch distinct years from the student_entries table
                                 $yearQuery = "SELECT DISTINCT year FROM student_entries WHERE year IS NOT NULL AND year != '' ORDER BY year";
                                 $yearResult = $conn->query($yearQuery);
 
@@ -394,11 +712,12 @@ include 'config.php'; // Include the database configuration
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="class" class="form-label">Select Class</label>
+                            <label for="class" class="form-label">
+                                <i class="fas fa-chalkboard mr-1"></i> Select Class
+                            </label>
                             <select name="class" id="class" class="form-select" required>
                                 <option value="">-- Select a class --</option>
                                 <?php
-                                // Fetch distinct classes from the student_entries table
                                 $classQuery = "SELECT DISTINCT class FROM student_entries WHERE class IS NOT NULL AND class != '' ORDER BY class";
                                 $classResult = $conn->query($classQuery);
 
@@ -422,8 +741,7 @@ include 'config.php'; // Include the database configuration
                         $selectedYear = $_POST['year'];
                         $selectedClass = $_POST['class'];
 
-                        // Fetch students from the student_entries table based on the selected year and class
-                        $studentListQuery = "SELECT name FROM student_entries WHERE year = :year AND class = :class ORDER BY name";
+                        $studentListQuery = "SELECT id, name FROM student_entries WHERE year = :year AND class = :class ORDER BY name";
                         $stmt = $conn->prepare($studentListQuery);
                         $stmt->bindParam(':year', $selectedYear);
                         $stmt->bindParam(':class', $selectedClass);
@@ -434,19 +752,24 @@ include 'config.php'; // Include the database configuration
 
                         <div class="mt-6">
                             <h2 class="section-title">
-                                <i class="fas fa-user-graduate"></i>
-                                <?= htmlspecialchars($selectedClass) ?> - <?= htmlspecialchars($selectedYear) ?> Student List
+                                <i class="fas fa-users mr-1"></i>
+                                <?= htmlspecialchars($selectedClass) ?> - <?= htmlspecialchars($selectedYear) ?> Students
                             </h2>
-                            <span class="badge" id="studentCount"><?= $studentsCount ?> student<?= $studentsCount !== 1 ? 's' : '' ?></span>
+                            <span class="badge"><?= $studentsCount ?> student<?= $studentsCount !== 1 ? 's' : '' ?></span>
 
                             <?php if ($studentsCount > 0): ?>
-                                <ul>
+                                <ul class="student-list">
                                     <?php foreach ($studentsList as $student): ?>
-                                        <li><?= htmlspecialchars($student['name']) ?></li>
+                                        <li class="student-list-item">
+                                            <span><?= htmlspecialchars($student['name']) ?></span>
+                                            <a href="?delete_id=<?= htmlspecialchars($student['id']) ?>" class="btn btn-danger btn-sm" onclick="return confirmDelete(event)">
+                                                <i class="fas fa-trash mr-1"></i> Delete
+                                            </a>
+                                        </li>
                                     <?php endforeach; ?>
                                 </ul>
                             <?php else: ?>
-                                <div class="empty-state mt-8">
+                                <div class="empty-state">
                                     <i class="fas fa-user-slash"></i>
                                     <h3>No Students Found</h3>
                                     <p>There are currently no students registered for this year and class.</p>
@@ -457,11 +780,58 @@ include 'config.php'; // Include the database configuration
                 </div>
             </div>
         </div>
+
+        <!-- Add New Student Button -->
+        <div class="action-buttons">
+            <a href="form.php" class="btn btn-primary">
+                <i class="fas fa-plus mr-1"></i> Add New Student
+            </a>
+        </div>
     </div>
 
-    <div id="toast" class="toast"></div>
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toast-message">Notification message</span>
+    </div>
 
     <script>
+        // Hide loading overlay when page is loaded
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                document.getElementById('loadingOverlay').style.opacity = '0';
+                setTimeout(function() {
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                }, 300);
+            }, 500);
+        });
+
+        // Tab switching functionality
+        const tabs = document.querySelectorAll('.tab');
+        const rosterCard = document.getElementById('rosterCard');
+        const listCard = document.getElementById('listCard');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Update active tab
+                tabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Show corresponding card
+                const tabName = this.getAttribute('data-tab');
+                if (tabName === 'roster') {
+                    rosterCard.style.display = 'block';
+                    listCard.style.display = 'none';
+                    showToast('Showing Class Roster', 'success');
+                } else {
+                    rosterCard.style.display = 'none';
+                    listCard.style.display = 'block';
+                    showToast('Showing Student List', 'success');
+                }
+            });
+        });
+
+        // Image preview functionality
         function previewImage(input) {
             const studentId = input.getAttribute('data-student-id');
             const file = input.files[0];
@@ -469,12 +839,63 @@ include 'config.php'; // Include the database configuration
 
             reader.onload = function(e) {
                 document.getElementById('preview-' + studentId).src = e.target.result;
+                showToast('Image selected for ' + studentId, 'success');
             };
 
             if (file) {
                 reader.readAsDataURL(file);
             }
         }
+
+        // Toast notification function
+        function showToast(message, type = 'default') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            
+            // Set message and type
+            toastMessage.textContent = message;
+            
+            // Reset classes and set new type
+            toast.className = 'toast';
+            toast.classList.add('show', type);
+            
+            // Set icon based on type
+            const icon = toast.querySelector('i');
+            if (type === 'success') {
+                icon.className = 'fas fa-check-circle';
+            } else if (type === 'error') {
+                icon.className = 'fas fa-exclamation-circle';
+            } else if (type === 'warning') {
+                icon.className = 'fas fa-exclamation-triangle';
+            } else {
+                icon.className = 'fas fa-info-circle';
+            }
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Confirm before deleting
+        function confirmDelete(event) {
+            if (!confirm('Are you sure you want to delete this student? This action cannot be undone.')) {
+                event.preventDefault();
+                return false;
+            }
+            showToast('Student deleted successfully', 'success');
+            return true;
+        }
+
+        // Show success toast if redirected from delete action
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('delete_success')) {
+            showToast('Student deleted successfully', 'success');
+        }
     </script>
 </body>
 </html>
+<?php
+// End output buffering and flush
+ob_end_flush();
+?>
