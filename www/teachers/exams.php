@@ -27,13 +27,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $classSelected = $_POST['class'] ?? '';
         $subjectSelected = $_POST['subject'] ?? '';
         $yearSelected = $_POST['year'] ?? '';
+        
+        // Flag to check if any empty scores exist
+        $emptyScoresExist = false;
+        $emptyScoreRows = [];
 
         foreach ($_POST['students'] as $studentId => $data) {
-            $classScore = $data['class_score'] ?? 0;
-            $examScore = $data['exam_score'] ?? 0;
+            $classScore = isset($data['class_score']) && $data['class_score'] !== '' ? (float)$data['class_score'] : 0;
+            $examScore = isset($data['exam_score']) && $data['exam_score'] !== '' ? (float)$data['exam_score'] : 0;
             $totalScore = $classScore + $examScore;
             $admissionNumber = $data['admission_number'] ?? '';
             $position = $data['position'] ?? null;
+            
+            // Check for empty scores
+            if ((!isset($data['class_score']) || $data['class_score'] === '') || 
+                (!isset($data['exam_score']) || $data['exam_score'] === '')) {
+                $emptyScoresExist = true;
+                $emptyScoreRows[] = $studentId;
+                continue; // Skip this iteration but continue processing
+            }
 
             if ($totalScore >= 80) {
                 $remarks = 'A';
@@ -64,7 +76,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 'position' => $position
             ]);
         }
-        echo "<script>document.addEventListener('DOMContentLoaded', function() { showNotification('success', 'Marks submitted successfully!'); });</script>";
+        
+        if ($emptyScoresExist) {
+            echo "<script>document.addEventListener('DOMContentLoaded', function() { 
+                showNotification('warning', 'Some scores were empty and set to zero. Please review.'); 
+                highlightEmptyRows(" . json_encode($emptyScoreRows) . ");
+            });</script>";
+        } else {
+            echo "<script>document.addEventListener('DOMContentLoaded', function() { showNotification('success', 'Marks submitted successfully!'); });</script>";
+        }
     } else {
         $classSelected = $_POST['class'] ?? '';
         $subjectSelected = $_POST['subject'] ?? '';
@@ -260,6 +280,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             transform: translateX(4px);
         }
         
+        .table tbody tr.empty-row {
+            background-color: rgba(248, 113, 113, 0.08);
+            animation: pulseWarning 1.5s infinite;
+        }
+        
         .table tbody td {
             padding: 1.25rem 1rem;
             vertical-align: middle;
@@ -286,6 +311,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             font-weight: 600;
             padding: 0.625rem;
             font-size: 0.9375rem;
+            transition: all 0.2s ease;
+        }
+        
+        .score-input:focus {
+            transform: scale(1.05);
+            z-index: 10;
+            position: relative;
         }
         
         .valid-score {
@@ -330,6 +362,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         .notification.success {
             border-left-color: var(--success-color);
+        }
+        
+        .notification.warning {
+            border-left-color: var(--warning-color);
         }
         
         .notification.error {
@@ -544,9 +580,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
             cursor: pointer;
             z-index: 1000;
+            transition: all 0.3s ease;
         }
         .back-to-top:hover {
             background-color: var(--primary-light);
+            transform: translateY(-3px);
         }
 
         @media (max-width: 1200px) {
@@ -562,7 +600,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
             
             .table tbody td {
-                padding: 1rem                 0.75rem;
+                padding: 1rem 0.75rem;
             }
         }
         
@@ -644,6 +682,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         @keyframes fadeOut {
             from { opacity: 1; transform: translateY(0); }
             to { opacity: 0; transform: translateY(-20px); }
+        }
+        
+        @keyframes pulseWarning {
+            0% { background-color: rgba(248, 113, 113, 0.08); }
+            50% { background-color: rgba(248, 113, 113, 0.15); }
+            100% { background-color: rgba(248, 113, 113, 0.08); }
         }
         
         /* Custom scrollbar */
@@ -755,7 +799,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <?php endif; ?>
             </div>
             <div class="card-body p-0">
-                <form method="POST" action="">
+                <form method="POST" action="" id="marksForm">
                     <input type="hidden" name="class" value="<?= htmlspecialchars($classSelected) ?>">
                     <input type="hidden" name="subject" value="<?= htmlspecialchars($subjectSelected) ?>">
                     <input type="hidden" name="year" value="<?= htmlspecialchars($yearSelected) ?>">
@@ -778,7 +822,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <tbody>
                                 <?php if (!empty($students)): ?>
                                     <?php foreach ($students as $index => $row): ?>
-                                        <tr>
+                                        <tr data-student-id="<?= $row['id'] ?>">
                                             <td data-label="#"><?= $index + 1 ?></td>
                                             <td data-label="Student">
                                                 <div class="student-name">
@@ -793,13 +837,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                                 <input type="number" class="form-control class-score score-input" 
                                                     name="students[<?= $row['id'] ?>][class_score]" 
                                                     data-student-id="<?= $row['id'] ?>" 
-                                                    max="50" min="0" placeholder="0-50">
+                                                    max="50" min="0" placeholder="0-50"
+                                                    tabindex="<?= $index * 2 + 1 ?>">
                                             </td>
                                             <td data-label="Exam (50%)">
                                                 <input type="number" class="form-control exam-score score-input" 
                                                     name="students[<?= $row['id'] ?>][exam_score]" 
                                                     data-student-id="<?= $row['id'] ?>" 
-                                                    max="50" min="0" placeholder="0-50">
+                                                    max="50" min="0" placeholder="0-50"
+                                                    tabindex="<?= $index * 2 + 2 ?>">
                                             </td>
                                             <td data-label="Total" class="total-cell fw-bold">0</td>
                                             <td data-label="Position" class="position-cell">
@@ -833,7 +879,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     
                     <?php if (!empty($students)): ?>
                     <div class="p-4 border-top">
-                        <button type="submit" name="submit_marks" class="btn btn-success w-100 py-3">
+                        <button type="submit" name="submit_marks" class="btn btn-success w-100 py-3" id="submitMarks">
                             <i class="fas fa-save me-2"></i>Submit Exam Scores
                         </button>
                     </div>
@@ -923,7 +969,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
     $(document).ready(function() {
-        // Initialize progress bar
+                // Initialize progress bar
         function initProgressBar() {
             $(window).on('scroll', function() {
                 var scrollTop = $(this).scrollTop();
@@ -950,13 +996,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Notification function
         function showNotification(type, message) {
             const notification = $('#notification');
-            notification.removeClass('success error').addClass(type).text(message).fadeIn();
+            notification.removeClass('success error warning').addClass(type).text(message).fadeIn();
             
             setTimeout(function() {
                 notification.fadeOut();
             }, 3000);
         }
         
+        // Highlight empty rows
+        function highlightEmptyRows(studentIds) {
+            studentIds.forEach(id => {
+                $(`tr[data-student-id="${id}"]`).addClass('empty-row');
+            });
+        }
+
         // Handle score input validation and calculations
         $('#scoresTable').on('input', '.class-score, .exam-score', function() {
             const $input = $(this);
@@ -976,6 +1029,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 showNotification('error', 'Score cannot be negative');
             } else {
                 $input.addClass('valid-score').removeClass('invalid-score');
+                $(this).closest('tr').removeClass('empty-row');
             }
 
             // Calculate total for this row
@@ -1018,8 +1072,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             updatePositions();
         });
 
-        // Function to calculate
-                // Function to calculate and update student positions
+        // Function to calculate and update student positions
         function updatePositions() {
             const rows = $('#scoresTable tbody tr').get();
             
@@ -1058,6 +1111,85 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             });
         }
         
+        // Keyboard navigation between cells
+        $('#scoresTable').on('keydown', '.score-input', function(e) {
+            const $currentInput = $(this);
+            const currentRow = $currentInput.closest('tr');
+            const currentIndex = currentRow.index();
+            const isClassScore = $currentInput.hasClass('class-score');
+            
+            // Handle arrow keys
+            switch(e.keyCode) {
+                case 38: // Up arrow
+                    e.preventDefault();
+                    if (currentIndex > 0) {
+                        const prevRow = currentRow.prev();
+                        const targetInput = isClassScore ? prevRow.find('.class-score') : prevRow.find('.exam-score');
+                        targetInput.focus().select();
+                    }
+                    break;
+                case 40: // Down arrow
+                    e.preventDefault();
+                    if (currentIndex < $('#scoresTable tbody tr').length - 1) {
+                        const nextRow = currentRow.next();
+                        const targetInput = isClassScore ? nextRow.find('.class-score') : nextRow.find('.exam-score');
+                        targetInput.focus().select();
+                    }
+                    break;
+                case 37: // Left arrow
+                    if (isClassScore) {
+                        e.preventDefault();
+                        currentRow.find('.exam-score').focus().select();
+                    }
+                    break;
+                case 39: // Right arrow
+                    if (!isClassScore) {
+                        e.preventDefault();
+                        currentRow.find('.class-score').focus().select();
+                    }
+                    break;
+                case 13: // Enter
+                    e.preventDefault();
+                    if (isClassScore) {
+                        currentRow.find('.exam-score').focus().select();
+                    } else if (currentIndex < $('#scoresTable tbody tr').length - 1) {
+                        const nextRow = currentRow.next();
+                        nextRow.find('.class-score').focus().select();
+                    }
+                    break;
+            }
+        });
+
+        // Form submission validation
+        $('#marksForm').on('submit', function(e) {
+            let emptyScores = [];
+            let hasEmptyScores = false;
+            
+            // Check for empty scores
+            $('.score-input').each(function() {
+                const $input = $(this);
+                if ($input.val() === '') {
+                    hasEmptyScores = true;
+                    emptyScores.push($input.data('student-id'));
+                    $input.closest('tr').addClass('empty-row');
+                    $input.val(0); // Set empty values to zero
+                }
+            });
+            
+            if (hasEmptyScores) {
+                showNotification('warning', 'Empty scores were set to zero. Please review highlighted rows.');
+                // Scroll to first empty row
+                $('html, body').animate({
+                    scrollTop: $(`tr[data-student-id="${emptyScores[0]}"]`).offset().top - 100
+                }, 500);
+                
+                // Continue with submission after setting empty values to zero
+                return true;
+            }
+            
+            return true;
+        });
+
         // Initialize tooltips
         const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         tooltipTriggerList.map(function (tooltipTriggerEl) {
@@ -1067,7 +1199,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Show success notification if marks were submitted
         <?php if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_marks'])): ?>
         $(document).ready(function() {
+            <?php if ($emptyScoresExist): ?>
+            showNotification('warning', 'Some scores were empty and set to zero. Please review.');
+            highlightEmptyRows(<?= json_encode($emptyScoreRows) ?>);
+            <?php else: ?>
             showNotification('success', 'Marks submitted successfully!');
+            <?php endif; ?>
         });
         <?php endif; ?>
         
@@ -1083,6 +1220,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 scrollTop: $($(this).attr('href')).offset().top - 20
             }, 500);
         });
+
+        // Auto-focus first score input when page loads with students
+        <?php if (!empty($students)): ?>
+        $(document).ready(function() {
+            setTimeout(function() {
+                $('#scoresTable tbody tr:first-child .class-score').focus();
+            }, 300);
+        });
+        <?php endif; ?>
     });
     </script>
 </body>
