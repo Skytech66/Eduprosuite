@@ -17,7 +17,6 @@ ini_set('display_errors', 1);
 
 // ✅ No need to include old Render config anymore
 // include 'config.php';
-?>
 
 include 'config.php'; // This should already set up $conn
 
@@ -1106,4 +1105,5 @@ if ($editScore === null && $_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POS
     <?php $conn = null; // Close the PDO connection ?>
 </body>
 </html>
+
 
