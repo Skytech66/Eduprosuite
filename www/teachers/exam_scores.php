@@ -1,15 +1,16 @@
 <?php
-$host = "db.mqtuzltstbshtjigzujz.supabase.co"; // Supabase host
-$port = "5432";                               // Supabase port
-$dbname = "postgres";                         // Supabase default DB name
-$user = "postgres";                           // Supabase user
-$password = "Ernestbizz..123";                // Your Supabase password
+$host = "aws-1-eu-north-1.pooler.supabase.com";  // Supabase connection pooler host
+$port = "6543";                                  // Pooler port (not 5432)
+$dbname = "postgres";                            // Default DB name
+$user = "postgres.mqtuzltstbshtjigzujz";        // Supabase user with project suffix
+$password = "Ernestbizz..123";                  // Your Supabase password
 
 try {
     $conn = new PDO("pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require", $user, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    // echo "✅ Connected successfully";
 } catch (PDOException $e) {
-    die("Connection failed: " . $e->getMessage());
+    die("❌ Connection failed: " . $e->getMessage());
 }
 
 error_reporting(E_ALL);
@@ -1105,5 +1106,6 @@ if ($editScore === null && $_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POS
     <?php $conn = null; // Close the PDO connection ?>
 </body>
 </html>
+
 
 
