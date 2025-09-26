@@ -1,13 +1,14 @@
 <?php
-$host = "dpg-d20bls6mcj7s73avna10-a.oregon-postgres.render.com";
-$port = "5432";
-$dbname = "school_523q";
-$user = "school_523q_user";
-$password = "05A4cQnogC1qETghafnFsKNYUxYIRwrv";
+$host = "db.mqtuzltstbshtjigzujz.supabase.co";  // Supabase host
+$port = "5432";                                // Supabase port
+$dbname = "postgres";                          // Default Supabase DB name
+$user = "postgres";                            // Supabase user
+$password = "Ernestbizz..123";                 // Your Supabase password
 
 try {
     $conn = new PDO("pgsql:host=$host;port=$port;dbname=$dbname", $user, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    // echo "Connected successfully"; // uncomment to test
 } catch (PDOException $e) {
     die("Connection failed: " . $e->getMessage());
 }
