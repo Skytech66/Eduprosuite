@@ -2,20 +2,22 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// config.php
-$host = "dpg-d20bls6mcj7s73avna10-a.oregon-postgres.render.com";
-$port = "5432";
-$dbname = "school_523q";
-$user = "school_523q_user";
-$password = "05A4cQnogC1qETghafnFsKNYUxYIRwrv";
+// Supabase connection
+$host = "db.mqtuzltstbshtjigzujz.supabase.co"; // Supabase host
+$port = "5432";                               // Supabase port
+$dbname = "postgres";                         // Default DB name in Supabase
+$user = "postgres";                           // Supabase user (default)
+$password = "Ernestbizz..123";                // Your Supabase password
 
 try {
     $conn = new PDO("pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require", $user, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    // echo "✅ Connected successfully"; // uncomment to test
+    // echo "✅ Connected to Supabase!";
 } catch (PDOException $e) {
     die("❌ Connection failed: " . $e->getMessage());
 }
+
+
 $classSelected = '';
 $subjectSelected = '';
 $yearSelected = '';
@@ -1234,4 +1236,5 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </script>
 </body>
 </html>
+
 
