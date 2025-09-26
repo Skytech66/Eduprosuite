@@ -1,12 +1,12 @@
 <?php
-$host = "dpg-d20bls6mcj7s73avna10-a.oregon-postgres.render.com";
-$port = "5432";
-$dbname = "school_523q";
-$user = "school_523q_user";
-$password = "05A4cQnogC1qETghafnFsKNYUxYIRwrv";
+$host = "db.mqtuzltstbshtjigzujz.supabase.co"; // Supabase host
+$port = "5432";                               // Supabase port
+$dbname = "postgres";                         // Supabase default DB name
+$user = "postgres";                           // Supabase user
+$password = "Ernestbizz..123";                // Your Supabase password
 
 try {
-    $conn = new PDO("pgsql:host=$host;port=$port;dbname=$dbname", $user, $password);
+    $conn = new PDO("pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require", $user, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (PDOException $e) {
     die("Connection failed: " . $e->getMessage());
@@ -14,6 +14,11 @@ try {
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
+
+// ✅ No need to include old Render config anymore
+// include 'config.php';
+?>
+
 include 'config.php'; // This should already set up $conn
 
 function formatScore($value) {
@@ -1101,3 +1106,4 @@ if ($editScore === null && $_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POS
     <?php $conn = null; // Close the PDO connection ?>
 </body>
 </html>
+
