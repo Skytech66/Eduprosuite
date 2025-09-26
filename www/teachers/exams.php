@@ -1,6 +1,7 @@
 <?php
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
+
 // config.php
 $host = "dpg-d20bls6mcj7s73avna10-a.oregon-postgres.render.com";
 $port = "5432";
@@ -9,12 +10,12 @@ $user = "school_523q_user";
 $password = "05A4cQnogC1qETghafnFsKNYUxYIRwrv";
 
 try {
-    $conn = new PDO("pgsql:host=$host;port=$port;dbname=$dbname", $user, $password);
+    $conn = new PDO("pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require", $user, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    // echo "✅ Connected successfully"; // uncomment to test
 } catch (PDOException $e) {
-    die("Connection failed: " . $e->getMessage());
+    die("❌ Connection failed: " . $e->getMessage());
 }
-
 $classSelected = '';
 $subjectSelected = '';
 $yearSelected = '';
@@ -1233,3 +1234,4 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </script>
 </body>
 </html>
+
