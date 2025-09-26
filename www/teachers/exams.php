@@ -2,17 +2,17 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Supabase connection (using connection pooler for Render)
-$host = "aws-1-eu-north-1.pooler.supabase.com"; // ✅ Pooler host
-$port = "6543";                                // ✅ Pooler port
-$dbname = "postgres";                          // Default Supabase DB
-$user = "postgres.mqtuzltstbshtjigzujz";       // ✅ Full Supabase user with suffix
+// Supabase connection (must use pooler)
+$host = "aws-1-eu-north-1.pooler.supabase.com"; // Pooler host
+$port = "6543";                                // Pooler port
+$dbname = "postgres";                          // Default DB name in Supabase
+$user = "postgres.mqtuzltstbshtjigzujz";       // Full Supabase user with project suffix
 $password = "Ernestbizz..123";                 // Your Supabase password
 
 try {
     $conn = new PDO("pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require", $user, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    // echo "✅ Connected to Supabase!";
+    echo "✅ Connected successfully to Supabase!";
 } catch (PDOException $e) {
     die("❌ Connection failed: " . $e->getMessage());
 }
@@ -1237,6 +1237,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </script>
 </body>
 </html>
+
 
 
 
