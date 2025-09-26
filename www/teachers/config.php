@@ -6,10 +6,10 @@ $user = "postgres";                            // Supabase user
 $password = "Ernestbizz..123";                 // Your Supabase password
 
 try {
-    $conn = new PDO("pgsql:host=$host;port=$port;dbname=$dbname", $user, $password);
+    $conn = new PDO("pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require", $user, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    // echo "Connected successfully"; // uncomment to test
+    // echo "✅ Connected successfully"; // Uncomment to test
 } catch (PDOException $e) {
-    die("Connection failed: " . $e->getMessage());
+    die("❌ Connection failed: " . $e->getMessage());
 }
 ?>
