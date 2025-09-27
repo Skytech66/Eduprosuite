@@ -602,24 +602,23 @@ ob_start();
                             <select name="class" id="class" class="form-select" required>
                                 <option value="">-- Select a class --</option>
                                 <?php
-                                try {
-                                    $conn = new PDO("pgsql:host=$host;port=$port;dbname=$dbname", $user, $password);
-                                    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-                                    
-                                    $classQuery = "SELECT DISTINCT class FROM marks WHERE class IS NOT NULL AND class != '' ORDER BY class";
-                                    $classResult = $conn->query($classQuery);
+                             <?php
+try {
+    $classQuery = "SELECT DISTINCT class FROM marks WHERE class IS NOT NULL AND class != '' ORDER BY class";
+    $classResult = $conn->query($classQuery);
+    if ($classResult) {
+        while ($row = $classResult->fetch(PDO::FETCH_ASSOC)) {
+            echo '<option value="' . htmlspecialchars($row['class']) . '">' . htmlspecialchars($row['class']) . '</option>';
+        }
+    } else {
+        echo '<option value="">No classes available</option>';
+    }
+} catch (PDOException $e) {
+    echo '<option value="">Error loading classes</option>';
+}
+?>
 
-                                    if ($classResult) {
-                                        while ($row = $classResult->fetch(PDO::FETCH_ASSOC)) {
-                                            echo '<option value="' . htmlspecialchars($row['class']) . '">' . htmlspecialchars($row['class']) . '</option>';
-                                        }
-                                    } else {
-                                        echo '<option value="">No classes available</option>';
-                                    }
-                                } catch (PDOException $e) {
-                                    echo '<option value="">Error loading classes</option>';
-                                }
-                                ?>
+                                
                             </select>
                         </div>
                         
@@ -895,23 +894,34 @@ ob_start();
             }, 3000);
         }
 
-        // Confirm before deleting
-        function confirmDelete(event) {
-            if (!confirm('Are you sure you want to delete this student? This action cannot be undone.')) {
-                event.preventDefault();
-                return false;
-            }
-            showToast('Student deleted successfully', 'success');
-            return true;
-        }
+            <!-- your other scripts -->
 
-        // Show success toast if redirected from delete action
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('delete_success')) {
-            showToast('Student deleted successfully', 'success');
+    <script>
+      // Confirm before deleting
+      function confirmDelete(event) {
+        if (!confirm('Are you sure you want to delete this student? This action cannot be undone.')) {
+          event.preventDefault();
+          return false;
         }
+        showToast('Student deleted successfully', 'success');
+        return true;
+      }
+
+      // Show success toast if redirected from delete action
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('delete_success')) {
+        showToast('Student deleted successfully', 'success');
+      }
+
+      // Hide spinner after page load
+      window.addEventListener("load", function() {
+        const spinner = document.querySelector(".spinner-overlay");
+        if (spinner) {
+          spinner.style.display = "none";
+        }
+      });
     </script>
-</body>
+  </body>
 </html>
 <?php
 // End output buffering and flush
