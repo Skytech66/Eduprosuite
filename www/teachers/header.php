@@ -158,8 +158,6 @@ $conn = db_conn();
             include('subjects.php');
         } elseif (isset($_GET['form'])) {
             include('add_students.php');
-        } elseif (isset($_GET['view_students'])) {
-            include('view_students.php');
         } elseif (isset($_GET['login'])) {
             include('attendance.php');
         } elseif (isset($_GET['lo'])) {
@@ -231,3 +229,4 @@ $conn = db_conn();
 </script>
 </body>
 </html>
+
