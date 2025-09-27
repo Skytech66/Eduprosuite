@@ -1,3 +1,32 @@
+<?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// Supabase connection (must use pooler)
+$host = "aws-1-eu-north-1.pooler.supabase.com"; 
+$port = "6543";                                
+$dbname = "postgres";                          
+$user = "postgres.mqtuzltstbshtjigzujz";       
+$password = "Ernestbizz..123";                 
+
+try {
+    $conn = new PDO(
+        "pgsql:host=$host;port=$port;dbname=$dbname",
+        $user,
+        $password,
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+        ]
+    );
+} catch (PDOException $e) {
+    die("Connection failed: " . $e->getMessage());
+}
+
+
+// Start output buffering for smooth loading
+ob_start();
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -59,42 +88,6 @@
             max-width: 1400px;
             margin: 0 auto;
             padding: 0 1.5rem;
-        }
-
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: var(--lighter);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            transition: opacity 0.3s ease;
-        }
-
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid var(--primary-light);
-            border-top: 4px solid var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 1rem;
-        }
-
-        .loading-text {
-            font-size: 1rem;
-            color: var(--gray);
-            font-weight: 500;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
 
         .header {
@@ -524,11 +517,6 @@
     </style>
 </head>
 <body>
-    <!-- Loading overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-spinner"></div>
-        <div class="loading-text">Loading Student Management System</div>
-    </div>
 
     <div class="container">
         <!-- Header with navigation -->
@@ -574,20 +562,23 @@
                                 <option value="">-- Select a class --</option>
                                 <?php
                                 try {
+                                    $conn = new PDO("pgsql:host=$host;port=$port;dbname=$dbname", $user, $password);
+                                    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                                    
                                     $classQuery = "SELECT DISTINCT class FROM marks WHERE class IS NOT NULL AND class != '' ORDER BY class";
                                     $classResult = $conn->query($classQuery);
 
                                     if ($classResult) {
-            while ($row = $classResult->fetch(PDO::FETCH_ASSOC)) {
-                echo '<option value="' . htmlspecialchars($row['class']) . '">' . htmlspecialchars($row['class']) . '</option>';
-            }
-        } else {
-            echo '<option value="">No classes available</option>';
-        }
-    } catch (PDOException $e) {
-        echo '<option value="">Error loading classes</option>';
-    }
-    ?>
+                                        while ($row = $classResult->fetch(PDO::FETCH_ASSOC)) {
+                                            echo '<option value="' . htmlspecialchars($row['class']) . '">' . htmlspecialchars($row['class']) . '</option>';
+                                        }
+                                    } else {
+                                        echo '<option value="">No classes available</option>';
+                                    }
+                                } catch (PDOException $e) {
+                                    echo '<option value="">Error loading classes</option>';
+                                }
+                                ?>
                             </select>
                         </div>
                         
@@ -887,5 +878,4 @@ ob_end_flush();
 ?>
 
 
-
-
+                                <?= htmlspecialchars($
