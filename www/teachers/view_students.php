@@ -607,18 +607,16 @@ ob_start();
                                     $classResult = $conn->query($classQuery);
 
                                     if ($classResult) {
-                                        while ($row = $classResult->fetch(PDO::FETCH_ASSOC)) {
-                                            echo '<option value="' . htmlspecialchars($row['class']) . '">' . htmlspecialchars($row['class']) . '</option>';
-                                        }
-                                    } else {
-                                        echo '<option value="">No classes available</option>';
-                                    }
-                                } catch (PDOException $e
-                                    }
-                                } catch (PDOException $e) {
-                                    echo '<option value="">Error loading classes</option>';
-                                }
-                                ?>
+            while ($row = $classResult->fetch(PDO::FETCH_ASSOC)) {
+                echo '<option value="' . htmlspecialchars($row['class']) . '">' . htmlspecialchars($row['class']) . '</option>';
+            }
+        } else {
+            echo '<option value="">No classes available</option>';
+        }
+    } catch (PDOException $e) {
+        echo '<option value="">Error loading classes</option>';
+    }
+    ?>
                             </select>
                         </div>
                         
@@ -916,5 +914,6 @@ ob_start();
 // End output buffering and flush
 ob_end_flush();
 ?>
+
 
 
