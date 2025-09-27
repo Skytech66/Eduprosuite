@@ -1,21 +1,19 @@
 <?php
-require_once "config.php"; // Database configuration
-
+require_once "config.php"; // Database configuration (assuming PDO connection)
 
 // Fetch all subjects from database
 function getSubjects($conn) {
     $sql = "SELECT * FROM subject";
-    $result = $conn->query($sql);
-    return $result;
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    return $stmt;
 }
 
 // Handle AJAX request for subject details
 if (isset($_GET['action']) && $_GET['action'] == 'get_subject' && isset($_GET['id'])) {
-    $stmt = $conn->prepare("SELECT * FROM subject WHERE subjectid = ?");
-    $stmt->bind_param("i", $_GET['id']);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $subject = $result->fetch_assoc();
+    $stmt = $conn->prepare("SELECT * FROM subject WHERE subjectid = :id");
+    $stmt->execute(['id' => $_GET['id']]);
+    $subject = $stmt->fetch(PDO::FETCH_ASSOC);
     header('Content-Type: application/json');
     echo json_encode($subject);
     exit;
@@ -578,9 +576,11 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_subject' && isset($_GET['i
                         <?php
                         // Fetch unique teachers from the database
                         $teacherQuery = "SELECT DISTINCT teacherid FROM subject WHERE teacherid IS NOT NULL";
-                        $teacherResult = $conn->query($teacherQuery);
-                        if ($teacherResult && $teacherResult->num_rows > 0) {
-                            while ($teacher = $teacherResult->fetch_assoc()) {
+                        $teacherStmt = $conn->prepare($teacherQuery);
+                        $teacherStmt->execute();
+                        $teacherResult = $teacherStmt;
+                        if ($teacherResult && $teacherResult->rowCount() > 0) {
+                            while ($teacher = $teacherResult->fetch(PDO::FETCH_ASSOC)) {
                                 echo '<option value="' . htmlspecialchars($teacher['teacherid']) . '">' . htmlspecialchars($teacher['teacherid']) . '</option>';
                             }
                         }
@@ -611,8 +611,8 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_subject' && isset($_GET['i
                     <tbody>
                         <?php
                         $subjects = getSubjects($conn);
-                        if ($subjects && $subjects->num_rows > 0) {
-                            while ($row = $subjects->fetch_assoc()) {
+                        if ($subjects && $subjects->rowCount() > 0) {
+                            while ($row = $subjects->fetch(PDO::FETCH_ASSOC)) {
                         ?>
                             <tr>
                                 <td>
@@ -631,7 +631,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_subject' && isset($_GET['i
                                     <span class="class-badge">Class <?php echo htmlspecialchars($row['classid']); ?></span>
                                 </td>
                                 <td>
-                                    <div class="teacher-info">
+                                                                       <div class="teacher-info">
                                         <div class="teacher-avatar">
                                             <i class="fas fa-user-tie"></i>
                                         </div>
@@ -835,7 +835,5 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_subject' && isset($_GET['i
 </body>
 </html>
 <?php
-if (isset($conn)) {
-    $conn->close();
-}
+$conn = null;
 ?>
