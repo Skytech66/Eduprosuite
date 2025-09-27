@@ -11,7 +11,7 @@ $password = "Ernestbizz..123";
 
 try {
     $conn = new PDO(
-        "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require",  // Added sslmode=require
+        "pgsql:host=$host;port=$port;dbname=$dbname",
         $user,
         $password,
         [
@@ -22,8 +22,6 @@ try {
 } catch (PDOException $e) {
     die("Connection failed: " . $e->getMessage());
 }
-
-
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
@@ -59,5 +57,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['images']) && isset($
     echo "<script>alert('Invalid submission. Please try again.'); window.location.href='view_students.php';</script>";
 }
 ?>
+
 
 
