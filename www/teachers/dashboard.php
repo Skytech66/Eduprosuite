@@ -3,7 +3,6 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 require_once "../include/functions.php";
 
-
 // Check session
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -17,6 +16,16 @@ if ($session_id == "") {
 }
 
 $conn = db_conn();
+
+// Get total students count
+$stmt = $conn->query("SELECT COUNT(name) as 'tstudents' FROM student");
+$row = $stmt->fetchArray(SQLITE3_ASSOC);
+$totalStudents = $row['tstudents'] ?? 0;
+
+// Get total classes count
+$stmt = $conn->query("SELECT COUNT(DISTINCT class) as 'tclasses' FROM student");
+$row = $stmt->fetchArray(SQLITE3_ASSOC);
+$totalClasses = $row['tclasses'] ?? 0;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -30,11 +39,8 @@ $conn = db_conn();
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- FullCalendar CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
-    
-    <!-- MDB CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/3.10.2/mdb.min.css" rel="stylesheet" />
     
     <style>
@@ -283,8 +289,8 @@ $conn = db_conn();
         }
 
         .sidebar-logo img {
-            width: 90%;
-            height: 90%;
+            width: 100%;
+            height: 100%;
             object-fit: contain;
         }
 
@@ -1610,6 +1616,34 @@ $conn = db_conn();
             100% { transform: rotate(360deg); }
         }
 
+        /* Form Loading State */
+        .form-loading {
+            position: relative;
+        }
+        .form-loading::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .form-loading::before {
+            content: "";
+            width: 30px;
+            height: 30px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4f46e5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            z-index: 101;
+        }
+
         /* Focus styles for accessibility */
         a:focus, button:focus, [tabindex="0"]:focus {
             outline: 2px solid var(--primary);
@@ -1760,7 +1794,7 @@ $conn = db_conn();
 <nav id="sidebar">
     <div class="sidebar-header">
         <div class="sidebar-logo">
-            <img src="adinkra.png" alt="Adinkra International School Crest">
+            <img src="logo.png" alt="Adinkra International School Crest">
         </div>
         <h4>EduPro Suite <span>2.0</span></h4>
     </div>
@@ -1839,15 +1873,16 @@ $conn = db_conn();
                     <span class="nav-link-text">Messages</span>
                 </a>
             </li>
+            <!-- Generate Reports Dropdown -->
             <li class="nav-item">
-                <a class="nav-link dropdown-toggle" data-toggle="collapse" href="#pageSubmenu">
+                <a class="nav-link dropdown-toggle" href="#pageSubmenu" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="pageSubmenu">
                     <i class="fas fa-file-invoice"></i>
                     <span class="nav-link-text">Generate Reports</span>
                 </a>
                 <div class="collapse" id="pageSubmenu">
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a href="#Generate_Report_Cards" class="nav-link" data-toggle="modal" data-target="#Generate_Report_Cards">
+                            <a href="#" class="nav-link" data-toggle="modal" data-target="#GenerateReportCardsModal">
                                 <i class="fas fa-file-alt"></i>
                                 <span class="nav-link-text">Students Report</span>
                             </a>
@@ -1927,11 +1962,6 @@ $conn = db_conn();
                 </div>
                 <div class="metric-content">
                     <span class="metric-label">Total Students</span>
-                    <?php
-                        $stmt = $conn->query("SELECT COUNT(name) as 'tstudents' FROM student");
-                        $row = $stmt->fetchArray(SQLITE3_ASSOC);
-                        $totalStudents = $row['tstudents'] ?? 0;
-                    ?>
                     <span class="metric-value"><?php echo $totalStudents; ?></span>
                     <div class="metric-trend">
                         <i class="fas fa-arrow-up"></i>
@@ -1950,11 +1980,6 @@ $conn = db_conn();
                 </div>
                 <div class="metric-content">
                     <span class="metric-label">Active Classes</span>
-                    <?php
-                        $stmt = $conn->query("SELECT COUNT(DISTINCT class) as 'tclasses' FROM student");
-                        $row = $stmt->fetchArray(SQLITE3_ASSOC);
-                        $totalClasses = $row['tclasses'] ?? 0;
-                    ?>
                     <span class="metric-value"><?php echo $totalClasses; ?></span>
                     <div class="metric-trend">
                         <i class="fas fa-arrow-up"></i>
@@ -2034,8 +2059,6 @@ $conn = db_conn();
                         <i class="fas fa-arrow-right"></i>
                     </div>
                 </a>
-
-                <!-- Emails Card -->
                 <a href="email_login.php" class="action-card">
                     <div class="action-icon emails">
                         <i class="fas fa-envelope"></i>
@@ -2046,8 +2069,6 @@ $conn = db_conn();
                         <i class="fas fa-arrow-right"></i>
                     </div>
                 </a>
-
-                <!-- Subjects Card -->
                 <a href="subjects.php" class="action-card">
                     <div class="action-icon subjects">
                         <i class="fas fa-book-open"></i>
@@ -2058,8 +2079,6 @@ $conn = db_conn();
                         <i class="fas fa-arrow-right"></i>
                     </div>
                 </a>
-
-                <!-- Exam Scores Card -->
                 <a href="exam_scores.php" class="action-card">
                     <div class="action-icon scores">
                         <i class="fas fa-chart-line"></i>
@@ -2070,7 +2089,6 @@ $conn = db_conn();
                         <i class="fas fa-arrow-right"></i>
                     </div>
                 </a>
-
                 <a href="lo.php" class="action-card">
                     <div class="action-icon behavior">
                         <i class="fas fa-clipboard-list"></i>
@@ -2155,7 +2173,8 @@ $conn = db_conn();
                                 <h3>New Message</h3>
                                 <span class="activity-time">2d ago</span>
                             </div>
-                            <p>From Parent: Jane Doe (Regarding: Term Project)</p>
+                            <p>From Parent: Jane Doe<p>
+                                                            <p>Regarding: Term Project</p>
                             <div class="activity-progress">
                                 <div class="progress-bar" style="width: 75%"></div>
                             </div>
@@ -2182,17 +2201,69 @@ $conn = db_conn();
     </div>
 </div>
 
+<!-- Generate Report Cards Modal -->
+<div class="modal fade" id="GenerateReportCardsModal" tabindex="-1" role="dialog" aria-labelledby="GenerateReportCardsModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+    
+      <form id="reportForm" method="POST" action="report_cards.php" target="_blank">
+        <div class="modal-header">
+          <h5 class="modal-title" id="GenerateReportCardsModalLabel">Generate Student Reports</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Select Class -->
+          <div class="form-group">
+            <label for="askclass">Select Class</label>
+            <select name="askclass" id="askclass" class="form-control" required>
+              <option value="">-- Choose Class --</option>
+              <?php
+              require "config.php";
+              $stmt = $conn->prepare("SELECT DISTINCT class FROM marks ORDER BY class ASC");
+              $stmt->execute();
+              $classes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+              foreach ($classes as $row) {
+                  echo "<option value='" . htmlspecialchars($row['class']) . "'>" . htmlspecialchars($row['class']) . "</option>";
+              }
+              ?>
+            </select>
+          </div>
+
+          <!-- Select Exam -->
+          <div class="form-group">
+            <label for="exam">Select Exam</label>
+            <select name="exam" id="exam" class="form-control" required>
+              <option value="">-- Choose Exam --</option>
+              <?php
+              $stmt = $conn->prepare("SELECT DISTINCT examname FROM marks ORDER BY examname ASC");
+              $stmt->execute();
+              $exams = $stmt->fetchAll(PDO::FETCH_ASSOC);
+              foreach ($exams as $row) {
+                  echo "<option value='" . htmlspecialchars($row['examname']) . "'>" . htmlspecialchars($row['examname']) . "</option>";
+              }
+              ?>
+            </select>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="generateReportBtn">Generate Report</button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
 <!-- JavaScript Libraries -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/3.10.2/mdb.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.datatables.net/v/bs-3.3.7/jq-2.2.4/dt-1.10.15/datatables.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.6.4/js/bootstrap-datepicker.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/3.10.2/mdb.min.js"></script>
 
 <script>
     // Sidebar toggle
@@ -2226,10 +2297,8 @@ $conn = db_conn();
         $(window).on('load', function() {
             $('#loading-overlay').removeClass('active');
         });
-    });
 
-    // Initialize Calendar
-    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Calendar
         const calendarEl = document.getElementById('calendar');
         const calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
@@ -2238,7 +2307,6 @@ $conn = db_conn();
                 center: 'title',
                 right: 'dayGridMonth,timeGridWeek,timeGridDay'
             },
-            themeSystem: 'standard',
             events: [
                 {
                     title: 'Parent-Teacher Meeting',
@@ -2327,6 +2395,19 @@ $conn = db_conn();
             }
         });
         calendar.render();
+
+        // Report form submission handler
+        $('#reportForm').on('submit', function(e) {
+            $('#generateReportBtn').prop('disabled', true);
+            $('#GenerateReportCardsModal').addClass('form-loading');
+            
+            // Optional: Add a small delay to show the loading state
+            setTimeout(() => {
+                $('#GenerateReportCardsModal').removeClass('form-loading');
+                $('#GenerateReportCardsModal').modal('hide');
+                $('#generateReportBtn').prop('disabled', false);
+            }, 2000);
+        });
     });
 
     function showUnderDevelopmentMessage() {
@@ -2334,7 +2415,6 @@ $conn = db_conn();
     }
 
     function showLoadingSpinner() {
-        // Show loading spinner
         alert("Loading all activities...");
     }
 </script>
