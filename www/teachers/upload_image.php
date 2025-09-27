@@ -1,14 +1,24 @@
 <?php
-// upload_image.php
-$host = "dpg-d20bls6mcj7s73avna10-a.oregon-postgres.render.com";
-$port = "5432";
-$dbname = "school_523q";
-$user = "school_523q_user";
-$password = "05A4cQnogC1qETghafnFsKNYUxYIRwrv";
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// Supabase connection (must use pooler)
+$host = "aws-1-eu-north-1.pooler.supabase.com"; 
+$port = "6543";                                
+$dbname = "postgres";                          
+$user = "postgres.mqtuzltstbshtjigzujz";       
+$password = "Ernestbizz..123";                 
 
 try {
-    $conn = new PDO("pgsql:host=$host;port=$port;dbname=$dbname", $user, $password);
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $conn = new PDO(
+        "pgsql:host=$host;port=$port;dbname=$dbname",
+        $user,
+        $password,
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+        ]
+    );
 } catch (PDOException $e) {
     die("Connection failed: " . $e->getMessage());
 }
@@ -48,3 +58,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['images']) && isset($
     echo "<script>alert('Invalid submission. Please try again.'); window.location.href='view_students.php';</script>";
 }
 ?>
+
