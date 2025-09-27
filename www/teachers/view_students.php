@@ -23,7 +23,6 @@ try {
     die("Connection failed: " . $e->getMessage());
 }
 
-
 // Start output buffering for smooth loading
 ob_start();
 ?>
@@ -88,6 +87,42 @@ ob_start();
             max-width: 1400px;
             margin: 0 auto;
             padding: 0 1.5rem;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--lighter);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--primary-light);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        .loading-text {
+            font-size: 1rem;
+            color: var(--gray);
+            font-weight: 500;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         .header {
@@ -517,6 +552,11 @@ ob_start();
     </style>
 </head>
 <body>
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading Student Management System</div>
+    </div>
 
     <div class="container">
         <!-- Header with navigation -->
@@ -561,23 +601,7 @@ ob_start();
                             <select name="class" id="class" class="form-select" required>
                                 <option value="">-- Select a class --</option>
                                 <?php
-                                try {
-                                    $conn = new PDO("pgsql:host=$host;port=$port;dbname=$dbname", $user, $password);
-                                    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-                                    
-                                    $classQuery = "SELECT DISTINCT class FROM marks WHERE class IS NOT NULL AND class != '' ORDER BY class";
-                                    $classResult = $conn->query($classQuery);
-
-                                    if ($classResult) {
-                                        while ($row = $classResult->fetch(PDO::FETCH_ASSOC)) {
-                                            echo '<option value="' . htmlspecialchars($row['class']) . '">' . htmlspecialchars($row['class']) . '</option>';
-                                        }
-                                    } else {
-                                        echo '<option value="">No classes available</option>';
-                                    }
-                                } catch (PDOException $e) {
-                                    echo '<option value="">Error loading classes</option>';
-                                }
+                                
                                 ?>
                             </select>
                         </div>
@@ -876,4 +900,3 @@ ob_start();
 // End output buffering and flush
 ob_end_flush();
 ?>
-
