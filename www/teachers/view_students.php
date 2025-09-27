@@ -11,7 +11,7 @@ $password = "Ernestbizz..123";
 
 try {
     $conn = new PDO(
-        "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require",  // Added sslmode=require
+        "pgsql:host=$host;port=$port;dbname=$dbname",
         $user,
         $password,
         [
@@ -22,7 +22,6 @@ try {
 } catch (PDOException $e) {
     die("Connection failed: " . $e->getMessage());
 }
-
 
 // Start output buffering for smooth loading
 ob_start();
@@ -901,4 +900,5 @@ ob_start();
 // End output buffering and flush
 ob_end_flush();
 ?>
+
 
