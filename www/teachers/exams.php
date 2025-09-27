@@ -8,19 +8,6 @@ $port = "6543";                                // Pooler port
 $dbname = "postgres";                          // Default DB name in Supabase
 $user = "postgres.mqtuzltstbshtjigzujz";       // Full Supabase user with project suffix
 $password = "Ernestbizz..123";                 // Your Supabase password
-try {
-    $conn = new PDO(
-        "pgsql:host=$host;port=$port;dbname=$dbname",
-        $user,
-        $password,
-        [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-        ]
-    );
-} catch (PDOException $e) {
-    die("Connection failed: " . $e->getMessage());
-}
 
 $classSelected = '';
 $subjectSelected = '';
@@ -1240,6 +1227,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </script>
 </body>
 </html>
+
 
 
 
