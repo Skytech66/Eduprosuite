@@ -631,7 +631,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_subject' && isset($_GET['i
                                     <span class="class-badge">Class <?php echo htmlspecialchars($row['classid']); ?></span>
                                 </td>
                                 <td>
-                                                                       <div class="teacher-info">
+                                                                      <div class="teacher-info">
                                         <div class="teacher-avatar">
                                             <i class="fas fa-user-tie"></i>
                                         </div>
@@ -837,3 +837,4 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_subject' && isset($_GET['i
 <?php
 $conn = null;
 ?>
+                                    
