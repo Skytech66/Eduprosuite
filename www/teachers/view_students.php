@@ -1,32 +1,3 @@
-<?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-// Supabase connection (must use pooler)
-$host = "aws-1-eu-north-1.pooler.supabase.com"; 
-$port = "6543";                                
-$dbname = "postgres";                          
-$user = "postgres.mqtuzltstbshtjigzujz";       
-$password = "Ernestbizz..123";                 
-
-try {
-    $conn = new PDO(
-        "pgsql:host=$host;port=$port;dbname=$dbname",
-        $user,
-        $password,
-        [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-        ]
-    );
-} catch (PDOException $e) {
-    die("Connection failed: " . $e->getMessage());
-}
-
-
-// Start output buffering for smooth loading
-ob_start();
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -914,6 +885,7 @@ ob_start();
 // End output buffering and flush
 ob_end_flush();
 ?>
+
 
 
 
