@@ -75,55 +75,12 @@ ob_start();
             color: var(--dark);
             line-height: 1.5;
             -webkit-font-smoothing: antialiased;
-            opacity: 0;
-            animation: fadeIn 0.5s ease-in-out forwards;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
         }
 
         .container {
             max-width: 1400px;
             margin: 0 auto;
             padding: 0 1.5rem;
-        }
-
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: var(--lighter);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            transition: opacity 0.3s ease;
-        }
-
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid var(--primary-light);
-            border-top: 4px solid var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 1rem;
-        }
-
-        .loading-text {
-            font-size: 1rem;
-            color: var(--gray);
-            font-weight: 500;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
 
         .header {
@@ -553,11 +510,6 @@ ob_start();
     </style>
 </head>
 <body>
-    <!-- Loading overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-spinner"></div>
-        <div class="loading-text">Loading Student Management System</div>
-    </div>
 
     <div class="container">
         <!-- Header with navigation -->
@@ -645,7 +597,6 @@ ob_start();
                                 <?= htmlspecialchars($selectedClass) ?> Roster
                             </h2>
                             <span class="badge"><?= $studentCount ?> student<?= $studentCount !== 1 ? 's' : '' ?></span>
-
                             <?php if ($studentCount > 0): ?>
                                 <form action="upload_image.php" method="POST" enctype="multipart/form-data" id="uploadForm">
                                     <input type="hidden" name="class" value="<?= htmlspecialchars($selectedClass) ?>">
