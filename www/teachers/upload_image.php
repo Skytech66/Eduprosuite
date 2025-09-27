@@ -22,6 +22,7 @@ try {
 } catch (PDOException $e) {
     die("Connection failed: " . $e->getMessage());
 }
+
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
@@ -57,6 +58,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['images']) && isset($
     echo "<script>alert('Invalid submission. Please try again.'); window.location.href='view_students.php';</script>";
 }
 ?>
-
-
-
