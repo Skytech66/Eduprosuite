@@ -29,81 +29,135 @@ $yearSelected = '';
 $examName = '';
 $students = [];
 
+$showConfirm = false;
+$populateScores = false;
+$confirmMessage = '';
+$messageType = '';
+$notifMessage = '';
+$emptyScoresExist = false;
+$emptyScoreRows = [];
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $classSelected = $_POST['class'] ?? '';
+    $subjectSelected = $_POST['subject'] ?? '';
+    $yearSelected = $_POST['year'] ?? '';
+    $examName = $_POST['examname'] ?? '';
+
     if (isset($_POST['submit_marks'])) {
-        $examName = $_POST['examname'] ?? '';
-        $classSelected = $_POST['class'] ?? '';
-        $subjectSelected = $_POST['subject'] ?? '';
-        $yearSelected = $_POST['year'] ?? '';
-        
-        // Flag to check if any empty scores exist
-        $emptyScoresExist = false;
-        $emptyScoreRows = [];
+        $replace = isset($_POST['replace']) && $_POST['replace'] == '1';
 
-        foreach ($_POST['students'] as $studentId => $data) {
-            $classScore = isset($data['class_score']) && $data['class_score'] !== '' ? (float)$data['class_score'] : 0;
-            $examScore = isset($data['exam_score']) && $data['exam_score'] !== '' ? (float)$data['exam_score'] : 0;
-            $totalScore = $classScore + $examScore;
-            $admissionNumber = $data['admission_number'] ?? '';
-            $position = $data['position'] ?? null;
-            
-            // Check for empty scores
-            if ((!isset($data['class_score']) || $data['class_score'] === '') || 
-                (!isset($data['exam_score']) || $data['exam_score'] === '')) {
-                $emptyScoresExist = true;
-                $emptyScoreRows[] = $studentId;
-                continue; // Skip this iteration but continue processing
-            }
-
-            if ($totalScore >= 80) {
-                $remarks = 'A';
-            } elseif ($totalScore >= 70) {
-                $remarks = 'B';
-            } elseif ($totalScore >= 60) {
-                $remarks = 'C';
-            } elseif ($totalScore >= 50) {
-                $remarks = 'D';
-            } elseif ($totalScore >= 40) {
-                $remarks = 'E';
-            } else {
-                $remarks = 'F';
-            }
-
-            $stmt = $conn->prepare("INSERT INTO marks (examname, class, class_score, exam_score, subject, student, admission_number, average, remarks, position, created_at) 
-                                   VALUES (:examname, :class, :class_score, :exam_score, :subject, :student, :admission_number, :average, :remarks, :position, CURRENT_TIMESTAMP)");
-            $stmt->execute([
+        // Pre-check for existing records per current students
+        $existingStudentsCount = 0;
+        if ($classSelected && $subjectSelected && $examName && !empty($_POST['students'])) {
+            $checkStmt = $conn->prepare("SELECT admission_number FROM marks WHERE examname = :examname AND class = :class AND subject = :subject");
+            $checkStmt->execute([
                 'examname' => $examName,
                 'class' => $classSelected,
-                'class_score' => $classScore,
-                'exam_score' => $examScore,
-                'subject' => $subjectSelected,
-                'student' => $data['student_name'],
-                'admission_number' => $admissionNumber,
-                'average' => $totalScore / 2,
-                'remarks' => $remarks,
-                'position' => $position
+                'subject' => $subjectSelected
             ]);
-        }
-        
-        if ($emptyScoresExist) {
-            echo "<script>document.addEventListener('DOMContentLoaded', function() { 
-                showNotification('warning', 'Some scores were empty and set to zero. Please review.'); 
-                highlightEmptyRows(" . json_encode($emptyScoreRows) . ");
-            });</script>";
-        } else {
-            echo "<script>document.addEventListener('DOMContentLoaded', function() { showNotification('success', 'Marks submitted successfully!'); });</script>";
-        }
-    } else {
-        $classSelected = $_POST['class'] ?? '';
-        $subjectSelected = $_POST['subject'] ?? '';
-        $yearSelected = $_POST['year'] ?? '';
-        $examName = $_POST['examname'] ?? '';
+            $allExisting = $checkStmt->fetchAll(PDO::FETCH_COLUMN, 0); // Fetch as array of admission_numbers
 
-        if ($classSelected && $yearSelected) {
-            $stmt = $conn->prepare("SELECT * FROM student_entries WHERE class = :class AND year = :year");
-            $stmt->execute(['class' => $classSelected, 'year' => $yearSelected]);
-            $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($_POST['students'] as $data) {
+                $admissionNumber = $data['admission_number'] ?? '';
+                if ($admissionNumber && in_array($admissionNumber, $allExisting)) {
+                    $existingStudentsCount++;
+                }
+            }
         }
+
+        if ($existingStudentsCount > 0 && !$replace) {
+            $showConfirm = true;
+            $populateScores = true;
+            $confirmMessage = "Marks already exist for {$existingStudentsCount} students. Do you want to replace them?";
+        } else {
+            // Process inserts/updates
+            $emptyScoresExist = false;
+            $emptyScoreRows = [];
+
+            foreach ($_POST['students'] as $studentId => $data) {
+                $classScore = isset($data['class_score']) && $data['class_score'] !== '' ? (float)$data['class_score'] : 0;
+                $examScore = isset($data['exam_score']) && $data['exam_score'] !== '' ? (float)$data['exam_score'] : 0;
+                $totalScore = $classScore + $examScore;
+                $admissionNumber = $data['admission_number'] ?? '';
+                $position = $data['position'] ?? null;
+                
+                // Check for empty scores
+                if ((!isset($data['class_score']) || $data['class_score'] === '') || 
+                    (!isset($data['exam_score']) || $data['exam_score'] === '')) {
+                    $emptyScoresExist = true;
+                    $emptyScoreRows[] = $studentId;
+                    continue; // Skip this iteration but continue processing
+                }
+
+                if ($totalScore >= 80) {
+                    $remarks = 'A';
+                } elseif ($totalScore >= 70) {
+                    $remarks = 'B';
+                } elseif ($totalScore >= 60) {
+                    $remarks = 'C';
+                } elseif ($totalScore >= 50) {
+                    $remarks = 'D';
+                } elseif ($totalScore >= 40) {
+                    $remarks = 'E';
+                } else {
+                    $remarks = 'F';
+                }
+
+                // Check if record exists
+                $checkStmt = $conn->prepare("SELECT id FROM marks WHERE examname = :examname AND class = :class AND subject = :subject AND admission_number = :admission_number");
+                $checkStmt->execute([
+                    'examname' => $examName,
+                    'class' => $classSelected,
+                    'subject' => $subjectSelected,
+                    'admission_number' => $admissionNumber
+                ]);
+                $existingRow = $checkStmt->fetch();
+
+                if ($existingRow) {
+                    // Update existing record
+                    $updateStmt = $conn->prepare("UPDATE marks SET class_score = :class_score, exam_score = :exam_score, average = :average, remarks = :remarks, position = :position, updated_at = CURRENT_TIMESTAMP WHERE id = :id");
+                    $updateStmt->execute([
+                        'class_score' => $classScore,
+                        'exam_score' => $examScore,
+                        'average' => $totalScore / 2,
+                        'remarks' => $remarks,
+                        'position' => $position,
+                        'id' => $existingRow['id']
+                    ]);
+                } else {
+                    // Insert new record
+                    $insertStmt = $conn->prepare("INSERT INTO marks (examname, class, class_score, exam_score, subject, student, admission_number, average, remarks, position, created_at) 
+                                               VALUES (:examname, :class, :class_score, :exam_score, :subject, :student, :admission_number, :average, :remarks, :position, CURRENT_TIMESTAMP)");
+                    $insertStmt->execute([
+                        'examname' => $examName,
+                        'class' => $classSelected,
+                        'class_score' => $classScore,
+                        'exam_score' => $examScore,
+                        'subject' => $subjectSelected,
+                        'student' => $data['student_name'],
+                        'admission_number' => $admissionNumber,
+                        'average' => $totalScore / 2,
+                        'remarks' => $remarks,
+                        'position' => $position
+                    ]);
+                }
+            }
+            
+            if ($emptyScoresExist) {
+                $messageType = 'warning';
+                $notifMessage = 'Some scores were empty and set to zero. Please review.';
+            } else {
+                $messageType = 'success';
+                $notifMessage = 'Marks submitted successfully!';
+            }
+        }
+    }
+
+    // Load students if criteria selected (moved outside for repopulation)
+    if ($classSelected && $yearSelected) {
+        $stmt = $conn->prepare("SELECT * FROM student_entries WHERE class = :class AND year = :year ORDER BY name ASC");
+        $stmt->execute(['class' => $classSelected, 'year' => $yearSelected]);
+        $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
 ?>
@@ -473,7 +527,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
         
         .student-avatar {
-            width: 40px;
+                        width: 40px;
             height: 40px;
             border-radius: 50%;
             background-color: var(--primary-color);
@@ -829,7 +883,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             </thead>
                             <tbody>
                                 <?php if (!empty($students)): ?>
-                                    <?php foreach ($students as $index => $row): ?>
+                                    <?php foreach ($students as $index => $row): 
+                                        $studentData = [];
+                                        if ($populateScores && isset($_POST['students'][$row['id']])) {
+                                            $studentData = $_POST['students'][$row['id']];
+                                        }
+                                        $classScoreVal = $studentData['class_score'] ?? '';
+                                        $examScoreVal = $studentData['exam_score'] ?? '';
+                                        $positionVal = $studentData['position'] ?? '';
+                                    ?>
                                         <tr data-student-id="<?= $row['id'] ?>">
                                             <td data-label="#"><?= $index + 1 ?></td>
                                             <td data-label="Student">
@@ -846,6 +908,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                                     name="students[<?= $row['id'] ?>][class_score]" 
                                                     data-student-id="<?= $row['id'] ?>" 
                                                     max="50" min="0" placeholder="0-50"
+                                                    value="<?= htmlspecialchars($classScoreVal) ?>"
                                                     tabindex="<?= $index * 2 + 1 ?>">
                                             </td>
                                             <td data-label="Exam (50%)">
@@ -853,6 +916,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                                     name="students[<?= $row['id'] ?>][exam_score]" 
                                                     data-student-id="<?= $row['id'] ?>" 
                                                     max="50" min="0" placeholder="0-50"
+                                                    value="<?= htmlspecialchars($examScoreVal) ?>"
                                                     tabindex="<?= $index * 2 + 2 ?>">
                                             </td>
                                             <td data-label="Total" class="total-cell fw-bold">0</td>
@@ -864,7 +928,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                             </td>
                                             <input type="hidden" name="students[<?= $row['id'] ?>][admission_number]" value="<?= htmlspecialchars($row['admission_number']) ?>">
                                             <input type="hidden" name="students[<?= $row['id'] ?>][student_name]" value="<?= htmlspecialchars($row['name']) ?>">
-                                            <input type="hidden" name="students[<?= $row['id'] ?>][position]" class="position-input" value="">
+                                            <input type="hidden" name="students[<?= $row['id'] ?>][position]" class="position-input" value="<?= htmlspecialchars($positionVal) ?>">
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php else: ?>
@@ -948,8 +1012,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             </select>
                         </div>
                         <div class="mb-4">
-                            <label class="form-label fw-bold">Academic Year</label>
-                            <select class="form-select" name="year" required>
+                            <label class="form-label fw-bold">Academic Year</>
+                                                         <select class="form-select" name="year" required>
                                 <option value="">Select Year</option>
                                 <?php
                                 $years = $conn->query("SELECT DISTINCT year FROM student_entries");
@@ -977,7 +1041,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
     $(document).ready(function() {
-                // Initialize progress bar
+        // Initialize progress bar
         function initProgressBar() {
             $(window).on('scroll', function() {
                 var scrollTop = $(this).scrollTop();
@@ -1204,16 +1268,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
         
-        // Show success notification if marks were submitted
-        <?php if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_marks'])): ?>
-        $(document).ready(function() {
-            <?php if ($emptyScoresExist): ?>
-            showNotification('warning', 'Some scores were empty and set to zero. Please review.');
-            highlightEmptyRows(<?= json_encode($emptyScoreRows) ?>);
-            <?php else: ?>
-            showNotification('success', 'Marks submitted successfully!');
-            <?php endif; ?>
-        });
+        // Show notification if marks were processed
+        <?php if ($messageType): ?>
+        showNotification('<?= $messageType ?>', '<?= addslashes($notifMessage) ?>');
+        <?php if (isset($emptyScoreRows) && !empty($emptyScoreRows)): ?>
+        highlightEmptyRows(<?= json_encode($emptyScoreRows) ?>);
+        <?php endif; ?>
         <?php endif; ?>
         
         // Focus first input when modal is shown
@@ -1230,28 +1290,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         });
 
         // Auto-focus first score input when page loads with students
-        <?php if (!empty($students)): ?>
-        $(document).ready(function() {
-            setTimeout(function() {
-                $('#scoresTable tbody tr:first-child .class-score').focus();
-            }, 300);
-        });
+        <?php if (!empty($students) && !$showConfirm): ?>
+        setTimeout(function() {
+            $('#scoresTable tbody tr:first-child .class-score').focus();
+        }, 300);
+        <?php endif; ?>
+
+        // Handle confirmation for replacing existing marks
+        <?php if ($showConfirm): ?>
+        if (confirm("<?= addslashes($confirmMessage) ?>")) {
+            // Add hidden input to indicate replacement
+            var form = document.getElementById('marksForm');
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'replace';
+            input.value = '1';
+            form.appendChild(input);
+            form.submit();
+        }
+        // If no, do nothing - user stays on the page with populated form
+        <?php endif; ?>
+
+        // Initialize positions and calculations on load if scores are populated
+        <?php if ($populateScores): ?>
+        updatePositions();
         <?php endif; ?>
     });
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
