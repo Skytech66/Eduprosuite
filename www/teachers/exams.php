@@ -2,7 +2,7 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// ✅ Supabase connection (must use pooler)
+// Supabase connection (must use pooler)
 $host = "aws-1-eu-north-1.pooler.supabase.com"; 
 $port = "6543";                                
 $dbname = "postgres";                          
@@ -21,7 +21,7 @@ try {
     );
 } catch (PDOException $e) {
     die("Connection failed: " . $e->getMessage());
-}               // Your Supabase password
+}
 
 $classSelected = '';
 $subjectSelected = '';
@@ -1241,6 +1241,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </script>
 </body>
 </html>
+
 
 
 
