@@ -737,7 +737,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link active" href="/www/dashboard.php"><i class="fas fa-tachometer-alt me-1"></i> Dashboard</a>
+                        <a class="nav-link active" href="../dashboard.php"><i class="fas fa-tachometer-alt me-1"></i> Dashboard</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="form.php"><i class="fas fa-users me-1"></i> Add Student</a>
@@ -1241,6 +1241,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </script>
 </body>
 </html>
+
 
 
 
