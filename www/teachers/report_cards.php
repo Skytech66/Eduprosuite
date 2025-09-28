@@ -49,12 +49,10 @@ class mypdf extends FPDF {
         $this->addWatermark();
 
         // Header text with no background color
-        $this->SetFont('Arial', 'B', 26);
+        $this->SetFont('Times', 'B', 26);
         $this->Cell(190, 8, '', 0, 0, 'C');
         $this->Ln();
-        // Add the logo image at the centered position
-        $logoWidth = 150; // Width of the logo
-        $this->Image('bob.png', 40, 12, $logoWidth, 23); // Adjusted X position to 40 and Y position to 3
+        // Removed the logo image 'bob.png'
 
         // Add a small line break to move the address down
         $this->Ln(11); // Adjust this value to control the spacing
@@ -84,7 +82,7 @@ class mypdf extends FPDF {
     function footer() {
         // Footer content can be added here if needed
         $this->SetY(-15);
-        $this->SetFont('Arial', 'I', 8);
+        $this->SetFont('Times', 'I', 8);
         $this->Cell(0, 10, 'Page ' . $this->PageNo(), 0, 0, 'C');
     }
 
@@ -244,7 +242,7 @@ class mypdf extends FPDF {
         // Generate reports for each student
         foreach ($students as $admno => $data) {
             $this->Ln(-10); // Move up by 10 units (adjust as needed)
-            $this->SetFont('Arial', 'BU', 16);
+            $this->SetFont('Times', 'BU', 16);
             $this->Cell(190, 10, 'PUPIL\'S TERMINAL REPORT', 0, 0, 'C'); // Use standard apostrophe
             $this->Ln();
             
@@ -301,7 +299,7 @@ class mypdf extends FPDF {
 
             // Populate the table with subject data
             foreach ($data['marks'] as $row) {
-                $this->SetFont('Arial', '', 10);
+                $this->SetFont('Times', '', 10);
                 $subject = $row["subject"]; // No decryption needed
                 $classScore = $row["class_score"]; // No decryption needed
                 $examScore = $row["exam_score"]; // No decryption needed
@@ -334,13 +332,13 @@ class mypdf extends FPDF {
                     $remarks = 'Weak';
                 }
                 // Set font to bold for Grade
-                $this->SetFont('Arial', 'B', 10);
+                $this->SetFont('Times', 'B', 10);
                 $this->Cell(25, 7, $grade, 1, 0, 'C'); // Grade
-                $this->SetFont('Arial', '', 10); // Reset font to normal for remarks
+                $this->SetFont('Times', '', 10); // Reset font to normal for remarks
                 $this->Cell(30, 7, $remarks, 1, 0, 'C'); // Remarks
 
                 // Set font to bold for Position
-                $this->SetFont('Arial', 'B', 10);
+                $this->SetFont('Times', 'B', 10);
                 if (is_numeric($originalPosition) && $originalPosition > 0) {
                     $this->Cell(25, 7, ordinal($originalPosition), 1, 0, 'C'); // Display the original position with ordinal
                 } else {
@@ -349,8 +347,8 @@ class mypdf extends FPDF {
                 $this->Ln();
             }
 
-            // Grading System Section - Moved directly under the position
-            $this->SetFont('Arial', 'BU', 14);
+             // Grading System Section - Moved directly under the position
+            $this->SetFont('Times', 'BU', 14);
             $this->Cell(0, 10, 'GRADING SYSTEM', 0, 1, 'C');
             $this->SetFont('Times', 'B', 11);
             $this->Cell(0, 10, 'A - Excellent (80 - 100)               B - Very Good (70 - 79)               C - Good (60 - 69)', 0, 1, 'C');
@@ -394,7 +392,7 @@ class mypdf extends FPDF {
             $signatureY = $this->GetY() - 10;
 
             // Add signature placeholders
-            $this->SetFont('Arial', 'I', 8);
+            $this->SetFont('Times', 'I', 8);
             
             // Class teacher signature placeholder
             $this->SetXY(50, $signatureY);
@@ -453,7 +451,7 @@ if (file_exists($signatureImage)) {
 
             // Requirements table
             $this->Ln(10);
-            $this->SetFont('Arial', 'B', 10);
+            $this->SetFont('Times', 'B', 10);
             $this->Cell(95, 7, 'REQUIREMENT FOR NEXT TERM', 1, 0, 'C');
             $this->Cell(95, 7, 'MANAGEMENT', 1, 1, 'C');
             
