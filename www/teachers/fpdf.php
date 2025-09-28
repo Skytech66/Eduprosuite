@@ -1136,18 +1136,53 @@ protected function _endpage()
 
 protected function _loadfont($font)
 {
-	// Load a font definition file from the font directory
-	if(strpos($font,'/')!==false || strpos($font,"\\")!==false)
-		$this->Error('Incorrect font definition file name: '.$font);
-	include($this->fontpath.$font);
-	if(!isset($name))
-		$this->Error('Could not include font definition file');
-	if(isset($enc))
-		$enc = strtolower($enc);
-	if(!isset($subsetted))
-		$subsetted = false;
-	return get_defined_vars();
+    // Load a font definition file from the font directory
+    if (strpos($font, '/') !== false || strpos($font, "\\") !== false) {
+        $this->Error('Incorrect font definition file name: ' . $font);
+    }
+
+    $fontFile = $this->fontpath . $font;
+
+    // ✅ Check if the font file exists
+    if (!file_exists($fontFile)) {
+        // Try fallback to Arial if the requested font is missing
+        trigger_error("Font file '$font' not found. Falling back to Arial.", E_USER_WARNING);
+        $fallback = $this->fontpath . 'arial.php';
+
+        if (file_exists($fallback)) {
+            include($fallback);
+            if (!isset($name)) {
+                $name = 'Arial';
+            }
+        } else {
+            // If even Arial is missing, set minimal defaults to prevent fatal errors
+            $name = 'Arial';
+            $enc = 'cp1252';
+            $subsetted = false;
+            return compact('name', 'enc', 'subsetted');
+        }
+    } else {
+        include($fontFile);
+        if (!isset($name)) {
+            // ✅ Fallback if font definition failed to load properly
+            trigger_error("Could not include font definition file '$font'. Falling back to Arial.", E_USER_WARNING);
+            $name = 'Arial';
+            $enc = 'cp1252';
+            $subsetted = false;
+            return compact('name', 'enc', 'subsetted');
+        }
+    }
+
+    if (isset($enc)) {
+        $enc = strtolower($enc);
+    }
+    if (!isset($subsetted)) {
+        $subsetted = false;
+    }
+
+    return get_defined_vars();
 }
+
 
 protected function _isascii($s)
 {
@@ -1895,3 +1930,4 @@ protected function _enddoc()
 }
 }
 ?>
+
