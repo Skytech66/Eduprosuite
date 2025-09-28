@@ -1,21 +1,36 @@
 <?php
-ob_start();
-require "config.php"; // Include the database configuration
-
-// Enable error reporting for debugging
+// Enable error reporting for development
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-function getRandomConductRemark($conductRemarks) {
-    if (empty($conductRemarks)) {
-        return 'No conduct remarks available.';
-    }
-    return $conductRemarks[array_rand($conductRemarks)];
+// Start output buffering to prevent "headers already sent" errors
+ob_start();
+
+// Supabase connection (must use pooler)
+$host = "aws-1-eu-north-1.pooler.supabase.com"; 
+$port = "6543";                                
+$dbname = "postgres";                          
+$user = "postgres.mqtuzltstbshtjigzujz";       
+$password = "Ernestbizz..123";                 
+
+try {
+    $conn = new PDO(
+        "pgsql:host=$host;port=$port;dbname=$dbname",
+        $user,
+        $password,
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+        ]
+    );
+} catch (PDOException $e) {
+    die("Connection failed: " . $e->getMessage());
 }
 
+// Function to convert a number to its ordinal representation
 function ordinal($number) {
-    $number = (int)$number;
+    $number = (int)$number; // Convert to integer
     if (!in_array(($number % 100), [11, 12, 13])) {
         switch ($number % 10) {
             case 1: return $number . 'st';
@@ -29,466 +44,448 @@ function ordinal($number) {
 require "fpdf.php";
 
 class mypdf extends FPDF {
-    // School colors
-    private $primaryColor = [0, 70, 140]; // Dark blue
-    private $secondaryColor = [220, 230, 241]; // Light blue
-    private $accentColor = [255, 195, 0]; // Gold
-
     function header() {
-        // Modern header with school branding
-        $this->SetY(10);
-        $this->SetFont('Helvetica', 'B', 24);
-        $this->SetTextColor($this->primaryColor[0], $this->primaryColor[1], $this->primaryColor[2]);
-        $this->Cell(0, 10, 'ADINKRA INTERNATIONAL SCHOOL', 0, 1, 'C');
+        // Add the watermark image
+        $this->addWatermark();
 
-        // Add the school crest image
-        $this->Image('adinkra.png', 30, 20, 20, 20); // Adjust the position and 
-        // Subheader with motto
-        $this->SetFont('Helvetica', 'I', 12);
-        $this->SetTextColor(100, 100, 100);
-        $this->Cell(0, 6, 'Excellence Through Knowledge', 0, 1, 'C');
+        // Header text with no background color
+        $this->SetFont('Arial', 'B', 26);
+        $this->Cell(190, 8, '', 0, 0, 'C');
+        $this->Ln();
+        // Add the logo image at the centered position
+        $logoWidth = 150; // Width of the logo
+        $this->Image('bob.png', 40, 12, $logoWidth, 23); // Adjusted X position to 40 and Y position to 3
 
-        // Contact information
-        $this->SetFont('Helvetica', '', 10);
-        $this->SetTextColor(70, 70, 70);
-        $this->Cell(0, 6, 'P.M.B 40, legon | TEL: +233 7741 1866 / +233 5416 2275', 0, 1, 'C');
-        $this->Cell(0, 6, 'LOCATION: East-legon / Accra', 0, 1, 'C');
+        // Add a small line break to move the address down
+        $this->Ln(11); // Adjust this value to control the spacing
 
-        // Decorative line
-        $this->SetDrawColor($this->accentColor[0], $this->accentColor[1], $this->accentColor[2]);
-        $this->SetLineWidth(0.8);
-        $this->Line(10, $this->GetY() + 5, 200, $this->GetY() + 5);
-        $this->Ln(6);
+        // Add the address directly under the logo
+        $this->SetFont('Times', 'B', 11);
+        $this->Cell(190, 10, 'P.M.B 40, Madina', 0, 0, 'C'); // Address
+        $this->Ln(); // Line break after the address
+
+        $this->Cell(190, 10, 'TEL: 0277411866 / 0541622751', 0, 0, 'C');
+        $this->Ln();
+
+        $this->Cell(190, 10, 'LOCATION: Abokobi / Boi New Town', 0, 0, 'C');
+        $this->Ln();
+
+        // Draw the line under LOCATION
+        $this->SetLineWidth(1); // Thicker line
+        $this->Line(10, $this->GetY(), 200, $this->GetY()); // Line under location
+        $this->Ln(); // Add a line break after the line
+    }
+
+    function addWatermark() {
+        // Add the watermark image
+        $this->Image('watermark_transparent_v3.png', 0, 0, 210, 297); // Full page size for A4
     }
 
     function footer() {
+        // Footer content can be added here if needed
         $this->SetY(-15);
-        $this->SetFont('Helvetica', 'I', 8);
-        $this->SetTextColor(100, 100, 100);
+        $this->SetFont('Arial', 'I', 8);
         $this->Cell(0, 10, 'Page ' . $this->PageNo(), 0, 0, 'C');
     }
 
     function getRemarks() {
+        // List of remarks
         $remarks = [
             "Making steady progress keep it up.",
             "A consistent effort will lead to improvement.",
             "Shows potential, needs to stay focused.",
-            "Good performance, keep working hard.",
-            "Excellent work, maintain the standard.",
-            "Satisfactory performance, can do better.",
-            "Needs to put in more effort to improve.",
-            "Showing improvement, keep it up.",
-            "Working hard, results are showing.",
-            "Needs to be more attentive in class.",
-            "Performance is improving steadily.",
-            "Should participate more in class activities.",
-            "Demonstrates good understanding of concepts.",
-            "Should work on time management.",
+            "Can achieve more with greater concentration.",
+            "A little more effort will bring better results.",
+            "Shows interest but needs to work more independently.",
+            "Needs to participate more actively in class.",
+            "Good attitude toward learning keep improving.",
+            "Capable of doing better with more dedication.",
+            "Beginning to take studies more seriously.",
+            "Needs to revise lessons more regularly.",
+            "Can perform better with greater consistency.",
+            "A quiet student, encouraged to engage more.",
+            "Demonstrates average understanding, more practice needed.",
+            "Should aim to submit all work on time.",
+            "Needs to improve attention during lessons.",
+            "Able to grasp concepts but needs reinforcement.",
+            "Has potential, needs to be more confident.",
+            "Tries hard but needs better study habits.",
+            "Needs to avoid rushing through work.",
+            "A positive attitude, but focus needs improvement.",
+            "Has improved slightly, more effort needed.",
+            "Capable of achieving higher results.",
+            "Needs to seek help when struggling.",
+            "Should stay on task more consistently.",
+            "A good foundation needs to build on it.",
+            "Shows improvement but must keep it up.",
+            "Can benefit from regular revision.",
+            "Can achieve higher potentials.",
+            "Shows average results can improve with guidance.",
+            "Can do better if distractions are minimized.",
+            "Improvement seen encouraged to continue.",
+            "Progressing slowly but steadily.",
+            "Should challenge self with more effort.",
+            "Needs to ask more questions when unsure.",
+            "A cooperative student needs to show more initiative.",
+            "Needs to take learning more seriously.",
+            "Has the ability but needs to apply it more.",
+            "Should strive to exceed basic expectations.",
+            "Progresses at an average pace can do more.",
+            "Will benefit from a more focused approach.",
+            "Good behavior needs academic push.",
+            "Needs to improve work completion rate.",
+            "Can shine with more confidence.",
+            "Should improve organization of work.",
+            "Shows average results across subjects.",
+            "Should build stronger study routines.",
+            "Can reach greater heights with extra effort.",
             "Encouraged to keep working hard and not settle."
         ];
+
+        // Randomly select a remark from the list
         return $remarks[array_rand($remarks)];
     }
 
-    // Ellipse drawing method supporting arcs for partial ellipses
-    function Ellipse($x, $y, $rx, $ry, $startAngle = 0, $endAngle = 360, $style = '') {
-        $k = $this->k;
-        $hp = $this->h;
-
-        // Convert angles from degrees to radians
-        $startAngle = deg2rad($startAngle);
-        $endAngle = deg2rad($endAngle);
-
-        $segments = 40; // Increase segments for smoother ellipse
-        $angleStep = ($endAngle - $startAngle) / $segments;
-
-        // Calculate points around the ellipse arc
-        $points = [];
-        for ($i = 0; $i <= $segments; $i++) {
-            $angle = $startAngle + $i * $angleStep;
-            $points[] = [
-                $x + $rx * cos($angle),
-                $y + $ry * sin($angle)
-            ];
-        }
-
-        // Begin path
-        $this->_out(sprintf('%.2F %.2F m', $points[0][0] * $k, ($hp - $points[0][1]) * $k));
-
-        // Draw lines between points
-        for ($i = 1; $i <= $segments; $i++) {
-            $this->_out(sprintf('%.2F %.2F l', $points[$i][0] * $k, ($hp - $points[$i][1]) * $k));
-        }
-
-        // Draw path: stroke or fill (default) or both
-        if ($style == 'F') {
-            $this->_out('f'); // Fill
-        } else if ($style == 'FD' || $style == 'DF') {
-            $this->_out('B'); // Fill and stroke
-        } else {
-            $this->_out('S'); // Stroke only
-        }
-    }
-
-    function drawCircularProgress($x, $y, $radius, $value, $label) {
-        // Draw background circle
-        $this->SetDrawColor(220, 220, 220);
-        $this->SetLineWidth(2);
-        $this->Ellipse($x, $y, $radius, $radius, 0, 360);
-
-        // Draw progress arc
-        $this->SetDrawColor($this->primaryColor[0], $this->primaryColor[1], $this->primaryColor[2]);
-        $this->SetLineWidth(3);
-        $endAngle = 360 * ($value / 100);
-        $this->Ellipse($x, $y, $radius, $radius, 0, $endAngle);
-
-        // Draw percentage text
-        $this->SetFont('Helvetica', 'B', 10);
-        $this->SetTextColor(0, 0, 0);
-        $this->SetXY($x - 5, $y - 3);
-        $this->Cell(10, 6, $value . '%', 0, 0, 'C');
-
-        // Draw label
-        $this->SetFont('Helvetica', '', 9);
-        $this->SetXY($x - $radius, $y + $radius + 2);
-        $this->Cell($radius * 2, 5, $label, 0, 0, 'C');
-    }
-
-    function headertable() {
-        global $conn; // Use the global MySQL connection
+    function headertable($conn) {
         $class = $_POST['askclass'];
         $exam = $_POST['exam'];
 
+        // Define conduct remarks
         $conductRemarks = [
             "Consistently demonstrates outstanding behavior and a positive attitude.",
-            "Shows respect for teachers and peers at all times.",
-            "A role model for other students in terms of conduct.",
-            "Always follows classroom rules and procedures.",
-            "Demonstrates excellent self-discipline and responsibility.",
-            "Polite and courteous in all interactions.",
-            "Works well with others in group activities.",
-            "Needs occasional reminders about classroom behavior.",
-            "Generally well-behaved but can be distracted sometimes.",
-            "Should work on following instructions more carefully.",
-            "Has shown improvement in behavior this term.",
-            "Sometimes needs guidance to make good choices.",
-            "Responds well to positive reinforcement.",
-            "Should work on staying focused during lessons.",
-            "Polite, respectful, and a joy to have in class."
+            "Exemplifies respect, responsibility, and integrity in all actions.",
+            "Engages actively and sets a positive example for peers.",
+            "Shows great potential—would benefit from improved focus during class.",
+            "Adheres to classroom expectations and contributes positively to the learning environment.",
+            "Demonstrates empathy, kindness, and strong interpersonal skills.",
+            "Encouraged to show greater respect and attentiveness during lessons.",
+            "Exhibits natural leadership and inspires others through actions.",
+            "Remarkable progress in behavior—keep up the great effort!",
+            "Takes initiative and displays a strong sense of responsibility.",
+            "Works well independently and in group settings.",
+            "Demonstrates resilience and perseverance in challenging tasks.",
+            "Is respectful to peers and teachers at all times.",
+            "A reliable and dependable student.",
+            "Cheerful and brings a positive energy to the class.",
+            "Actively listens and contributes meaningfully to discussions.",
+            "Regularly helps and encourages classmates.",
+            "Handles responsibilities with maturity and care.",
+            "Stays calm under pressure and manages conflict well.",
+            "Needs gentle reminders to stay on task but shows willingness to improve.",
+            "Maintains a positive attitude towards learning and growth.",
+            "Is developing good self-control and patience.",
+            "Willing to accept feedback and strives to do better.",
+            "Consistently completes tasks with care and attention.",
+            "Needs to work on being more cooperative during group activities.",
+            "Kind-hearted and always ready to support others.",
+            "Takes pride in personal and academic growth.",
+            "Enthusiastic and motivated to learn new things.",
+            "Sometimes distracted—encouraged to stay focused during lessons.",
+            "A great example of punctuality and preparedness.",
+            "Respectfully communicates with peers and adults.",
+            "Demonstrates honesty and trustworthiness.",
+            "Increasingly confident in expressing thoughts and ideas.",
+            "Appreciates structure and responds well to routines.",
+            "Can improve by being more mindful of class rules.",
+            "Always willing to take part in class activities.",
+            "Demonstrates a strong sense of fairness and justice.",
+            "Well-mannered and considerate of others' feelings.",
+            "Responds positively to encouragement and support.",
+            "Making steady improvement in behavior and attitude.",
+            "Demonstrates a calm and thoughtful presence.",
+            "Follows instructions carefully and consistently.",
+            "Is beginning to show initiative in taking responsibility.",
+            "Needs to focus on being more respectful during class discussions.",
+            "Displays maturity in handling challenges.",
+            "Always completes tasks on time and with effort.",
+            "Cooperates well and contributes meaningfully to team efforts.",
+            "Learns from mistakes and shows a growth mindset.",
+            "Needs reminders but shows willingness to correct behavior.",
+            "Polite, respectful, and a joy to have in class.",
+            "An excellent role model for classmates."
         ];
 
-        // Updated SQL query to select from 'students' and use 'admission_number'
-        $sql = "SELECT name, admission_number, photo FROM students WHERE class LIKE ? ORDER BY admission_number ASC";
+        // Fetch all student data including photo and marks from the marks table
+        $sql = "SELECT admission_number, photo, student, subject, class_score, exam_score, average, remarks, position 
+                FROM marks 
+                WHERE class = :class AND examname = :exam 
+                ORDER BY admission_number ASC";
+
         $stmt = $conn->prepare($sql);
-        $likeClass = "%$class%";
-        $stmt->bind_param('s', $likeClass);
+        $stmt->bindValue(':class', $class, PDO::PARAM_STR);
+        $stmt->bindValue(':exam', $exam, PDO::PARAM_STR);
         $stmt->execute();
-        $ret = $stmt->get_result();
 
-        if (!$ret) {
-            die("Query failed: " . $conn->error);
-        }
+        // Initialize an array to hold student data
+        $students = [];
 
-        $subjectOrder = [
-            'English', 'Science', 'Owop', 'R.M.E', 'History', 
-            'Computing', 'Creative', 'Twi', 'French'
-        ];
-
-        $totalScores = [];
-        while ($row1 = $ret->fetch_assoc()) {
-            $admission_number = $row1["admission_number"];
-            $studentName = $row1["name"];
-            $photoPath = $row1["photo"];
-
-            $sqlm = "SELECT average FROM marks WHERE admission_number = ? AND examname = ?";
-            $stmtm = $conn->prepare($sqlm);
-            $stmtm->bind_param('ss', $admission_number, $exam);
-            $stmtm->execute();
-            $retm = $stmtm->get_result();
-
-            $totalScore = 0;
-            $subjectCount = 0;
-
-            while ($row = $retm->fetch_assoc()) {
-                $average = $row["average"];
-                $totalScore += $average;
-                $subjectCount++;
+        // Fetch all data into the students array
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $admno = $row["admission_number"];
+            
+            // Initialize student info if not already set
+            if (!isset($students[$admno])) {
+                $students[$admno]['name'] = $row["student"];
+                $students[$admno]['photo'] = $row["photo"]; // Include the photo
+                $students[$admno]['marks'] = [];
             }
 
-            $totalScores[$admission_number] = [
-                'total' => $totalScore,
-                'student' => $studentName,
-                'subjectCount' => $subjectCount,
-                'photo' => $photoPath
+            // Add subject marks
+            $students[$admno]['marks'][] = [
+                'subject' => $row["subject"],
+                'class_score' => $row["class_score"],
+                'exam_score' => $row["exam_score"],
+                'average' => $row["average"],
+                'remarks' => $row["remarks"],
+                'position' => $row["position"]
             ];
-            $stmtm->close();
         }
 
-        arsort($totalScores);
-        $ret->data_seek(0); // Reset the result set
-
-        foreach ($totalScores as $admission_number => $data) {
-            // Student Report Header
-            $this->SetFont('Helvetica', 'B', 16);
-            $this->SetTextColor($this->primaryColor[0], $this->primaryColor[1], $this->primaryColor[2]);
-            $this->Cell(0, 10, 'STUDENT PROGRESS REPORT', 0, 1, 'C');
-            $this->SetFont('Helvetica', '', 12);
-            $this->SetTextColor(0, 0, 0);
-            $this->Cell(0, 6, 'Terminal Assessment - ' . $exam, 0, 1, 'C');
-            $this->Ln(1);
-
-            // Student Photo and Info Section
-            $this->SetFillColor($this->secondaryColor[0], $this->secondaryColor[1], $this->secondaryColor[2]);
-            $this->RoundedRect(10, $this->GetY(), 190, 30, 5, 'F');
-
+        // Generate reports for each student
+        foreach ($students as $admno => $data) {
+            $this->Ln(-10); // Move up by 10 units (adjust as needed)
+            $this->SetFont('Arial', 'BU', 16);
+            $this->Cell(190, 10, 'PUPIL\'S TERMINAL REPORT', 0, 0, 'C'); // Use standard apostrophe
+            $this->Ln();
+            
+            // Display the photo
             if (!empty($data['photo']) && file_exists($data['photo'])) {
-                $this->Image($data['photo'], 15, $this->GetY() + 5, 20, 20);
+                $this->Image($data['photo'], 11, 15, 26, 20); // Display the photo
             } else {
-                $this->SetFillColor(200, 200, 200);
-                $this->Rect(15, $this->GetY() + 5, 20, 20, 'F');
+                // If no photo is available, display a grey placeholder
+                $this->SetFillColor(200, 200, 200); // Set fill color to grey
+                $this->Rect(11, 15, 26, 20, 'F'); // Draw a filled rectangle as a placeholder
             }
 
-            $this->SetXY(40, $this->GetY() + 5);
-            $this->SetFont('Helvetica', 'B', 14);
-            $this->Cell(50, 7, 'Name:', 0, 0, 'L');
-            $this->SetFont('Helvetica', '', 14);
-            $this->Cell(100, 7, $data['student'], 0, 1, 'L');
-
-            $this->SetX(40);
-            $this->SetFont('Helvetica', 'B', 12);
-            $this->Cell(50, 7, 'Class:', 0, 0, 'L');
-            $this->SetFont('Helvetica', '', 12);
-            $this->Cell(50, 7, $class, 0, 0, 'L');
-
-            $this->SetFont('Helvetica', 'B', 12);
-            $this->Cell(30, 7, 'Term Ends:', 0, 0, 'L');
-            $this->SetFont('Helvetica', '', 12);
-            $this->Cell(50, 7, '17th April, 2025', 0, 1, 'L');
-
-            $this->SetX(40);
-            $this->SetFont('Helvetica', 'B', 12);
-            $this->Cell(50, 7, 'Admission No:', 0, 0, 'L');
-            $this->SetFont('Helvetica', '', 12);
-            $this->Cell(50, 7, $admission_number, 0, 0, 'L');
-
-            $this->SetFont('Helvetica', 'B', 12);
-            $this->Cell(30, 7, 'Resumes:', 0, 0, 'L');
-            $this->SetFont('Helvetica', '', 12);
-            $this->Cell(50, 7, '6th May, 2025', 0, 1, 'L');
-
-            $this->Ln(7);
-
-            // Academic Performance Table
-            $this->SetFillColor($this->primaryColor[0], $this->primaryColor[1], $this->primaryColor[2]);
-            $this->SetTextColor(255, 255, 255);
-            $this->SetFont('Helvetica', 'B', 11);
-
-            $header = ['SUBJECT', 'CLASS(50%)', 'EXAM(50%)', 'TOTAL(100%)', 'GRADE', 'REMARKS', 'POSITION'];
-            $w = [30, 25, 25, 25, 20, 40, 25];
-
-            for ($i=0; $i<count($header); $i++)
-                $this->Cell($w[$i], 8, $header[$i], 1, 0, 'C', true);
+            // Student details section
+            $this->SetFont('Times', '', 12);
+            $this->Cell(35, 10, 'Name:', 0, 0, 'L');
+            $this->SetFont('Times', 'B', 12); // Set to bold
+            $this->Cell(10, 10, $data['name'], 0, 0, 'L');
+            $this->SetFont('Times', '', 12); // Reset to normal
             $this->Ln();
 
-            $this->SetTextColor(0, 0, 0);
-            $this->SetFont('Helvetica', '', 10);
+            // Now display the class in bold
+            $this->SetFont('Times', '', 12);
+            $this->Cell(35, 10, 'Class :', 0, 0, 'L');
+            $this->SetFont('Times', 'B', 13); // Set to bold
+            $this->Cell(70, 10, $class, 0, 0, 'L');
+            $this->SetFont('Times', '', 12); // Reset to normal
+            $this->Cell(30, 10, 'Exam :', 0, 0, 'L');
+            $this->SetFont('Times', 'B', 12); // Set to bold
+            $this->Cell(76, 10, $exam, 0, 0, 'L');
+            $this->SetFont('Times', '', 12); // Reset to normal
+            $this->Ln();
 
-            $sqlm = "SELECT subject, midterm, endterm, average, remarks, position FROM marks WHERE admission_number = ? AND examname = ?";
-            $stmtm2 = $conn->prepare($sqlm);
-            $stmtm2->bind_param('ss', $admission_number, $exam);
-            $stmtm2->execute();
-            $retm2 = $stmtm2->get_result();
+            $this->SetFont('Times', '', 12);
+            $this->Cell(50, 10, 'Term Ending:', 0, 0, 'L');
+            $this->SetFont('Times', 'B', 12); // Set to bold for the date
+            $this->Cell(50, 10, '7th August, 2025', 0, 0, 'L'); // Bold date
+            $this->SetFont('Times', '', 12); // Reset to normal
+            $this->Cell(50, 10, 'Next term begins: ', 0, 0, 'L'); // Normal text
+            $this->SetFont('Times', 'B', 12); // Set to bold for the date
+            $this->Cell(50, 10, '2nd September,2025', 0, 0, 'L'); // Bold date
+            $this->SetFont('Times', '', 12); // Reset to normal
+            $this->Ln(); // Add an extra line
 
-            $subjects = [];
-            while ($row = $retm2->fetch_assoc()) {
-                $subjects[] = $row;
-            }
-            $stmtm2->close();
+            // Table headers for subject and marks
+            $this->SetFont('Times', 'B', 12);
+            $this->Cell(27, 8, 'SUBJECT', 1, 0, 'C'); // Reduced width
+            $this->Cell(30, 8, 'CLASS (50%)', 1, 0, 'C'); // Reduced width
+            $this->Cell(30, 8, 'EXAM (50%)', 1, 0, 'C'); // Reduced width
+            $this->Cell(30, 8, 'TOTAL (100%)', 1, 0, 'C'); // Reduced width
+            $this->Cell(25, 8, 'GRADE', 1, 0, 'C'); // Reduced width
+            $this->Cell(30, 8, 'REMARKS', 1, 0, 'C'); // Reduced width
+            $this->Cell(25, 8, 'POSITION', 1, 0, 'C'); // Restored Position column
+            $this->Ln();
 
-            usort($subjects, function($a, $b) use ($subjectOrder) {
-                $posA = array_search($a['subject'], $subjectOrder);
-                $posB = array_search($b['subject'], $subjectOrder);
-                return $posA - $posB;
-            });
+            // Populate the table with subject data
+            foreach ($data['marks'] as $row) {
+                $this->SetFont('Arial', '', 10);
+                $subject = $row["subject"]; // No decryption needed
+                $classScore = $row["class_score"]; // No decryption needed
+                $examScore = $row["exam_score"]; // No decryption needed
+                $average = $row["average"]; // No decryption needed
+                $originalPosition = $row["position"]; // Fetch the original position without decryption
 
-            foreach ($subjects as $row) {
-                $subject = $row["subject"];
-                $midterm = $row["midterm"];
-                $endterm = $row["endterm"];
-                $average = $row["average"];
-                $originalPosition = $row["position"];
+                $this->Cell(27, 7, $subject, 1, 0, 'C'); // Reduced height
+                $this->Cell(30, 7, $classScore, 1, 0, 'C'); // Reduced height
+                $this->Cell(30, 7, $examScore, 1, 0, 'C'); // Reduced height
+                $this->Cell(30, 7, $average, 1, 0, 'C'); // Reduced height
 
-                $this->Cell($w[0], 7, $subject, 'LRB', 0, 'C');
-                $this->Cell($w[1], 7, $midterm, 'RB', 0, 'C');
-                $this->Cell($w[2], 7, $endterm, 'RB', 0, 'C');
-                $this->Cell($w[3], 7, $average, 'RB', 0, 'C');
-
+                // Display the grade and remarks
                 if ($average >= 80) {
-                    $grade = 'A'; $remarks = 'Superb';
+                    $grade = 'A';
+                    $remarks = 'Excellent';
                 } elseif ($average >= 70) {
-                    $grade = 'B'; $remarks = 'Outstanding';
+                    $grade = 'B';
+                    $remarks = 'Very Good';
                 } elseif ($average >= 60) {
-                    $grade = 'C'; $remarks = 'Commendable';
+                    $grade = 'C';
+                    $remarks = 'Good';
                 } elseif ($average >= 50) {
-                    $grade = 'D'; $remarks = 'Capable';
+                    $grade = 'D';
+                    $remarks = 'Average';
                 } elseif ($average >= 40) {
-                    $grade = 'E'; $remarks = 'Developing';
+                    $grade = 'E';
+                    $remarks = 'Credit';
                 } else {
-                    $grade = 'F'; $remarks = 'Emerging';
+                    $grade = 'F';
+                    $remarks = 'Weak';
                 }
+                // Set font to bold for Grade
+                $this->SetFont('Arial', 'B', 10);
+                $this->Cell(25, 7, $grade, 1, 0, 'C'); // Grade
+                $this->SetFont('Arial', '', 10); // Reset font to normal for remarks
+                $this->Cell(30, 7, $remarks, 1, 0, 'C'); // Remarks
 
-                $this->SetFont('Helvetica', 'B', 10);
-                $this->Cell($w[4], 7, $grade, 'RB', 0, 'C');
-                $this->SetFont('Helvetica', '', 10);
-                $this->Cell($w[5], 7, $remarks, 'RB', 0, 'C');
-                $this->SetFont('Helvetica', 'B', 10);
-
+                // Set font to bold for Position
+                $this->SetFont('Arial', 'B', 10);
                 if (is_numeric($originalPosition) && $originalPosition > 0) {
-                    $this->Cell($w[6], 7, ordinal($originalPosition), 'RB', 0, 'C');
+                    $this->Cell(25, 7, ordinal($originalPosition), 1, 0, 'C'); // Display the original position with ordinal
                 } else {
-                    $this->Cell($w[6], 7, 'N/A', 'RB', 0, 'C');
+                    $this->Cell(25, 7, 'N/A', 1, 0, 'C'); // Handle invalid position
                 }
                 $this->Ln();
             }
 
-             // Grading Key
-            $this->Ln(5);
-            $this->SetFillColor($this->secondaryColor[0], $this->secondaryColor[1], $this->secondaryColor[2]);
-            $this->RoundedRect(10, $this->GetY(), 190, 15, 3, 'F');
+            // Grading System Section - Moved directly under the position
+            $this->SetFont('Arial', 'BU', 14);
+            $this->Cell(0, 10, 'GRADING SYSTEM', 0, 1, 'C');
+            $this->SetFont('Times', 'B', 11);
+            $this->Cell(0, 10, 'A - Excellent (80 - 100)               B - Very Good (70 - 79)               C - Good (60 - 69)', 0, 1, 'C');
+            $this->Cell(0, 10, '     D - Average (50 - 59)                           E - Credit (40 - 44)                         F - Weak(39 and below)', 0, 1, 'C');
+            $this->SetLineWidth(0.5); // Thicker line
+            $this->Line(10, $this->GetY(), 200, $this->GetY()); // Add a line under grading system
             
-            $this->SetFont('Helvetica', 'B', 11);
-            $this->SetXY(10, $this->GetY() + 3);
-            $this->Cell(190, 2, 'GRADING KEY', 0, 1, 'C');
+            // Attendance, Out of, and Promoted to Section - Directly under the Total Score and Position
+            $this->Ln(3); // Adjust as needed for spacing
+            $this->SetFont('Times', 'B', 12);
+            $this->Cell(35, 10, 'Attendance:', 0, 0, 'L');
+            $this->Cell(35, 10, '______', 0, 0, 'L');
+            $this->Cell(35, 10, 'Out of:', 0, 0, 'L');
+            $this->Cell(35, 10, '______', 0, 0, 'L');
+            $this->Cell(35, 10, 'Promoted to: Basic 8', 0, 0, 'L');
+            $this->Cell(35, 10, '', 0, 1, 'L'); // Empty cell for spacing
+            $this->Ln(1); // Adjust as needed for spacing
+
+            // Remarks Section
+            $remarks = $this->getRemarks();  // Use the new random remark selection
+            $this->SetFont('Times', 'B', 12);
+            $this->Cell(35, 4, 'Remarks:', 0, 0, 'L');
+            $this->SetFont('Times', '', 12);
+            $this->MultiCell(0, 4, $remarks, 0, 'L');
+            $this->Ln();
+
+            // Conduct Remark Section
+            $conductRemark = $conductRemarks[array_rand($conductRemarks)]; // Random conduct remark
+            $this->SetFont('Times', 'B', 12);
+            $this->Cell(35, 4, 'Conduct:', 0, 0, 'L');
+            $this->SetFont('Times', '', 12);
+            $this->MultiCell(0, 4, $conductRemark, 0, 'L');
+            $this->Ln(2);
+
+            // Add the signatures 
+            $this->SetFont('Times', 'B', 12);
+            $this->Cell(80, 8, 'Class teacher\'s signature:', 0, 0, 'L'); 
+            $this->Cell(80, 8, 'Headmistress\'s signature:', 0, 1, 'L'); 
+
+            // Set specific Y position for the signatures
+            $signatureY = $this->GetY() - 10;
+
+            // Add signature placeholders
+            $this->SetFont('Arial', 'I', 8);
             
-            $this->SetFont('Helvetica', '', 10);
-            $this->SetXY(10, $this->GetY() + 2);
-            $this->Cell(38, 5, 'A (80-100) = Superb', 0, 0, 'C');
-            $this->Cell(38, 5, 'B (70-79) = Commendable', 0, 0, 'C');
-            $this->Cell(38, 5, 'C (60-69) = Capable', 0, 0, 'C');
-            $this->Cell(38, 5, 'D (50-59) = Developing', 0, 0, 'C');
-            $this->Cell(38, 5, 'E (40-49) = Emerging', 0, 1, 'C');
-            $this->Ln(3);
-
-            // Skills Assessment Section
-            $this->SetFont('Helvetica', 'B', 11);
-            $this->Cell(0, 7, 'SKILLS ASSESSMENT', 0, 1, 'L');
-            $this->Ln(0);
+            // Class teacher signature placeholder
+            $this->SetXY(50, $signatureY);
+            $this->Cell(40, 5, '', 0, 0, 'C');
             
-            // Updated skills array and order as per request:
-            $skills = [
-                'Time Management' => rand(60, 100),
-                'Critical Thinking' => rand(60, 100),
-                'Creativity' => rand(60, 100),
-                'Collaboration' => rand(60, 100),
-                'Behaviour' => rand(60, 100),
+            // Headmistress signature placeholder
+            $this->SetXY(130, $signatureY);
+            $this->Cell(40, 5, '', 0, 0, 'C');
 
-                
-            ];
-            
-           // Draw circular progress bars
-$radius = 12;
-$startX = 30;
-$yPos = $this->GetY();
-$spacing = 38;
-$skillsPerRow = 5;
-$skillCount = 0;
+            // Determine which image to insert based on the class
+            $imagePath = '';
+            switch(strtolower($class)) {
+                case 'basic 3b':
+                    $imagePath = 'lion.png';
+                    break;
+                case 'basic 3a':
+                    $imagePath = 'free.png';
+                    break;
+                case 'basic 6':
+                    $imagePath = 'ern.png';
+                    break;
+                default:
+                    $imagePath = 'new.jpg';
+            }
 
-foreach ($skills as $skill => $value) {
-    $this->drawCircularProgress($startX, $yPos + $radius + 10, $radius, $value, $skill);
-    $startX += $spacing;
-    $skillCount++;
+                        // Insert the appropriate image for headmistress signature based on class
+            $signatureImage = '';
+            switch(strtolower(trim($class))) {
+                case 'basic 3b':
+                    $signatureImage = 'new.jpg';
+                    break;
+                case 'basic 3a':
+                    $signatureImage = 'new.jpg';
+                    break;
+                case 'basic 6':
+                    $signatureImage = 'ern.png';
+                    break;
+                default:
+                    $signatureImage = 'new.jpg';
+            }
 
-    if ($skillCount % $skillsPerRow == 0) {
-        $startX = 30;
-        $yPos += $radius * 2 + 1;
-        $this->SetY($yPos + $radius + 14);
+           // Verify image exists before inserting
+if (file_exists($signatureImage)) {
+    $this->Image($signatureImage, 140, $signatureY - 5, 25, 15); // Position next to signature
+} else {
+    // Fallback to default image if specified image doesn't exist
+    if (file_exists('new.jpg')) {
+        // Moved further right (changed X from 130 to 160)
+        $this->Image('new.jpg', 140, $signatureY - 2, 17, 15);
+    } else {
+        // If no image is available, just show the signature line
+        $this->SetXY(130, $signatureY);
+        $this->Cell(40, 5, '', 0, 0, 'C');
     }
 }
 
-// Set Y position to be just below the progress circles
-$this->SetY($yPos + $radius * 1 + 2);
-
-// Attendance and Promotion Section
-
-$this->SetFont('Helvetica', 'B', 11);
-$this->SetXY(15, $this->GetY() + 1);
-$this->Cell(40, 5, 'Attendance:', 0, 0, 'L');
-$this->SetFont('Helvetica', '', 11);
-$this->Cell(20, 5, '______', 0, 0, 'L');
-
-$this->SetFont('Helvetica', 'B', 11);
-$this->Cell(40, 5, 'Out of:', 0, 0, 'L');
-$this->SetFont('Helvetica', '', 11);
-$this->Cell(20, 5, '______', 0, 0, 'L');
-
-$this->SetFont('Helvetica', 'B', 11);
-$this->Cell(40, 5, 'Promoted to:', 0, 0, 'L');
-$this->SetFont('Helvetica', '', 11);
-$this->Cell(20, 5, '______', 0, 1, 'L');
-$this->Ln(1);
-
-// Comments Section
-$this->SetFont('Helvetica', 'B', 12);
-$this->Cell(40, 7, 'Teacher Remarks:', 0, 0, 'L');
-$this->SetFont('Helvetica', '', 11);
-$this->MultiCell(0, 7, $this->getRemarks(), 0, 'L');
-
-$this->SetFont('Helvetica', 'B', 12);
-$this->Cell(40, 7, 'Conduct:', 0, 0, 'L');
-$this->SetFont('Helvetica', '', 11);
-$this->MultiCell(0, 7, getRandomConductRemark($conductRemarks), 0, 'L');
-
-// Signature Line
-$this->SetFont('Helvetica', 'B', 11);
-$this->Cell(0, 5, 'Class Teacher: ____________________                Headteacher signature ___________________', 0, 1, 'L');
-
-            // Add new page for next student
+            // Requirements table
+            $this->Ln(10);
+            $this->SetFont('Arial', 'B', 10);
+            $this->Cell(95, 7, 'REQUIREMENT FOR NEXT TERM', 1, 0, 'C');
+            $this->Cell(95, 7, 'MANAGEMENT', 1, 1, 'C');
+            
+            $this->SetFont('Times', '', 10);
+            $this->MultiCell(95, 5, "SCHOOL FEES: GHC 250\n A4 sheet 1\nDETOL: 1 (CAMEL)\nTOILET ROLL 3, TOILET SOAP 2\nFEEDING FEE: GHC 7.00", 1, 'L');
+            
+            $currentY = $this->GetY();
+            $this->SetXY(105, $currentY - 25);
+            $this->MultiCell(95, 6, "WITH OUR SINCEREST THANKSGIVING TO PARENTS AND STAKEHOLDERS OF THE SCHOOL, WE LOOK FORWARD TO WORKING WITH YOU NEXT TERM. MAY GOD BLESS YOU.", 1, 'L');
+            
+            $this->Ln(5); // Add space after management text
+            
+            // Add a new page for next student report
             $this->AddPage();
         }
     }
-    
-    // Helper function for rounded rectangles
-    function RoundedRect($x, $y, $w, $h, $r, $style = '') {
-        $k = $this->k;
-        $hp = $this->h;
-        if($style=='F')
-            $op='f';
-        elseif($style=='FD' || $style=='DF')
-            $op='B';
-        else
-            $op='S';
-        $MyArc = 4/3 * (sqrt(2) - 1);
-        $this->_out(sprintf('%.2F %.2F m',($x+$r)*$k,($hp-$y)*$k ));
-        $xc = $x+$w-$r ;
-        $yc = $y+$r;
-        $this->_out(sprintf('%.2F %.2F l', $xc*$k,($hp-$y)*$k ));
-        
-        $this->_Arc($xc + $r*$MyArc, $yc - $r, $xc + $r, $yc - $r*$MyArc, $xc + $r, $yc);
-        $xc = $x+$w-$r ;
-        $yc = $y+$h-$r;
-        $this->_out(sprintf('%.2F %.2F l',($x+$w)*$k,($hp-$yc)*$k));
-        $this->_Arc($xc + $r, $yc + $r*$MyArc, $xc + $r*$MyArc, $yc + $r, $xc, $yc + $r);
-        $xc = $x+$r ;
-        $yc = $y+$h-$r;
-        $this->_out(sprintf('%.2F %.2F l',$xc*$k,($hp-($y+$h))*$k));
-        $this->_Arc($xc - $r*$MyArc, $yc + $r, $xc - $r, $yc + $r*$MyArc, $xc - $r, $yc);
-        $xc = $x+$r ;
-        $yc = $y+$r;
-        $this->_out(sprintf('%.2F %.2F l',($x)*$k,($hp-$yc)*$k ));
-        $this->_Arc($xc - $r, $yc - $r*$MyArc, $xc - $r*$MyArc, $yc - $r, $xc, $yc - $r);
-        $this->_out($op);
-    }
-    
-    function _Arc($x1, $y1, $x2, $y2, $x3, $y3) {
-        $h = $this->h;
-        $this->_out(sprintf('%.2F %.2F %.2F %.2F %.2F %.2F c', $x1*$this->k, ($h-$y1)*$this->k,
-            $x2*$this->k, ($h-$y2)*$this->k, $x3*$this->k, ($h-$y3)*$this->k));
-    }
 }
 
-$pdf = new mypdf();
-$pdf->AliasNbPages();
-$pdf->AddPage('P', 'A4', 0);
-$pdf->headertable();
-$pdf->Output();
-ob_end_flush();
+// Check if form is submitted and generate PDF
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Create new PDF instance
+    $pdf = new mypdf();
+    $pdf->AliasNbPages();
+    $pdf->AddPage('P', 'A4', 0);
+    $pdf->headertable($conn);
+    
+    // Output the PDF inline in the browser
+    $pdf->Output('student_report.pdf', 'I'); // 'I' shows in browser
+    
+    // Flush the output buffer
+    ob_end_flush();
+} else {
+    die("Invalid request method.");
+}
 ?>
