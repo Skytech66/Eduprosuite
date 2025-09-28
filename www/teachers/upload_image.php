@@ -23,30 +23,19 @@ try {
     die("Connection failed: " . $e->getMessage());
 }
 
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['images']) && isset($_POST['iduser'])) {
     $images = $_FILES['images'];
     $students = $_POST['iduser'];
 
-    $uploadDir = 'uploads/';
-    if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0777, true);
-    }
-
     foreach ($students as $index => $studentId) {
         if (!empty($images['tmp_name'][$index])) {
             $tmpName = $images['tmp_name'][$index];
-            $originalName = basename($images['name'][$index]);
-            $ext = pathinfo($originalName, PATHINFO_EXTENSION);
-            $newFileName = uniqid('img_') . '.' . $ext;
-            $destination = $uploadDir . $newFileName;
-
-            if (move_uploaded_file($tmpName, $destination)) {
+            $imageData = file_get_contents($tmpName);
+            if ($imageData !== false) {
+                $base64 = base64_encode($imageData);
                 $stmt = $conn->prepare("UPDATE marks SET photo = :photo WHERE student = :student");
                 $stmt->execute([
-                    'photo' => $destination,
+                    'photo' => $base64,
                     'student' => $studentId
                 ]);
             }
