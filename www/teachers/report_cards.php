@@ -44,33 +44,43 @@ function ordinal($number) {
 require "fpdf.php";
 
 class mypdf extends FPDF {
+    var $config; // Property to hold report config
+
+    function setConfig($config) {
+        $this->config = $config;
+    }
+
     function header() {
         // Add the watermark image
         $this->addWatermark();
 
         // Header text with no background color
-        $this->SetFont('Times', 'B', 26);
+        $this->SetFont('Arial', 'B', 26);
         $this->Cell(190, 8, '', 0, 0, 'C');
         $this->Ln();
-        // Removed the logo image 'bob.png'
+        // Add the logo image at the centered position
+        $logoWidth = 150; // Width of the logo
+        $this->Image('bob.png', 40, 12, $logoWidth, 23); // Adjusted X position to 40 and Y position to 3
 
         // Add a small line break to move the address down
         $this->Ln(11); // Adjust this value to control the spacing
 
-        // Add the address directly under the logo
+        // Display school name as header (larger font)
+        $this->SetFont('Times', 'B', 14);
+        $this->Cell(190, 10, $this->config['school_name'], 0, 0, 'C');
+        $this->Ln();
+
+        // Add the po_box and address from config
         $this->SetFont('Times', 'B', 11);
-        $this->Cell(190, 10, 'P.M.B 40, Madina', 0, 0, 'C'); // Address
-        $this->Ln(); // Line break after the address
-
-        $this->Cell(190, 10, 'TEL: 0277411866 / 0541622751', 0, 0, 'C');
+        $this->Cell(190, 10, $this->config['po_box'], 0, 0, 'C'); // po_box
         $this->Ln();
 
-        $this->Cell(190, 10, 'LOCATION: Abokobi / Boi New Town', 0, 0, 'C');
+        $this->Cell(190, 10, $this->config['address'], 0, 0, 'C'); // address
         $this->Ln();
 
-        // Draw the line under LOCATION
+        // Draw the line under address
         $this->SetLineWidth(1); // Thicker line
-        $this->Line(10, $this->GetY(), 200, $this->GetY()); // Line under location
+        $this->Line(10, $this->GetY(), 200, $this->GetY()); // Line under address
         $this->Ln(); // Add a line break after the line
     }
 
@@ -82,7 +92,7 @@ class mypdf extends FPDF {
     function footer() {
         // Footer content can be added here if needed
         $this->SetY(-15);
-        $this->SetFont('Times', 'I', 8);
+        $this->SetFont('Arial', 'I', 8);
         $this->Cell(0, 10, 'Page ' . $this->PageNo(), 0, 0, 'C');
     }
 
@@ -242,7 +252,7 @@ class mypdf extends FPDF {
         // Generate reports for each student
         foreach ($students as $admno => $data) {
             $this->Ln(-10); // Move up by 10 units (adjust as needed)
-            $this->SetFont('Times', 'BU', 16);
+            $this->SetFont('Arial', 'BU', 16);
             $this->Cell(190, 10, 'PUPIL\'S TERMINAL REPORT', 0, 0, 'C'); // Use standard apostrophe
             $this->Ln();
             
@@ -278,11 +288,11 @@ class mypdf extends FPDF {
             $this->SetFont('Times', '', 12);
             $this->Cell(50, 10, 'Term Ending:', 0, 0, 'L');
             $this->SetFont('Times', 'B', 12); // Set to bold for the date
-            $this->Cell(50, 10, '7th August, 2025', 0, 0, 'L'); // Bold date
+            $this->Cell(50, 10, $this->config['term_ends'], 0, 0, 'L'); // Dynamic term_ends
             $this->SetFont('Times', '', 12); // Reset to normal
             $this->Cell(50, 10, 'Next term begins: ', 0, 0, 'L'); // Normal text
             $this->SetFont('Times', 'B', 12); // Set to bold for the date
-            $this->Cell(50, 10, '2nd September,2025', 0, 0, 'L'); // Bold date
+            $this->Cell(50, 10, $this->config['term_begins'], 0, 0, 'L'); // Dynamic term_begins
             $this->SetFont('Times', '', 12); // Reset to normal
             $this->Ln(); // Add an extra line
 
@@ -299,7 +309,7 @@ class mypdf extends FPDF {
 
             // Populate the table with subject data
             foreach ($data['marks'] as $row) {
-                $this->SetFont('Times', '', 10);
+                $this->SetFont('Arial', '', 10);
                 $subject = $row["subject"]; // No decryption needed
                 $classScore = $row["class_score"]; // No decryption needed
                 $examScore = $row["exam_score"]; // No decryption needed
@@ -332,13 +342,13 @@ class mypdf extends FPDF {
                     $remarks = 'Weak';
                 }
                 // Set font to bold for Grade
-                $this->SetFont('Times', 'B', 10);
+                $this->SetFont('Arial', 'B', 10);
                 $this->Cell(25, 7, $grade, 1, 0, 'C'); // Grade
-                $this->SetFont('Times', '', 10); // Reset font to normal for remarks
+                $this->SetFont('Arial', '', 10); // Reset font to normal for remarks
                 $this->Cell(30, 7, $remarks, 1, 0, 'C'); // Remarks
 
                 // Set font to bold for Position
-                $this->SetFont('Times', 'B', 10);
+                $this->SetFont('Arial', 'B', 10);
                 if (is_numeric($originalPosition) && $originalPosition > 0) {
                     $this->Cell(25, 7, ordinal($originalPosition), 1, 0, 'C'); // Display the original position with ordinal
                 } else {
@@ -347,8 +357,15 @@ class mypdf extends FPDF {
                 $this->Ln();
             }
 
-             // Grading System Section - Moved directly under the position
-            $this->SetFont('Times', 'BU', 14);
+            // Grading System Section - Moved directly under the position
+            $this->SetFont('Arial', 'BU', 14);
+            $this->Cell(0, 10, 'GRADING SYSTEM', 0, 1, 'C');
+            $this->SetFont('Times', 'B', 11);
+            $this->Cell(0, 10, 'A - Excellent (80 - 100)               B - Very Good (70 - 79)               C - Good (60 - 69)', 0, 1, 'C');
+            $this->Cell(0, 10, '     D - Average (50 - 59)                           E - Credit (40 - 44)                         F - Weak(39 and below)',
+
+            // Grading System Section - Moved directly under the position
+            $this->SetFont('Arial', 'BU', 14);
             $this->Cell(0, 10, 'GRADING SYSTEM', 0, 1, 'C');
             $this->SetFont('Times', 'B', 11);
             $this->Cell(0, 10, 'A - Excellent (80 - 100)               B - Very Good (70 - 79)               C - Good (60 - 69)', 0, 1, 'C');
@@ -392,7 +409,7 @@ class mypdf extends FPDF {
             $signatureY = $this->GetY() - 10;
 
             // Add signature placeholders
-            $this->SetFont('Times', 'I', 8);
+            $this->SetFont('Arial', 'I', 8);
             
             // Class teacher signature placeholder
             $this->SetXY(50, $signatureY);
@@ -451,7 +468,7 @@ if (file_exists($signatureImage)) {
 
             // Requirements table
             $this->Ln(10);
-            $this->SetFont('Times', 'B', 10);
+            $this->SetFont('Arial', 'B', 10);
             $this->Cell(95, 7, 'REQUIREMENT FOR NEXT TERM', 1, 0, 'C');
             $this->Cell(95, 7, 'MANAGEMENT', 1, 1, 'C');
             
@@ -487,3 +504,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     die("Invalid request method.");
 }
 ?>
+
