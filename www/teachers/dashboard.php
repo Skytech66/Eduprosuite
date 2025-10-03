@@ -1862,17 +1862,18 @@ $totalClasses = $row['tclasses'] ?? 0;
                 </a>
             </li>
             <li class="nav-item">
-                <a href="index.php?email_login" class="nav-link">
-                    <i class="fas fa-envelope"></i>
-                    <span class="nav-link-text">Emails</span>
-                </a>
-            </li>
-           <li class="nav-item">
+    <a href="email_login.php" class="nav-link">
+        <i class="fas fa-envelope"></i>
+        <span class="nav-link-text">Emails</span>
+    </a>
+</li>
+<li class="nav-item">
     <a href="config_report.php" class="nav-link">
         <i class="fas fa-comments"></i>
         <span class="nav-link-text">configure report</span>
     </a>
 </li>
+
             <!-- Generate Reports Dropdown -->
             <li class="nav-item">
                 <a class="nav-link dropdown-toggle" href="#pageSubmenu" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="pageSubmenu">
@@ -2420,4 +2421,3 @@ $totalClasses = $row['tclasses'] ?? 0;
 </script>
 </body>
 </html>
-
