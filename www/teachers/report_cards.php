@@ -364,14 +364,15 @@ class mypdf extends FPDF {
             $this->Cell(0, 10, 'A - Excellent (80 - 100)               B - Very Good (70 - 79)               C - Good (60 - 69)', 0, 1, 'C');
             $this->Cell(0, 10, '     D - Average (50 - 59)                           E - Credit (40 - 44)                         F - Weak(39 and below)',
 
-            // Grading System Section - Moved directly under the position
-            $this->SetFont('Arial', 'BU', 14);
-            $this->Cell(0, 10, 'GRADING SYSTEM', 0, 1, 'C');
-            $this->SetFont('Times', 'B', 11);
-            $this->Cell(0, 10, 'A - Excellent (80 - 100)               B - Very Good (70 - 79)               C - Good (60 - 69)', 0, 1, 'C');
-            $this->Cell(0, 10, '     D - Average (50 - 59)                           E - Credit (40 - 44)                         F - Weak(39 and below)', 0, 1, 'C');
-            $this->SetLineWidth(0.5); // Thicker line
-            $this->Line(10, $this->GetY(), 200, $this->GetY()); // Add a line under grading system
+           // Grading System Section - Moved directly under the position
+$this->SetFont('Arial', 'BU', 14);
+$this->Cell(0, 10, 'GRADING SYSTEM', 0, 1, 'C');
+$this->SetFont('Times', 'B', 11);
+$this->Cell(0, 10, 'A - Excellent (80 - 100)               B - Very Good (70 - 79)               C - Good (60 - 69)', 0, 1, 'C');
+$this->Cell(0, 10, 'D - Average (50 - 59)               E - Credit (40 - 44)               F - Weak (39 and below)', 0, 1, 'C');
+$this->SetLineWidth(0.5); // Thicker line
+$this->Line(10, $this->GetY(), 200, $this->GetY()); // Add a line under grading system
+
             
             // Attendance, Out of, and Promoted to Section - Directly under the Total Score and Position
             $this->Ln(3); // Adjust as needed for spacing
@@ -504,4 +505,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     die("Invalid request method.");
 }
 ?>
+
 
