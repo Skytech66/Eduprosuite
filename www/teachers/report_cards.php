@@ -44,7 +44,7 @@ function ordinal($number) {
 require "fpdf.php";
 
 class mypdf extends FPDF {
-    var $config; // Property to hold report config
+    var $config = array(); // Property to hold config data
 
     function setConfig($config) {
         $this->config = $config;
@@ -65,22 +65,35 @@ class mypdf extends FPDF {
         // Add a small line break to move the address down
         $this->Ln(11); // Adjust this value to control the spacing
 
-        // Display school name as header (larger font)
-        $this->SetFont('Times', 'B', 14);
-        $this->Cell(190, 10, $this->config['school_name'], 0, 0, 'C');
+        // Add the school name (fetched from config)
+        if (isset($this->config['school_name']) && !empty($this->config['school_name'])) {
+            $this->SetFont('Times', 'B', 14);
+            $this->Cell(190, 10, $this->config['school_name'], 0, 0, 'C');
+            $this->Ln();
+        }
+
+        // Add the PO Box and Address (combined, fetched from config) directly under the logo/school name
+        if (isset($this->config['po_box']) && isset($this->config['address'])) {
+            $this->SetFont('Times', 'B', 11);
+            $addressLine = $this->config['po_box'] . ', ' . $this->config['address'];
+            $this->Cell(190, 10, $addressLine, 0, 0, 'C'); // PO Box and Address combined
+            $this->Ln(); // Line break after the address
+        } else {
+            // Fallback to hardcoded if config not available (for safety)
+            $this->SetFont('Times', 'B', 11);
+            $this->Cell(190, 10, 'P.M.B 40, Madina', 0, 0, 'C'); // Original hardcoded
+            $this->Ln();
+        }
+
+        $this->Cell(190, 10, 'TEL: 0277411866 / 0541622751', 0, 0, 'C');
         $this->Ln();
 
-        // Add the po_box and address from config
-        $this->SetFont('Times', 'B', 11);
-        $this->Cell(190, 10, $this->config['po_box'], 0, 0, 'C'); // po_box
+        $this->Cell(190, 10, 'LOCATION: Abokobi / Boi New Town', 0, 0, 'C');
         $this->Ln();
 
-        $this->Cell(190, 10, $this->config['address'], 0, 0, 'C'); // address
-        $this->Ln();
-
-        // Draw the line under address
+        // Draw the line under LOCATION
         $this->SetLineWidth(1); // Thicker line
-        $this->Line(10, $this->GetY(), 200, $this->GetY()); // Line under address
+        $this->Line(10, $this->GetY(), 200, $this->GetY()); // Line under location
         $this->Ln(); // Add a line break after the line
     }
 
@@ -288,11 +301,15 @@ class mypdf extends FPDF {
             $this->SetFont('Times', '', 12);
             $this->Cell(50, 10, 'Term Ending:', 0, 0, 'L');
             $this->SetFont('Times', 'B', 12); // Set to bold for the date
-            $this->Cell(50, 10, $this->config['term_ends'], 0, 0, 'L'); // Dynamic term_ends
+            // Use fetched term ends (fallback to hardcoded if not available)
+            $termEnds = isset($this->config['term ends']) ? $this->config['term ends'] : '7th August, 2025';
+            $this->Cell(50, 10, $termEnds, 0, 0, 'L'); // Bold date
             $this->SetFont('Times', '', 12); // Reset to normal
             $this->Cell(50, 10, 'Next term begins: ', 0, 0, 'L'); // Normal text
             $this->SetFont('Times', 'B', 12); // Set to bold for the date
-            $this->Cell(50, 10, $this->config['term_begins'], 0, 0, 'L'); // Dynamic term_begins
+            // Use fetched term begins (fallback to hardcoded if not available)
+            $termBegins = isset($this->config['term begins']) ? $this->config['term begins'] : '2nd September,2025';
+            $this->Cell(50, 10, $termBegins, 0, 0, 'L'); // Bold date
             $this->SetFont('Times', '', 12); // Reset to normal
             $this->Ln(); // Add an extra line
 
@@ -345,7 +362,7 @@ class mypdf extends FPDF {
                 $this->SetFont('Arial', 'B', 10);
                 $this->Cell(25, 7, $grade, 1, 0, 'C'); // Grade
                 $this->SetFont('Arial', '', 10); // Reset font to normal for remarks
-                $this->Cell(30, 7, $remarks, 1, 0, 'C'); // Remarks
+                 $this->Cell(30, 7, $remarks, 1, 0, 'C'); // Remarks
 
                 // Set font to bold for Position
                 $this->SetFont('Arial', 'B', 10);
@@ -362,17 +379,9 @@ class mypdf extends FPDF {
             $this->Cell(0, 10, 'GRADING SYSTEM', 0, 1, 'C');
             $this->SetFont('Times', 'B', 11);
             $this->Cell(0, 10, 'A - Excellent (80 - 100)               B - Very Good (70 - 79)               C - Good (60 - 69)', 0, 1, 'C');
-            $this->Cell(0, 10, '     D - Average (50 - 59)                           E - Credit (40 - 44)                         F - Weak(39 and below)',
-
-           // Grading System Section - Moved directly under the position
-$this->SetFont('Arial', 'BU', 14);
-$this->Cell(0, 10, 'GRADING SYSTEM', 0, 1, 'C');
-$this->SetFont('Times', 'B', 11);
-$this->Cell(0, 10, 'A - Excellent (80 - 100)               B - Very Good (70 - 79)               C - Good (60 - 69)', 0, 1, 'C');
-$this->Cell(0, 10, 'D - Average (50 - 59)               E - Credit (40 - 44)               F - Weak (39 and below)', 0, 1, 'C');
-$this->SetLineWidth(0.5); // Thicker line
-$this->Line(10, $this->GetY(), 200, $this->GetY()); // Add a line under grading system
-
+            $this->Cell(0, 10, '     D - Average (50 - 59)                           E - Credit (40 - 44)                         F - Weak(39 and below)', 0, 1, 'C');
+            $this->SetLineWidth(0.5); // Thicker line
+            $this->Line(10, $this->GetY(), 200, $this->GetY()); // Add a line under grading system
             
             // Attendance, Out of, and Promoted to Section - Directly under the Total Score and Position
             $this->Ln(3); // Adjust as needed for spacing
@@ -436,7 +445,7 @@ $this->Line(10, $this->GetY(), 200, $this->GetY()); // Add a line under grading 
                     $imagePath = 'new.jpg';
             }
 
-                        // Insert the appropriate image for headmistress signature based on class
+            // Insert the appropriate image for headmistress signature based on class
             $signatureImage = '';
             switch(strtolower(trim($class))) {
                 case 'basic 3b':
@@ -452,20 +461,20 @@ $this->Line(10, $this->GetY(), 200, $this->GetY()); // Add a line under grading 
                     $signatureImage = 'new.jpg';
             }
 
-           // Verify image exists before inserting
-if (file_exists($signatureImage)) {
-    $this->Image($signatureImage, 140, $signatureY - 5, 25, 15); // Position next to signature
-} else {
-    // Fallback to default image if specified image doesn't exist
-    if (file_exists('new.jpg')) {
-        // Moved further right (changed X from 130 to 160)
-        $this->Image('new.jpg', 140, $signatureY - 2, 17, 15);
-    } else {
-        // If no image is available, just show the signature line
-        $this->SetXY(130, $signatureY);
-        $this->Cell(40, 5, '', 0, 0, 'C');
-    }
-}
+            // Verify image exists before inserting
+            if (file_exists($signatureImage)) {
+                $this->Image($signatureImage, 140, $signatureY - 5, 25, 15); // Position next to signature
+            } else {
+                // Fallback to default image if specified image doesn't exist
+                if (file_exists('new.jpg')) {
+                    // Moved further right (changed X from 130 to 160)
+                    $this->Image('new.jpg', 140, $signatureY - 2, 17, 15);
+                } else {
+                    // If no image is available, just show the signature line
+                    $this->SetXY(130, $signatureY);
+                    $this->Cell(40, 5, '', 0, 0, 'C');
+                }
+            }
 
             // Requirements table
             $this->Ln(10);
@@ -490,8 +499,19 @@ if (file_exists($signatureImage)) {
 
 // Check if form is submitted and generate PDF
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Fetch config data from the database
+    $configSql = "SELECT school_name, po_box, address, \"term ends\", \"term begins\" FROM config_report LIMIT 1";
+    $configStmt = $conn->query($configSql);
+    $config = $configStmt->fetch(PDO::FETCH_ASSOC);
+    
+    // If no config found, use empty array (fallbacks will handle it)
+    if (!$config) {
+        $config = array();
+    }
+    
     // Create new PDF instance
     $pdf = new mypdf();
+    $pdf->setConfig($config); // Pass the config data to the PDF class
     $pdf->AliasNbPages();
     $pdf->AddPage('P', 'A4', 0);
     $pdf->headertable($conn);
@@ -505,5 +525,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     die("Invalid request method.");
 }
 ?>
-
-
