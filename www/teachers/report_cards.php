@@ -51,16 +51,26 @@ class mypdf extends FPDF {
     }
 
     function header() {
-        // Add the watermark image
-        $this->addWatermark();
+        // Add the watermark image if exists
+        if (file_exists('watermark_transparent_v3.png')) {
+            $this->Image('watermark_transparent_v3.png', 0, 0, 210, 297); // Full page size for A4
+        }
 
         // Header text with no background color
         $this->SetFont('Arial', 'B', 26);
         $this->Cell(190, 8, '', 0, 0, 'C');
         $this->Ln();
-        // Add the logo image at the centered position
-        $logoWidth = 150; // Width of the logo
-        $this->Image('bob.png', 40, 12, $logoWidth, 23); // Adjusted X position to 40 and Y position to 3
+
+        // Add the logo image at the centered position if exists
+        if (file_exists('bob.png')) {
+            $logoWidth = 150; // Width of the logo
+            $this->Image('bob.png', 40, 12, $logoWidth, 23);
+        } else {
+            // Placeholder rectangle with text for missing logo
+            $this->SetFont('Arial', 'I', 12);
+            $this->SetXY(40, 12);
+            $this->Cell(150, 23, '[Logo]', 1, 0, 'C');
+        }
 
         // Add a small line break to move the address down
         $this->Ln(11); // Adjust this value to control the spacing
@@ -95,11 +105,6 @@ class mypdf extends FPDF {
         $this->SetLineWidth(1); // Thicker line
         $this->Line(10, $this->GetY(), 200, $this->GetY()); // Line under location
         $this->Ln(); // Add a line break after the line
-    }
-
-    function addWatermark() {
-        // Add the watermark image
-        $this->Image('watermark_transparent_v3.png', 0, 0, 210, 297); // Full page size for A4
     }
 
     function footer() {
@@ -273,13 +278,16 @@ class mypdf extends FPDF {
             $this->Cell(190, 10, 'PUPIL\'S TERMINAL REPORT', 0, 0, 'C'); // Use standard apostrophe
             $this->Ln();
             
-            // Display the photo
+            // Display the photo if exists, else placeholder
             if (!empty($data['photo']) && file_exists($data['photo'])) {
-                $this->Image($data['photo'], 11, 15, 26, 20); // Display the photo
+                $this->Image($data['photo'], 11, 15, 26, 20);
             } else {
-                // If no photo is available, display a grey placeholder
-                $this->SetFillColor(200, 200, 200); // Set fill color to grey
-                $this->Rect(11, 15, 26, 20, 'F'); // Draw a filled rectangle as a placeholder
+                // Draw a grey rectangle placeholder instead of image
+                $this->SetFillColor(200, 200, 200);
+                $this->Rect(11, 15, 26, 20, 'F');
+                $this->SetFont('Arial', 'I', 8);
+                $this->SetXY(11, 25);
+                $this->Cell(26, 5, 'No Photo', 0, 0, 'C');
             }
 
             // Student details section
@@ -327,18 +335,18 @@ class mypdf extends FPDF {
             // Populate the table with subject data
             foreach ($data['marks'] as $row) {
                 $this->SetFont('Arial', '', 10);
-                $subject = $row["subject"]; // No decryption needed
-                $classScore = $row["class_score"]; // No decryption needed
-                $examScore = $row["exam_score"]; // No decryption needed
-                $average = $row["average"]; // No decryption needed
-                $originalPosition = $row["position"]; // Fetch the original position without decryption
+                $subject = $row["subject"];
+                $classScore = $row["class_score"];
+                $examScore = $row["exam_score"];
+                $average = $row["average"];
+                $originalPosition = $row["position"];
 
-                $this->Cell(27, 7, $subject, 1, 0, 'C'); // Reduced height
-                $this->Cell(30, 7, $classScore, 1, 0, 'C'); // Reduced height
-                $this->Cell(30, 7, $examScore, 1, 0, 'C'); // Reduced height
-                $this->Cell(30, 7, $average, 1, 0, 'C'); // Reduced height
+                $this->Cell(27, 7, $subject, 1, 0, 'C');
+                $this->Cell(30, 7, $classScore, 1, 0, 'C');
+                $this->Cell(30, 7, $examScore, 1, 0, 'C');
+                $this->Cell(30, 7, $average, 1, 0, 'C');
 
-                // Display the grade and remarks
+                // Determine grade and remarks
                 if ($average >= 80) {
                     $grade = 'A';
                     $remarks = 'Excellent';
@@ -351,6 +359,9 @@ class mypdf extends FPDF {
                 } elseif ($average >= 50) {
                     $grade = 'D';
                     $remarks = 'Average';
+                } elseif ($average >= 40) {
+                    $grade = 'E';
+                    $remarks = 'Credit';
                                     } elseif ($average >= 40) {
                     $grade = 'E';
                     $remarks = 'Credit';
@@ -430,22 +441,6 @@ class mypdf extends FPDF {
             $this->Cell(40, 5, '', 0, 0, 'C');
 
             // Determine which image to insert based on the class
-            $imagePath = '';
-            switch(strtolower($class)) {
-                case 'basic 3b':
-                    $imagePath = 'lion.png';
-                    break;
-                case 'basic 3a':
-                    $imagePath = 'free.png';
-                    break;
-                case 'basic 6':
-                    $imagePath = 'ern.png';
-                    break;
-                default:
-                    $imagePath = 'new.jpg';
-            }
-
-            // Insert the appropriate image for headmistress signature based on class
             $signatureImage = '';
             switch(strtolower(trim($class))) {
                 case 'basic 3b':
@@ -461,16 +456,11 @@ class mypdf extends FPDF {
 
             // Verify image exists before inserting
             if (file_exists($signatureImage)) {
-                $this->Image($signatureImage, 140, $signatureY - 5, 25, 15); // Position next to signature
+                $this->Image($signatureImage, 140, $signatureY - 5, 25, 15);
             } else {
-                // Fallback to default image if specified image doesn't exist
-                if (file_exists('new.jpg')) {
-                    $this->Image('new.jpg', 140, $signatureY - 2, 17, 15);
-                } else {
-                    // If no image is available, just show the signature line
-                    $this->SetXY(130, $signatureY);
-                    $this->Cell(40, 5, '', 0, 0, 'C');
-                }
+                // Draw a simple line placeholder for signature
+                $this->SetXY(140, $signatureY);
+                $this->Cell(40, 5, 'Signature', 'B', 0, 'C');
             }
 
             // Requirements table
@@ -523,4 +513,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
-                } elseif ($average >= 40
