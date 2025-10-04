@@ -30,7 +30,7 @@ try {
 
 // Function to convert a number to its ordinal representation
 function ordinal($number) {
-    $number = (int)$number; // Convert to integer
+    $number = (int)$number;
     if (!in_array(($number % 100), [11, 12, 13])) {
         switch ($number % 10) {
             case 1: return $number . 'st';
@@ -44,78 +44,92 @@ function ordinal($number) {
 require "fpdf.php";
 
 class mypdf extends FPDF {
-    var $config = array(); // Property to hold config data
+    var $config = array();
+    var $current_student_index = 0;
+    var $total_students = 0;
 
     function setConfig($config) {
         $this->config = $config;
     }
 
+    function setTotalStudents($total) {
+        $this->total_students = $total;
+    }
+
     function header() {
-        // Add the watermark image if exists
+        // Subtle background pattern/texture
         if (file_exists('watermark_transparent_v3.png')) {
-            $this->Image('watermark_transparent_v3.png', 0, 0, 210, 297); // Full page size for A4
+            $this->Image('watermark_transparent_v3.png', 0, 0, 210, 297);
         }
 
-        // Header text with no background color
-        $this->SetFont('Arial', 'B', 26);
-        $this->Cell(190, 8, '', 0, 0, 'C');
-        $this->Ln();
-
-        // Add the logo image at the centered position if exists
+        // School header with professional styling
+        $this->SetFillColor(240, 240, 240);
+        $this->Rect(0, 0, 210, 40, 'F');
+        
+        // School logo
         if (file_exists('bob.png')) {
-            $logoWidth = 150; // Width of the logo
-            $this->Image('bob.png', 40, 12, $logoWidth, 23);
+            $this->Image('bob.png', 15, 8, 30, 25);
         } else {
-            // Placeholder rectangle with text for missing logo
-            $this->SetFont('Arial', 'I', 12);
-            $this->SetXY(40, 12);
-            $this->Cell(150, 23, '[Logo]', 1, 0, 'C');
+            $this->SetFillColor(220, 220, 220);
+            $this->Rect(15, 8, 30, 25, 'F');
+            $this->SetFont('Arial', 'I', 8);
+            $this->SetXY(15, 16);
+            $this->Cell(30, 5, 'SCHOOL LOGO', 0, 0, 'C');
         }
 
-        // Add a small line break to move the address down
-        $this->Ln(11); // Adjust this value to control the spacing
+        // School information - right aligned
+        $this->SetFont('Times', 'B', 16);
+        $this->SetXY(50, 8);
+        $this->Cell(140, 8, isset($this->config['school_name']) ? strtoupper($this->config['school_name']) : 'SCHOOL NAME', 0, 1, 'C');
+        
+        $this->SetFont('Times', '', 10);
+        $this->SetX(50);
+        $addressLine = isset($this->config['po_box']) && isset($this->config['address']) ? 
+            $this->config['po_box'] . ', ' . $this->config['address'] : 'P.M.B 40, Madina';
+        $this->Cell(140, 6, $addressLine, 0, 1, 'C');
+        
+        $this->SetX(50);
+        $this->Cell(140, 6, 'TEL: 0277411866 / 0541622751', 0, 1, 'C');
+        
+        $this->SetX(50);
+        $this->Cell(140, 6, 'LOCATION: Abokobi / Boi New Town', 0, 1, 'C');
 
-        // Add the school name (fetched from config)
-        if (isset($this->config['school_name']) && !empty($this->config['school_name'])) {
-            $this->SetFont('Times', 'B', 14);
-            $this->Cell(190, 10, $this->config['school_name'], 0, 0, 'C');
-            $this->Ln();
-        }
-
-        // Add the PO Box and Address (combined, fetched from config) directly under the logo/school name
-        if (isset($this->config['po_box']) && isset($this->config['address'])) {
-            $this->SetFont('Times', 'B', 11);
-            $addressLine = $this->config['po_box'] . ', ' . $this->config['address'];
-            $this->Cell(190, 10, $addressLine, 0, 0, 'C'); // PO Box and Address combined
-            $this->Ln(); // Line break after the address
-        } else {
-            // Fallback to hardcoded if config not available (for safety)
-            $this->SetFont('Times', 'B', 11);
-            $this->Cell(190, 10, 'P.M.B 40, Madina', 0, 0, 'C'); // Original hardcoded
-            $this->Ln();
-        }
-
-        $this->Cell(190, 10, 'TEL: 0277411866 / 0541622751', 0, 0, 'C');
-        $this->Ln();
-
-        $this->Cell(190, 10, 'LOCATION: Abokobi / Boi New Town', 0, 0, 'C');
-        $this->Ln();
-
-        // Draw the line under LOCATION
-        $this->SetLineWidth(1); // Thicker line
-        $this->Line(10, $this->GetY(), 200, $this->GetY()); // Line under location
-        $this->Ln(); // Add a line break after the line
+        // Decorative line
+        $this->SetLineWidth(0.8);
+        $this->SetDrawColor(100, 100, 150);
+        $this->Line(10, 38, 200, 38);
+        
+        // Report title
+        $this->SetY(42);
+        $this->SetFont('Arial', 'B', 18);
+        $this->SetTextColor(50, 50, 120);
+        $this->Cell(190, 10, 'STUDENT ACADEMIC REPORT', 0, 1, 'C');
+        
+        $this->SetFont('Arial', 'I', 11);
+        $this->SetTextColor(100, 100, 100);
+        $this->Cell(190, 6, 'Comprehensive Performance Assessment', 0, 1, 'C');
     }
 
     function footer() {
-        // Footer content can be added here if needed
-        $this->SetY(-15);
+        $this->SetY(-18);
+        $this->SetFont('Arial', 'I', 9);
+        $this->SetTextColor(100, 100, 100);
+        
+        // Footer line
+        $this->SetLineWidth(0.3);
+        $this->SetDrawColor(200, 200, 200);
+        $this->Line(10, $this->GetY(), 200, $this->GetY());
+        
+        $this->Ln(2);
+        $this->Cell(95, 6, 'Generated on: ' . date('F j, Y'), 0, 0, 'L');
+        $this->Cell(95, 6, 'Page ' . $this->PageNo() . ' of {nb}', 0, 1, 'R');
+        
+        // Confidential notice
         $this->SetFont('Arial', 'I', 8);
-        $this->Cell(0, 10, 'Page ' . $this->PageNo(), 0, 0, 'C');
+        $this->Cell(190, 4, 'CONFIDENTIAL: For authorized personnel only', 0, 1, 'C');
     }
 
     function getRemarks() {
-        // List of remarks
         $remarks = [
             "Making steady progress keep it up.",
             "A consistent effort will lead to improvement.",
@@ -167,16 +181,33 @@ class mypdf extends FPDF {
             "Can reach greater heights with extra effort.",
             "Encouraged to keep working hard and not settle."
         ];
-
-        // Randomly select a remark from the list
         return $remarks[array_rand($remarks)];
+    }
+
+    function drawStudentPhoto($photo, $x, $y) {
+        if (!empty($photo) && file_exists($photo)) {
+            // Add border around photo
+            $this->SetDrawColor(200, 200, 200);
+            $this->SetLineWidth(0.5);
+            $this->Rect($x-2, $y-2, 32, 26);
+            $this->Image($photo, $x, $y, 28, 22);
+        } else {
+            // Professional placeholder
+            $this->SetFillColor(245, 245, 245);
+            $this->SetDrawColor(220, 220, 220);
+            $this->SetLineWidth(0.5);
+            $this->Rect($x-2, $y-2, 32, 26, 'DF');
+            $this->SetFont('Arial', 'I', 7);
+            $this->SetTextColor(150, 150, 150);
+            $this->SetXY($x, $y+8);
+            $this->Cell(28, 5, 'PHOTO', 0, 0, 'C');
+        }
     }
 
     function headertable($conn) {
         $class = $_POST['askclass'];
         $exam = $_POST['exam'];
 
-        // Define conduct remarks
         $conductRemarks = [
             "Consistently demonstrates outstanding behavior and a positive attitude.",
             "Exemplifies respect, responsibility, and integrity in all actions.",
@@ -231,7 +262,7 @@ class mypdf extends FPDF {
             "An excellent role model for classmates."
         ];
 
-        // Fetch all student data including photo and marks from the marks table
+        // Fetch all student data
         $sql = "SELECT admission_number, photo, student, subject, class_score, exam_score, average, remarks, position 
                 FROM marks 
                 WHERE class = :class AND examname = :exam 
@@ -242,21 +273,14 @@ class mypdf extends FPDF {
         $stmt->bindValue(':exam', $exam, PDO::PARAM_STR);
         $stmt->execute();
 
-        // Initialize an array to hold student data
         $students = [];
-
-        // Fetch all data into the students array
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $admno = $row["admission_number"];
-            
-            // Initialize student info if not already set
             if (!isset($students[$admno])) {
                 $students[$admno]['name'] = $row["student"];
-                $students[$admno]['photo'] = $row["photo"]; // Include the photo
+                $students[$admno]['photo'] = $row["photo"];
                 $students[$admno]['marks'] = [];
             }
-
-            // Add subject marks
             $students[$admno]['marks'][] = [
                 'subject' => $row["subject"],
                 'class_score' => $row["class_score"],
@@ -267,180 +291,221 @@ class mypdf extends FPDF {
             ];
         }
 
-        // Get term dates from config
+        $this->setTotalStudents(count($students));
         $termEnds = isset($this->config['term_ends']) ? $this->config['term_ends'] : '7th August, 2025';
         $termBegins = isset($this->config['term_begins']) ? $this->config['term_begins'] : '2nd September, 2025';
 
-        // Generate reports for each student
         foreach ($students as $admno => $data) {
-            $this->Ln(-10); // Move up by 10 units (adjust as needed)
-            $this->SetFont('Arial', 'BU', 16);
-            $this->Cell(190, 10, 'PUPIL\'S TERMINAL REPORT', 0, 0, 'C'); // Use standard apostrophe
+            $this->current_student_index++;
+            
+            // Student information section with modern layout
+            $this->SetY(55);
+            
+            // Student photo
+            $this->drawStudentPhoto($data['photo'], 160, 55);
+            
+            // Student details in a clean layout
+            $this->SetFont('Times', 'B', 12);
+            $this->SetTextColor(60, 60, 60);
+            $this->Cell(40, 8, 'STUDENT:', 0, 0, 'L');
+            $this->SetFont('Times', '', 12);
+            $this->SetTextColor(30, 30, 30);
+            $this->Cell(80, 8, $data['name'], 0, 1, 'L');
+            
+            $this->SetFont('Times', 'B', 12);
+            $this->SetTextColor(60, 60, 60);
+            $this->Cell(40, 8, 'CLASS:', 0, 0, 'L');
+            $this->SetFont('Times', 'B', 13);
+            $this->SetTextColor(40, 80, 120);
+            $this->Cell(40, 8, $class, 0, 0, 'L');
+            
+            $this->SetFont('Times', 'B', 12);
+            $this->SetTextColor(60, 60, 60);
+            $this->Cell(30, 8, 'EXAM:', 0, 0, 'L');
+            $this->SetFont('Times', 'B', 12);
+            $this->SetTextColor(40, 80, 120);
+            $this->Cell(40, 8, $exam, 0, 1, 'L');
+            
+            $this->SetFont('Times', 'B', 12);
+            $this->SetTextColor(60, 60, 60);
+            $this->Cell(45, 8, 'TERM ENDS:', 0, 0, 'L');
+            $this->SetFont('Times', '', 12);
+            $this->SetTextColor(30, 30, 30);
+            $this->Cell(45, 8, $termEnds, 0, 0, 'L');
+            
+            $this->SetFont('Times', 'B', 12);
+            $this->SetTextColor(60, 60, 60);
+            $this->Cell(45, 8, 'NEXT TERM:', 0, 0, 'L');
+            $this->SetFont('Times', '', 12);
+            $this->SetTextColor(30, 30, 30);
+            $this->Cell(45, 8, $termBegins, 0, 1, 'L');
+
+            // Academic performance table with enhanced styling
+            $this->Ln(5);
+            
+            // Table header with professional colors
+            $this->SetFillColor(60, 100, 150);
+            $this->SetTextColor(255, 255, 255);
+            $this->SetFont('Times', 'B', 11);
+            $this->SetLineWidth(0.3);
+            
+            $headers = ['SUBJECT', 'CLASS (50%)', 'EXAM (50%)', 'TOTAL (100%)', 'GRADE', 'REMARKS', 'POSITION'];
+            $widths = [30, 25, 25, 25, 20, 35, 25];
+            
+            for ($i = 0; $i < count($headers); $i++) {
+                $this->Cell($widths[$i], 8, $headers[$i], 1, 0, 'C', true);
+            }
             $this->Ln();
             
-            // Display the photo if exists, else placeholder
-            if (!empty($data['photo']) && file_exists($data['photo'])) {
-                $this->Image($data['photo'], 11, 15, 26, 20);
-            } else {
-                // Draw a grey rectangle placeholder instead of image
-                $this->SetFillColor(200, 200, 200);
-                $this->Rect(11, 15, 26, 20, 'F');
-                $this->SetFont('Arial', 'I', 8);
-                $this->SetXY(11, 25);
-                $this->Cell(26, 5, 'No Photo', 0, 0, 'C');
-            }
-
-            // Student details section
-            $this->SetFont('Times', '', 12);
-            $this->Cell(35, 10, 'Name:', 0, 0, 'L');
-            $this->SetFont('Times', 'B', 12); // Set to bold
-            $this->Cell(10, 10, $data['name'], 0, 0, 'L');
-            $this->SetFont('Times', '', 12); // Reset to normal
-            $this->Ln();
-
-            // Now display the class in bold
-            $this->SetFont('Times', '', 12);
-            $this->Cell(35, 10, 'Class :', 0, 0, 'L');
-            $this->SetFont('Times', 'B', 13); // Set to bold
-            $this->Cell(70, 10, $class, 0, 0, 'L');
-            $this->SetFont('Times', '', 12); // Reset to normal
-            $this->Cell(30, 10, 'Exam :', 0, 0, 'L');
-            $this->SetFont('Times', 'B', 12); // Set to bold
-            $this->Cell(76, 10, $exam, 0, 0, 'L');
-            $this->SetFont('Times', '', 12); // Reset to normal
-            $this->Ln();
-
-            $this->SetFont('Times', '', 12);
-            $this->Cell(50, 10, 'Term Ending:', 0, 0, 'L');
-            $this->SetFont('Times', 'B', 12); // Set to bold for the date
-            $this->Cell(50, 10, $termEnds, 0, 0, 'L'); // Bold date
-            $this->SetFont('Times', '', 12); // Reset to normal
-            $this->Cell(50, 10, 'Next term begins: ', 0, 0, 'L'); // Normal text
-            $this->SetFont('Times', 'B', 12); // Set to bold for the date
-            $this->Cell(50, 10, $termBegins, 0, 0, 'L'); // Bold date
-            $this->SetFont('Times', '', 12); // Reset to normal
-            $this->Ln(); // Add an extra line
-
-            // Table headers for subject and marks
-            $this->SetFont('Times', 'B', 12);
-            $this->Cell(27, 8, 'SUBJECT', 1, 0, 'C'); // Reduced width
-            $this->Cell(30, 8, 'CLASS (50%)', 1, 0, 'C'); // Reduced width
-            $this->Cell(30, 8, 'EXAM (50%)', 1, 0, 'C'); // Reduced width
-            $this->Cell(30, 8, 'TOTAL (100%)', 1, 0, 'C'); // Reduced width
-            $this->Cell(25, 8, 'GRADE', 1, 0, 'C'); // Reduced width
-            $this->Cell(30, 8, 'REMARKS', 1, 0, 'C'); // Reduced width
-            $this->Cell(25, 8, 'POSITION', 1, 0, 'C'); // Restored Position column
-            $this->Ln();
-
-            // Populate the table with subject data
+            // Table content
+            $this->SetTextColor(0, 0, 0);
+            $this->SetFillColor(245, 248, 250);
+            $fill = false;
+            
             foreach ($data['marks'] as $row) {
-                $this->SetFont('Arial', '', 10);
+                $this->SetFont('Arial', '', 9);
+                
+                if ($fill) {
+                    $this->SetFillColor(245, 248, 250);
+                } else {
+                    $this->SetFillColor(255, 255, 255);
+                }
+                
                 $subject = $row["subject"];
                 $classScore = $row["class_score"];
                 $examScore = $row["exam_score"];
                 $average = $row["average"];
                 $originalPosition = $row["position"];
 
-                $this->Cell(27, 7, $subject, 1, 0, 'C');
-                $this->Cell(30, 7, $classScore, 1, 0, 'C');
-                $this->Cell(30, 7, $examScore, 1, 0, 'C');
-                $this->Cell(30, 7, $average, 1, 0, 'C');
+                $this->Cell($widths[0], 7, $subject, 1, 0, 'C', $fill);
+                $this->Cell($widths[1], 7, $classScore, 1, 0, 'C', $fill);
+                $this->Cell($widths[2], 7, $examScore, 1, 0, 'C', $fill);
+                $this->Cell($widths[3], 7, $average, 1, 0, 'C', $fill);
 
-                // Determine grade and remarks
+                // Determine grade with color coding
                 if ($average >= 80) {
-                    $grade = 'A';
+                    $grade = 'A'; $gradeColor = array(0, 128, 0); // Green
                     $remarks = 'Excellent';
                 } elseif ($average >= 70) {
-                    $grade = 'B';
+                    $grade = 'B'; $gradeColor = array(0, 100, 200); // Blue
                     $remarks = 'Very Good';
                 } elseif ($average >= 60) {
-                    $grade = 'C';
+                    $grade = 'C'; $gradeColor = array(255, 140, 0); // Orange
                     $remarks = 'Good';
                 } elseif ($average >= 50) {
-                    $grade = 'D';
+                    $grade = 'D'; $gradeColor = array(165, 42, 42); // Brown
                     $remarks = 'Average';
                 } elseif ($average >= 40) {
-                    $grade = 'E';
-                    $remarks = 'Credit';
-                                    } elseif ($average >= 40) {
-                    $grade = 'E';
+                    $grade = 'E'; $gradeColor = array(128, 0, 128); // Purple
                     $remarks = 'Credit';
                 } else {
-                    $grade = 'F';
+                    $grade = 'F'; $gradeColor = array(220, 0, 0); // Red
                     $remarks = 'Weak';
                 }
-                // Set font to bold for Grade
-                $this->SetFont('Arial', 'B', 10);
-                $this->Cell(25, 7, $grade, 1, 0, 'C'); // Grade
-                $this->SetFont('Arial', '', 10); // Reset font to normal for remarks
-                $this->Cell(30, 7, $remarks, 1, 0, 'C'); // Remarks
-
-                // Set font to bold for Position
-                $this->SetFont('Arial', 'B', 10);
+                
+                $this->SetTextColor($gradeColor[0], $gradeColor[1], $gradeColor[2]);
+                $this->SetFont('Arial', 'B', 9);
+                $this->Cell($widths[4], 7, $grade, 1, 0, 'C', $fill);
+                
+                $this->SetTextColor(0, 0, 0);
+                $this->SetFont('Arial', '', 8);
+                $this->Cell($widths[5], 7, $remarks, 1, 0, 'C', $fill);
+                
+                $this->SetTextColor(60, 60, 150);
+                $this->SetFont('Arial', 'B', 9);
                 if (is_numeric($originalPosition) && $originalPosition > 0) {
-                    $this->Cell(25, 7, ordinal($originalPosition), 1, 0, 'C'); // Display the original position with ordinal
+                    $this->Cell($widths[6], 7, ordinal($originalPosition), 1, 0, 'C', $fill);
                 } else {
-                    $this->Cell(25, 7, 'N/A', 1, 0, 'C'); // Handle invalid position
+                    $this->Cell($widths[6], 7, 'N/A', 1, 0, 'C', $fill);
                 }
                 $this->Ln();
+                
+                $fill = !$fill;
+                $this->SetTextColor(0, 0, 0);
             }
 
-            // Grading System Section - Moved directly under the position
-            $this->SetFont('Arial', 'BU', 14);
-            $this->Cell(0, 10, 'GRADING SYSTEM', 0, 1, 'C');
+            // Grading System in a clean box
+            $this->Ln(8);
+            $this->SetFillColor(240, 245, 250);
+            $this->SetDrawColor(200, 210, 230);
+            $this->SetLineWidth(0.5);
+            $this->Rect(10, $this->GetY(), 190, 22, 'DF');
+            
+            $this->SetFont('Arial', 'BU', 12);
+            $this->SetTextColor(50, 80, 120);
+            $this->Cell(190, 8, 'GRADING SYSTEM', 0, 1, 'C');
+            
+            $this->SetFont('Times', 'B', 10);
+            $this->SetTextColor(60, 60, 60);
+            $this->Cell(190, 5, 'A - Excellent (80 - 100)        B - Very Good (70 - 79)        C - Good (60 - 69)', 0, 1, 'C');
+            $this->Cell(190, 5, 'D - Average (50 - 59)           E - Credit (40 - 49)           F - Weak (0 - 39)', 0, 1, 'C');
+
+            // Student status section
+            $this->Ln(10);
             $this->SetFont('Times', 'B', 11);
-            $this->Cell(0, 10, 'A - Excellent (80 - 100)               B - Very Good (70 - 79)               C - Good (60 - 69)', 0, 1, 'C');
-            $this->Cell(0, 10, '     D - Average (50 - 59)                           E - Credit (40 - 44)                         F - Weak(39 and below)', 0, 1, 'C');
-            $this->SetLineWidth(0.5); // Thicker line
-            $this->Line(10, $this->GetY(), 200, $this->GetY()); // Add a line under grading system
+            $this->SetTextColor(60, 60, 60);
             
-            // Attendance, Out of, and Promoted to Section - Directly under the Total Score and Position
-            $this->Ln(3); // Adjust as needed for spacing
-            $this->SetFont('Times', 'B', 12);
-            $this->Cell(35, 10, 'Attendance:', 0, 0, 'L');
-            $this->Cell(35, 10, '______', 0, 0, 'L');
-            $this->Cell(35, 10, 'Out of:', 0, 0, 'L');
-            $this->Cell(35, 10, '______', 0, 0, 'L');
-            $this->Cell(35, 10, 'Promoted to: Basic 8', 0, 0, 'L');
-            $this->Cell(35, 10, '', 0, 1, 'L'); // Empty cell for spacing
-            $this->Ln(1); // Adjust as needed for spacing
-
-            // Remarks Section
-            $remarks = $this->getRemarks();  // Use the new random remark selection
-            $this->SetFont('Times', 'B', 12);
-            $this->Cell(35, 4, 'Remarks:', 0, 0, 'L');
-            $this->SetFont('Times', '', 12);
-            $this->MultiCell(0, 4, $remarks, 0, 'L');
-            $this->Ln();
-
-            // Conduct Remark Section
-            $conductRemark = $conductRemarks[array_rand($conductRemarks)]; // Random conduct remark
-            $this->SetFont('Times', 'B', 12);
-            $this->Cell(35, 4, 'Conduct:', 0, 0, 'L');
-            $this->SetFont('Times', '', 12);
-            $this->MultiCell(0, 4, $conductRemark, 0, 'L');
-            $this->Ln(2);
-
-            // Add the signatures 
-            $this->SetFont('Times', 'B', 12);
-            $this->Cell(80, 8, 'Class teacher\'s signature:', 0, 0, 'L'); 
-            $this->Cell(80, 8, 'Headmistress\'s signature:', 0, 1, 'L'); 
-
-            // Set specific Y position for the signatures
-            $signatureY = $this->GetY() - 10;
-
-            // Add signature placeholders
-            $this->SetFont('Arial', 'I', 8);
+            $this->Cell(40, 8, 'Attendance:', 0, 0, 'L');
+            $this->SetFont('Times', '', 11);
+            $this->SetTextColor(30, 30, 30);
+            $this->Cell(25, 8, '______', 'B', 0, 'C');
             
-            // Class teacher signature placeholder
-            $this->SetXY(50, $signatureY);
-            $this->Cell(40, 5, '', 0, 0, 'C');
+            $this->SetFont('Times', 'B', 11);
+            $this->SetTextColor(60, 60, 60);
+            $this->Cell(30, 8, 'Out of:', 0, 0, 'L');
+            $this->SetFont('Times', '', 11);
+            $this->SetTextColor(30, 30, 30);
+            $this->Cell(25, 8, '______', 'B', 0, 'C');
             
-            // Headmistress signature placeholder
-            $this->SetXY(130, $signatureY);
-            $this->Cell(40, 5, '', 0, 0, 'C');
+            $this->SetFont('Times', 'B', 11);
+            $this->SetTextColor(40, 100, 40);
+            $this->Cell(45, 8, 'Promoted to:', 0, 0, 'L');
+            $this->SetFont('Times', 'B', 11);
+            $this->SetTextColor(30, 80, 160);
+            $this->Cell(25, 8, 'Basic 8', 0, 1, 'L');
 
-            // Determine which image to insert based on the class
+            // Comments section with improved layout
+            $this->Ln(5);
+            $remarks = $this->getRemarks();
+            $conductRemark = $conductRemarks[array_rand($conductRemarks)];
+            
+            // Academic remarks
+            $this->SetFillColor(250, 250, 252);
+            $this->SetDrawColor(220, 220, 220);
+            $this->Rect(10, $this->GetY(), 190, 22, 'D');
+            
+            $this->SetFont('Times', 'B', 11);
+            $this->SetTextColor(80, 80, 80);
+            $this->Cell(35, 6, 'Academic Remarks:', 0, 1, 'L');
+            $this->SetFont('Times', '', 10);
+            $this->SetTextColor(50, 50, 50);
+            $this->MultiCell(180, 5, $remarks, 0, 'L');
+            
+            // Conduct remarks
+            $this->SetFont('Times', 'B', 11);
+            $this->SetTextColor(80, 80, 80);
+            $this->Cell(35, 6, 'Conduct Remarks:', 0, 1, 'L');
+            $this->SetFont('Times', '', 10);
+            $this->SetTextColor(50, 50, 50);
+            $this->MultiCell(180, 5, $conductRemark, 0, 'L');
+
+            // Signatures section with professional layout
+            $this->Ln(8);
+            $signatureY = $this->GetY();
+            
+            // Class teacher signature
+            $this->SetFont('Times', 'B', 10);
+            $this->SetTextColor(80, 80, 80);
+            $this->Cell(80, 6, 'Class Teacher\'s Signature:', 0, 0, 'L');
+            $this->SetDrawColor(150, 150, 150);
+            $this->Line(45, $signatureY + 8, 85, $signatureY + 8);
+            
+            // Headmistress signature
+            $this->SetX(110);
+            $this->Cell(80, 6, 'Headmistress\'s Signature:', 0, 1, 'L');
+            $this->Line(125, $signatureY + 8, 165, $signatureY + 8);
+            
+            // Add signature image if available
             $signatureImage = '';
             switch(strtolower(trim($class))) {
                 case 'basic 3b':
@@ -454,32 +519,43 @@ class mypdf extends FPDF {
                     $signatureImage = 'new.jpg';
             }
 
-            // Verify image exists before inserting
             if (file_exists($signatureImage)) {
-                $this->Image($signatureImage, 140, $signatureY - 5, 25, 15);
-            } else {
-                // Draw a simple line placeholder for signature
-                $this->SetXY(140, $signatureY);
-                $this->Cell(40, 5, 'Signature', 'B', 0, 'C');
+                $this->Image($signatureImage, 130, $signatureY - 2, 25, 12);
             }
 
-            // Requirements table
-            $this->Ln(10);
-            $this->SetFont('Arial', 'B', 10);
-            $this->Cell(95, 7, 'REQUIREMENT FOR NEXT TERM', 1, 0, 'C');
-            $this->Cell(95, 7, 'MANAGEMENT', 1, 1, 'C');
+            // Requirements and Management section
+            $this->Ln(12);
+            $this->SetFillColor(60, 100, 150);
+            $this->SetTextColor(255, 255, 255);
+            $this->SetFont('Arial', 'B', 11);
             
+            $this->Cell(95, 8, 'REQUIREMENTS FOR NEXT TERM', 1, 0, 'C', true);
+            $this->Cell(95, 8, 'MANAGEMENT MESSAGE', 1, 1, 'C', true);
+            
+            // Requirements content
+            $this->SetTextColor(0, 0, 0);
             $this->SetFont('Times', '', 10);
-            $this->MultiCell(95, 5, "SCHOOL FEES: GHC 250\nA4 sheet 1\nDETOL: 1 (CAMEL)\nTOILET ROLL 3, TOILET SOAP 2\nFEEDING FEE: GHC 7.00", 1, 'L');
+            $requirements = "• SCHOOL FEES: GHC 250.00\n• A4 SHEETS: 1 Ream\n• DETTOL: 1 Bottle (Camel)\n• TOILET ROLL: 3 Rolls\n• TOILET SOAP: 2 Bars\n• FEEDING FEE: GHC 7.00/week";
             
+            $reqY = $this->GetY();
+            $this->MultiCell(95, 5, $requirements, 1, 'L');
+            
+            // Management message
             $currentY = $this->GetY();
-            $this->SetXY(105, $currentY - 25);
-            $this->MultiCell(95, 6, "WITH OUR SINCEREST THANKSGIVING TO PARENTS AND STAKEHOLDERS OF THE SCHOOL, WE LOOK FORWARD TO WORKING WITH YOU NEXT TERM. MAY GOD BLESS YOU.", 1, 'L');
+            $this->SetXY(105, $reqY);
+            $this->SetFont('Times', '', 9);
+            $this->MultiCell(95, 5, "With our sincerest thanksgiving to parents and stakeholders of the school, we look forward to working with you next term. Your continued support and partnership in your child's education is deeply appreciated. May God bless you abundantly.", 1, 'L');
             
-            $this->Ln(5); // Add space after management text
-            
-            // Add a new page for next student report
-            $this->AddPage();
+            // Progress indicator
+            $this->Ln(5);
+            $this->SetFont('Arial', 'I', 8);
+            $this->SetTextColor(100, 100, 100);
+            $this->Cell(190, 4, "Report " . $this->current_student_index . " of " . $this->total_students, 0, 1, 'R');
+
+            // Add page break for next student (except for the last one)
+            if ($this->current_student_index < $this->total_students) {
+                $this->AddPage();
+            }
         }
     }
 }
@@ -491,20 +567,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $configStmt = $conn->query($configSql);
     $config = $configStmt->fetch(PDO::FETCH_ASSOC);
     
-    // If no config found, use empty array (fallbacks will handle it)
     if (!$config) {
         $config = array();
     }
     
     // Create new PDF instance
     $pdf = new mypdf();
-    $pdf->setConfig($config); // Pass the config data to the PDF class
+    $pdf->setConfig($config);
     $pdf->AliasNbPages();
     $pdf->AddPage('P', 'A4', 0);
     $pdf->headertable($conn);
     
     // Output the PDF inline in the browser
-    $pdf->Output('student_report.pdf', 'I'); // 'I' shows in browser
+    $pdf->Output('student_academic_report.pdf', 'I');
     
     // Flush the output buffer
     ob_end_flush();
@@ -512,4 +587,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     die("Invalid request method.");
 }
 ?>
-
