@@ -262,6 +262,10 @@ class mypdf extends FPDF {
             ];
         }
 
+        // Get term dates from config
+        $termEnds = isset($this->config['term_ends']) ? $this->config['term_ends'] : '7th August, 2025';
+        $termBegins = isset($this->config['term_begins']) ? $this->config['term_begins'] : '2nd September, 2025';
+
         // Generate reports for each student
         foreach ($students as $admno => $data) {
             $this->Ln(-10); // Move up by 10 units (adjust as needed)
@@ -301,14 +305,10 @@ class mypdf extends FPDF {
             $this->SetFont('Times', '', 12);
             $this->Cell(50, 10, 'Term Ending:', 0, 0, 'L');
             $this->SetFont('Times', 'B', 12); // Set to bold for the date
-            // Use fetched term ends (fallback to hardcoded if not available)
-            $termEnds = isset($this->config['term ends']) ? $this->config['term ends'] : '7th August, 2025';
             $this->Cell(50, 10, $termEnds, 0, 0, 'L'); // Bold date
             $this->SetFont('Times', '', 12); // Reset to normal
             $this->Cell(50, 10, 'Next term begins: ', 0, 0, 'L'); // Normal text
             $this->SetFont('Times', 'B', 12); // Set to bold for the date
-            // Use fetched term begins (fallback to hardcoded if not available)
-            $termBegins = isset($this->config['term begins']) ? $this->config['term begins'] : '2nd September,2025';
             $this->Cell(50, 10, $termBegins, 0, 0, 'L'); // Bold date
             $this->SetFont('Times', '', 12); // Reset to normal
             $this->Ln(); // Add an extra line
@@ -351,18 +351,18 @@ class mypdf extends FPDF {
                 } elseif ($average >= 50) {
                     $grade = 'D';
                     $remarks = 'Average';
-                } elseif ($average >= 40) {
+                                    } elseif ($average >= 40) {
                     $grade = 'E';
                     $remarks = 'Credit';
                 } else {
                     $grade = 'F';
                     $remarks = 'Weak';
                 }
-               // Set font to bold for Grade
+                // Set font to bold for Grade
                 $this->SetFont('Arial', 'B', 10);
                 $this->Cell(25, 7, $grade, 1, 0, 'C'); // Grade
                 $this->SetFont('Arial', '', 10); // Reset font to normal for remarks
-                 $this->Cell(30, 7, $remarks, 1, 0, 'C'); // Remarks
+                $this->Cell(30, 7, $remarks, 1, 0, 'C'); // Remarks
 
                 // Set font to bold for Position
                 $this->SetFont('Arial', 'B', 10);
@@ -449,8 +449,6 @@ class mypdf extends FPDF {
             $signatureImage = '';
             switch(strtolower(trim($class))) {
                 case 'basic 3b':
-                    $signatureImage = 'new.jpg';
-                    break;
                 case 'basic 3a':
                     $signatureImage = 'new.jpg';
                     break;
@@ -467,7 +465,6 @@ class mypdf extends FPDF {
             } else {
                 // Fallback to default image if specified image doesn't exist
                 if (file_exists('new.jpg')) {
-                    // Moved further right (changed X from 130 to 160)
                     $this->Image('new.jpg', 140, $signatureY - 2, 17, 15);
                 } else {
                     // If no image is available, just show the signature line
@@ -483,7 +480,7 @@ class mypdf extends FPDF {
             $this->Cell(95, 7, 'MANAGEMENT', 1, 1, 'C');
             
             $this->SetFont('Times', '', 10);
-            $this->MultiCell(95, 5, "SCHOOL FEES: GHC 250\n A4 sheet 1\nDETOL: 1 (CAMEL)\nTOILET ROLL 3, TOILET SOAP 2\nFEEDING FEE: GHC 7.00", 1, 'L');
+            $this->MultiCell(95, 5, "SCHOOL FEES: GHC 250\nA4 sheet 1\nDETOL: 1 (CAMEL)\nTOILET ROLL 3, TOILET SOAP 2\nFEEDING FEE: GHC 7.00", 1, 'L');
             
             $currentY = $this->GetY();
             $this->SetXY(105, $currentY - 25);
@@ -500,7 +497,7 @@ class mypdf extends FPDF {
 // Check if form is submitted and generate PDF
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Fetch config data from the database
-    $configSql = "SELECT school_name, po_box, address, \"term ends\", \"term begins\" FROM config_report LIMIT 1";
+    $configSql = "SELECT school_name, po_box, address, term_ends, term_begins FROM config_report LIMIT 1";
     $configStmt = $conn->query($configSql);
     $config = $configStmt->fetch(PDO::FETCH_ASSOC);
     
@@ -525,3 +522,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     die("Invalid request method.");
 }
 ?>
+
+                } elseif ($average >= 40
