@@ -56,6 +56,70 @@ class mypdf extends FPDF {
         $this->total_students = $total;
     }
 
+    // Function to draw progress circle
+    function drawProgressCircle($x, $y, $radius, $percentage, $label, $color) {
+        // Circle background
+        $this->SetFillColor(240, 240, 240);
+        $this->SetDrawColor(200, 200, 200);
+        $this->Circle($x, $y, $radius, 'FD');
+        
+        // Progress arc
+        $this->SetFillColor($color[0], $color[1], $color[2]);
+        $this->SetDrawColor($color[0], $color[1], $color[2]);
+        
+        // Draw progress arc
+        $startAngle = 0;
+        $endAngle = ($percentage / 100) * 360;
+        
+        // Draw the progress arc
+        $this->Sector($x, $y, $radius, $startAngle, $endAngle, 'F');
+        
+        // Outer circle border
+        $this->SetDrawColor(100, 100, 100);
+        $this->SetLineWidth(0.3);
+        $this->Circle($x, $y, $radius);
+        
+        // Percentage text
+        $this->SetFont('Arial', 'B', 10);
+        $this->SetTextColor(50, 50, 50);
+        $this->SetXY($x - 5, $y - 2);
+        $this->Cell(10, 5, $percentage . '%', 0, 0, 'C');
+        
+        // Label
+        $this->SetFont('Arial', 'B', 8);
+        $this->SetTextColor(80, 80, 80);
+        $this->SetXY($x - 15, $y + $radius + 2);
+        $this->Cell(30, 4, $label, 0, 0, 'C');
+    }
+
+    // Function to draw sector for progress circles (pie chart segment)
+    function Sector($xc, $yc, $r, $a, $b, $style='FD', $init=true) {
+        if($init)
+            $this->_out('q');
+        $this->_out(sprintf('%.2F %.2F m', $xc, $yc));
+        if ($a > $b)
+            $b += 360;
+        $ar = deg2rad($a);
+        $br = deg2rad($b);
+        $n = ceil(($b-$a)/10);
+        for($i=0;$i<=$n;$i++) {
+            $alpha = $a + ($b-$a)*$i/$n;
+            $x = $xc + $r*cos(deg2rad($alpha));
+            $y = $yc - $r*sin(deg2rad($alpha));
+            $this->_out(sprintf('%.2F %.2F l', $x, $y));
+        }
+        $this->_out(sprintf('%.2F %.2F l', $xc, $yc));
+        if($style=='F')
+            $op = 'f';
+        elseif($style=='FD' || $style=='DF')
+            $op = 'b';
+        else
+            $op = 's';
+        $this->_out($op);
+        if($init)
+            $this->_out('Q');
+    }
+
     function header() {
         // Subtle background pattern/texture
         if (file_exists('watermark_transparent_v3.png')) {
@@ -298,6 +362,12 @@ class mypdf extends FPDF {
         foreach ($students as $admno => $data) {
             $this->current_student_index++;
             
+            // Generate random performance percentages for demonstration
+            // In a real scenario, these would come from your database
+            $academicMastery = rand(65, 95);
+            $punctuality = rand(70, 98);
+            $behavior = rand(75, 99);
+            
             // Student information section with modern layout
             $this->SetY(55);
             
@@ -523,28 +593,53 @@ class mypdf extends FPDF {
                 $this->Image($signatureImage, 130, $signatureY - 2, 25, 12);
             }
 
-            // Requirements and Management section
-            $this->Ln(12);
+            // PERFORMANCE METRICS SECTION WITH PROGRESS CIRCLES
+            $this->Ln(15);
+            
+            // Section header
             $this->SetFillColor(60, 100, 150);
             $this->SetTextColor(255, 255, 255);
-            $this->SetFont('Arial', 'B', 11);
+            $this->SetFont('Arial', 'B', 12);
+            $this->Cell(190, 8, 'PERFORMANCE METRICS', 1, 1, 'C', true);
             
-            $this->Cell(95, 8, 'REQUIREMENTS FOR NEXT TERM', 1, 0, 'C', true);
-            $this->Cell(95, 8, 'MANAGEMENT MESSAGE', 1, 1, 'C', true);
+            $this->Ln(5);
             
-            // Requirements content
-            $this->SetTextColor(0, 0, 0);
-            $this->SetFont('Times', '', 10);
-            $requirements = "• SCHOOL FEES: GHC 250.00\n• A4 SHEETS: 1 Ream\n• DETTOL: 1 Bottle (Camel)\n• TOILET ROLL: 3 Rolls\n• TOILET SOAP: 2 Bars\n• FEEDING FEE: GHC 7.00/week";
+            // Progress circles container
+            $circleY = $this->GetY();
             
-            $reqY = $this->GetY();
-            $this->MultiCell(95, 5, $requirements, 1, 'L');
+            // Academic Mastery Circle
+            $this->drawProgressCircle(40, $circleY + 20, 15, $academicMastery, 'ACADEMIC MASTERY', array(65, 105, 225)); // Royal Blue
             
-            // Management message
-            $currentY = $this->GetY();
-            $this->SetXY(105, $reqY);
-            $this->SetFont('Times', '', 9);
-            $this->MultiCell(95, 5, "With our sincerest thanksgiving to parents and stakeholders of the school, we look forward to working with you next term. Your continued support and partnership in your child's education is deeply appreciated. May God bless you abundantly.", 1, 'L');
+            // Punctuality Circle
+            $this->drawProgressCircle(105, $circleY + 20, 15, $punctuality, 'PUNCTUALITY', array(50, 205, 50)); // Lime Green
+            
+            // Behavior Circle
+            $this->drawProgressCircle(170, $circleY + 20, 15, $behavior, 'BEHAVIOR & CONDUCT', array(255, 140, 0)); // Dark Orange
+            
+            $this->Ln(35);
+            
+            // Performance summary
+            $this->SetFillColor(245, 245, 245);
+            $this->SetDrawColor(220, 220, 220);
+            $this->SetLineWidth(0.3);
+            $this->Rect(10, $this->GetY(), 190, 25, 'D');
+            
+            $this->SetFont('Arial', 'B', 10);
+            $this->SetTextColor(60, 60, 60);
+            $this->Cell(190, 6, 'PERFORMANCE SUMMARY', 0, 1, 'C');
+            
+            $this->SetFont('Arial', '', 9);
+            $this->SetTextColor(80, 80, 80);
+            
+            $summaryText = "This student demonstrates ";
+            $summaryText .= $academicMastery >= 80 ? "exceptional" : ($academicMastery >= 70 ? "strong" : ($academicMastery >= 60 ? "satisfactory" : "developing"));
+            $summaryText .= " academic mastery with {$academicMastery}% proficiency, ";
+            $summaryText .= $punctuality >= 90 ? "excellent" : ($punctuality >= 80 ? "good" : ($punctuality >= 70 ? "adequate" : "needs improvement"));
+            $summaryText .= " attendance records at {$punctuality}%, and ";
+            $summaryText .= $behavior >= 85 ? "outstanding" : ($behavior >= 75 ? "positive" : ($behavior >= 65 ? "satisfactory" : "developing"));
+            $summaryText .= " behavioral conduct scoring {$behavior}%.";
+            
+            $this->MultiCell(180, 4, $summaryText, 0, 'C');
             
             // Progress indicator
             $this->Ln(5);
