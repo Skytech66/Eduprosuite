@@ -358,7 +358,7 @@ class mypdf extends FPDF {
                     $grade = 'F';
                     $remarks = 'Weak';
                 }
-                // Set font to bold for Grade
+               // Set font to bold for Grade
                 $this->SetFont('Arial', 'B', 10);
                 $this->Cell(25, 7, $grade, 1, 0, 'C'); // Grade
                 $this->SetFont('Arial', '', 10); // Reset font to normal for remarks
