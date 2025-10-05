@@ -49,6 +49,24 @@ class mypdf extends FPDF {
     }
 
     /**
+     * Draw a circle
+     */
+    function Circle($x, $y, $r, $style='D')
+    {
+        // $style can be:
+        // 'D' = Draw only, 'F' = Fill only, 'DF' or 'FD' = Draw and Fill
+        $op = ($style=='F') ? 'f' : (($style=='FD' || $style=='DF') ? 'b' : 's');
+        $h = $this->h;
+        $this->_out(sprintf(
+            '%.2F %.2F %.2F 0 360 arc %s',
+            $x * $this->k,
+            ($h - $y) * $this->k,
+            $r * $this->k,
+            $op
+        ));
+    }
+
+    /**
      * Draw a progress circle with percentage and label
      */
     function drawProgressCircle($x, $y, $radius, $percent, $label) {
@@ -373,7 +391,7 @@ class mypdf extends FPDF {
             $this->SetTextColor(30, 70, 120);
             $this->Cell(80, 8, strtoupper($data['name']), 0, 1, 'L');
             
-            $this->SetFont('Helvetica', 'B', 12);
+                        $this->SetFont('Helvetica', 'B', 12);
             $this->SetTextColor(80, 80, 100);
             $this->SetXY(20, 72);
             $this->Cell(25, 8, 'CLASS:', 0, 0, 'L');
@@ -679,7 +697,7 @@ class mypdf extends FPDF {
 
             // School motto or closing message
             $this->SetFont('Helvetica', 'B', 10);
-            $this->SetTextColor(70, 100, 150);
+                        $this->SetTextColor(70, 100, 150);
             $this->Cell(180, 6, '"Quality Education for Future Leaders"', 0, 1, 'C');
 
             // Add page break for next student (except for the last one)
