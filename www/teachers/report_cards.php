@@ -3,32 +3,24 @@
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-
-// Start output buffering to prevent "headers already sent" errors
 ob_start();
 
-// Supabase connection (must use pooler)
-$host = "aws-1-eu-north-1.pooler.supabase.com"; 
-$port = "6543";                                
-$dbname = "postgres";                          
-$user = "postgres.mqtuzltstbshtjigzujz";       
-$password = "Ernestbizz..123";                 
+$host = "aws-1-eu-north-1.pooler.supabase.com";
+$port = "6543";
+$dbname = "postgres";
+$user = "postgres.mqtuzltstbshtjigzujz";
+$password = "Ernestbizz..123";
 
 try {
-    $conn = new PDO(
-        "pgsql:host=$host;port=$port;dbname=$dbname",
-        $user,
-        $password,
-        [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-        ]
-    );
+    $conn = new PDO("pgsql:host=$host;port=$port;dbname=$dbname", $user, $password, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+    ]);
 } catch (PDOException $e) {
     die("Connection failed: " . $e->getMessage());
 }
 
-// Function to convert a number to its ordinal representation
+// Function to convert number to ordinal
 function ordinal($number) {
     $number = (int)$number;
     if (!in_array(($number % 100), [11, 12, 13])) {
@@ -151,143 +143,143 @@ class mypdf extends FPDF {
 
         // School header with professional styling
         $this->SetFillColor(240, 240, 240);
-        $this->Rect(0, 0, 210, 40, 'F');
+        $this->Rect(0, 0, 210, 45, 'F');
         
         // School logo
         if (file_exists('bob.png')) {
-            $this->Image('bob.png', 15, 8, 30, 25);
+            $this->Image('bob.png', 15, 10, 35, 28);
         } else {
             $this->SetFillColor(220, 220, 220);
-            $this->Rect(15, 8, 30, 25, 'F');
+            $this->Rect(15, 10, 35, 28, 'F');
             $this->SetFont('Arial', 'I', 8);
-            $this->SetXY(15, 16);
-            $this->Cell(30, 5, 'SCHOOL LOGO', 0, 0, 'C');
+            $this->SetXY(15, 20);
+            $this->Cell(35, 5, 'SCHOOL LOGO', 0, 0, 'C');
         }
 
-        // School information - right aligned
-        $this->SetFont('Times', 'B', 16);
-        $this->SetXY(50, 8);
-        $this->Cell(140, 8, isset($this->config['school_name']) ? strtoupper($this->config['school_name']) : 'SCHOOL NAME', 0, 1, 'C');
+        // School information - centered
+        $this->SetFont('Times', 'B', 18);
+        $this->SetTextColor(40, 80, 120);
+        $this->SetXY(60, 12);
+        $this->Cell(140, 8, isset($this->config['school_name']) ? strtoupper($this->config['school_name']) : 'EXCELLENCE ACADEMY', 0, 1, 'C');
         
-        $this->SetFont('Times', '', 10);
-        $this->SetX(50);
+        $this->SetFont('Times', 'B', 12);
+        $this->SetTextColor(80, 80, 80);
+        $this->SetX(60);
         $addressLine = isset($this->config['po_box']) && isset($this->config['address']) ? 
-            $this->config['po_box'] . ', ' . $this->config['address'] : 'P.M.B 40, Madina';
+            $this->config['po_box'] . ', ' . $this->config['address'] : 'P.M.B 40, Madina - Accra';
         $this->Cell(140, 6, $addressLine, 0, 1, 'C');
         
-        $this->SetX(50);
-        $this->Cell(140, 6, 'TEL: 0277411866 / 0541622751', 0, 1, 'C');
+        $this->SetX(60);
+        $this->Cell(140, 6, '📞 0277411866 • 0541622751', 0, 1, 'C');
         
-        $this->SetX(50);
-        $this->Cell(140, 6, 'LOCATION: Abokobi / Boi New Town', 0, 1, 'C');
+        $this->SetX(60);
+        $this->Cell(140, 6, '📍 Abokobi / Boi New Town', 0, 1, 'C');
 
-        // Decorative line
-        $this->SetLineWidth(0.8);
-        $this->SetDrawColor(100, 100, 150);
-        $this->Line(10, 38, 200, 38);
+        // Decorative line with accent color
+        $this->SetLineWidth(1);
+        $this->SetDrawColor(70, 130, 180);
+        $this->Line(15, 42, 195, 42);
         
-        // Report title
-        $this->SetY(42);
-        $this->SetFont('Arial', 'B', 18);
+        // Report title with modern styling
+        $this->SetY(48);
+        $this->SetFont('Arial', 'B', 20);
         $this->SetTextColor(50, 50, 120);
-        $this->Cell(190, 10, 'STUDENT ACADEMIC REPORT', 0, 1, 'C');
+        $this->Cell(190, 10, 'ACADEMIC PERFORMANCE REPORT', 0, 1, 'C');
         
-        $this->SetFont('Arial', 'I', 11);
-        $this->SetTextColor(100, 100, 100);
-        $this->Cell(190, 6, 'Comprehensive Performance Assessment', 0, 1, 'C');
+        $this->SetFont('Arial', 'I', 12);
+        $this->SetTextColor(100, 100, 150);
+        $this->Cell(190, 6, 'Comprehensive Student Assessment', 0, 1, 'C');
     }
 
     function footer() {
-        $this->SetY(-18);
+        $this->SetY(-20);
         $this->SetFont('Arial', 'I', 9);
         $this->SetTextColor(100, 100, 100);
         
         // Footer line
         $this->SetLineWidth(0.3);
         $this->SetDrawColor(200, 200, 200);
-        $this->Line(10, $this->GetY(), 200, $this->GetY());
+        $this->Line(15, $this->GetY(), 195, $this->GetY());
         
-        $this->Ln(2);
-        $this->Cell(95, 6, 'Generated on: ' . date('F j, Y'), 0, 0, 'L');
+        $this->Ln(3);
+        $this->Cell(95, 6, 'Generated on: ' . date('F j, Y g:i A'), 0, 0, 'L');
         $this->Cell(95, 6, 'Page ' . $this->PageNo() . ' of {nb}', 0, 1, 'R');
         
         // Confidential notice
         $this->SetFont('Arial', 'I', 8);
-        $this->Cell(190, 4, 'CONFIDENTIAL: For authorized personnel only', 0, 1, 'C');
+        $this->SetTextColor(150, 150, 150);
+        $this->Cell(190, 4, 'OFFICIAL DOCUMENT • CONFIDENTIAL • FOR AUTHORIZED RECIPIENTS ONLY', 0, 1, 'C');
     }
 
-    function getRemarks() {
+    function getAcademicRemarks() {
         $remarks = [
-            "Making steady progress keep it up.",
-            "A consistent effort will lead to improvement.",
-            "Shows potential, needs to stay focused.",
-            "Can achieve more with greater concentration.",
-            "A little more effort will bring better results.",
-            "Shows interest but needs to work more independently.",
-            "Needs to participate more actively in class.",
-            "Good attitude toward learning keep improving.",
-            "Capable of doing better with more dedication.",
-            "Beginning to take studies more seriously.",
-            "Needs to revise lessons more regularly.",
-            "Can perform better with greater consistency.",
-            "A quiet student, encouraged to engage more.",
-            "Demonstrates average understanding, more practice needed.",
-            "Should aim to submit all work on time.",
-            "Needs to improve attention during lessons.",
-            "Able to grasp concepts but needs reinforcement.",
-            "Has potential, needs to be more confident.",
-            "Tries hard but needs better study habits.",
-            "Needs to avoid rushing through work.",
-            "A positive attitude, but focus needs improvement.",
-            "Has improved slightly, more effort needed.",
-            "Capable of achieving higher results.",
-            "Needs to seek help when struggling.",
-            "Should stay on task more consistently.",
-            "A good foundation needs to build on it.",
-            "Shows improvement but must keep it up.",
-            "Can benefit from regular revision.",
-            "Can achieve higher potentials.",
-            "Shows average results can improve with guidance.",
-            "Can do better if distractions are minimized.",
-            "Improvement seen encouraged to continue.",
-            "Progressing slowly but steadily.",
-            "Should challenge self with more effort.",
-            "Needs to ask more questions when unsure.",
-            "A cooperative student needs to show more initiative.",
-            "Needs to take learning more seriously.",
-            "Has the ability but needs to apply it more.",
-            "Should strive to exceed basic expectations.",
-            "Progresses at an average pace can do more.",
-            "Will benefit from a more focused approach.",
-            "Good behavior needs academic push.",
-            "Needs to improve work completion rate.",
-            "Can shine with more confidence.",
-            "Should improve organization of work.",
-            "Shows average results across subjects.",
-            "Should build stronger study routines.",
-            "Can reach greater heights with extra effort.",
-            "Encouraged to keep working hard and not settle."
+            "Exceptional academic performance with consistent excellence across all subjects.",
+            "Demonstrates outstanding understanding and application of concepts.",
+            "Shows remarkable progress and dedication to academic excellence.",
+            "Consistently produces high-quality work with great attention to detail.",
+            "Strong analytical skills and excellent problem-solving abilities.",
+            "Shows great potential and consistently exceeds expectations.",
+            "Very good understanding of concepts with consistent performance.",
+            "Makes valuable contributions to class discussions and activities.",
+            "Shows steady improvement and strong commitment to learning.",
+            "Good grasp of subject matter with reliable performance.",
+            "Developing well and shows positive attitude towards learning.",
+            "Making satisfactory progress with room for continued growth.",
+            "Shows interest in learning and participates actively in class.",
+            "Working towards achieving full potential with guidance.",
+            "Needs to develop more consistent study habits for better results.",
+            "Would benefit from additional practice and reinforcement.",
+            "Requires more focus and dedication to improve performance.",
+            "Needs to work on completing assignments more consistently."
         ];
         return $remarks[array_rand($remarks)];
     }
 
+    function getConductRemarks() {
+        $conductRemarks = [
+            "Exemplary behavior and outstanding character. A role model for peers.",
+            "Consistently demonstrates respect, responsibility, and integrity.",
+            "Excellent classroom citizen with positive attitude and strong work ethic.",
+            "Shows exceptional leadership qualities and helps others willingly.",
+            "Very respectful and cooperative with teachers and classmates.",
+            "Displays excellent self-discipline and organizational skills.",
+            "Positive contributor to class environment with good behavior.",
+            "Reliable and trustworthy with strong sense of responsibility.",
+            "Works well independently and collaborates effectively in groups.",
+            "Shows good manners and treats others with kindness and respect.",
+            "Generally well-behaved with positive approach to learning.",
+            "Responds well to guidance and shows willingness to improve.",
+            "Developing good social skills and classroom etiquette.",
+            "Needs occasional reminders to maintain focus and attention.",
+            "Would benefit from improved self-control in classroom settings.",
+            "Requires consistent monitoring to ensure task completion.",
+            "Needs to work on following classroom rules more consistently.",
+            "Would benefit from developing better conflict resolution skills."
+        ];
+        return $conductRemarks[array_rand($conductRemarks)];
+    }
+
     function drawStudentPhoto($photo, $x, $y) {
         if (!empty($photo) && file_exists($photo)) {
-            // Add border around photo
-            $this->SetDrawColor(200, 200, 200);
-            $this->SetLineWidth(0.5);
-            $this->Rect($x-2, $y-2, 32, 26);
-            $this->Image($photo, $x, $y, 28, 22);
+            // Add professional border around photo
+            $this->SetDrawColor(180, 180, 180);
+            $this->SetLineWidth(0.8);
+            $this->Rect($x-3, $y-3, 36, 30);
+            $this->SetFillColor(250, 250, 250);
+            $this->Rect($x-2, $y-2, 34, 28, 'F');
+            $this->Image($photo, $x, $y, 30, 24);
         } else {
-            // Professional placeholder
+            // Professional photo placeholder
             $this->SetFillColor(245, 245, 245);
-            $this->SetDrawColor(220, 220, 220);
-            $this->SetLineWidth(0.5);
-            $this->Rect($x-2, $y-2, 32, 26, 'DF');
-            $this->SetFont('Arial', 'I', 7);
+            $this->SetDrawColor(200, 200, 200);
+            $this->SetLineWidth(0.8);
+            $this->Rect($x-3, $y-3, 36, 30, 'DF');
+            $this->SetFont('Arial', 'I', 8);
             $this->SetTextColor(150, 150, 150);
             $this->SetXY($x, $y+8);
-            $this->Cell(28, 5, 'PHOTO', 0, 0, 'C');
+            $this->Cell(30, 5, 'STUDENT', 0, 0, 'C');
+            $this->SetXY($x, $y+15);
+            $this->Cell(30, 5, 'PHOTO', 0, 0, 'C');
         }
     }
 
@@ -322,60 +314,6 @@ class mypdf extends FPDF {
         $class = $_POST['askclass'];
         $exam = $_POST['exam'];
 
-        $conductRemarks = [
-            "Consistently demonstrates outstanding behavior and a positive attitude.",
-            "Exemplifies respect, responsibility, and integrity in all actions.",
-            "Engages actively and sets a positive example for peers.",
-            "Shows great potential—would benefit from improved focus during class.",
-            "Adheres to classroom expectations and contributes positively to the learning environment.",
-            "Demonstrates empathy, kindness, and strong interpersonal skills.",
-            "Encouraged to show greater respect and attentiveness during lessons.",
-            "Exhibits natural leadership and inspires others through actions.",
-            "Remarkable progress in behavior—keep up the great effort!",
-            "Takes initiative and displays a strong sense of responsibility.",
-            "Works well independently and in group settings.",
-            "Demonstrates resilience and perseverance in challenging tasks.",
-            "Is respectful to peers and teachers at all times.",
-            "A reliable and dependable student.",
-            "Cheerful and brings a positive energy to the class.",
-            "Actively listens and contributes meaningfully to discussions.",
-            "Regularly helps and encourages classmates.",
-            "Handles responsibilities with maturity and care.",
-            "Stays calm under pressure and manages conflict well.",
-            "Needs gentle reminders to stay on task but shows willingness to improve.",
-            "Maintains a positive attitude towards learning and growth.",
-            "Is developing good self-control and patience.",
-            "Willing to accept feedback and strives to do better.",
-            "Consistently completes tasks with care and attention.",
-            "Needs to work on being more cooperative during group activities.",
-            "Kind-hearted and always ready to support others.",
-            "Takes pride in personal and academic growth.",
-            "Enthusiastic and motivated to learn new things.",
-            "Sometimes distracted—encouraged to stay focused during lessons.",
-            "A great example of punctuality and preparedness.",
-            "Respectfully communicates with peers and adults.",
-            "Demonstrates honesty and trustworthiness.",
-            "Increasingly confident in expressing thoughts and ideas.",
-            "Appreciates structure and responds well to routines.",
-            "Can improve by being more mindful of class rules.",
-            "Always willing to take part in class activities.",
-            "Demonstrates a strong sense of fairness and justice.",
-            "Well-mannered and considerate of others' feelings.",
-            "Responds positively to encouragement and support.",
-            "Making steady improvement in behavior and attitude.",
-            "Demonstrates a calm and thoughtful presence.",
-            "Follows instructions carefully and consistently.",
-            "Is beginning to show initiative in taking responsibility.",
-            "Needs to focus on being more respectful during class discussions.",
-            "Displays maturity in handling challenges.",
-            "Always completes tasks on time and with effort.",
-            "Cooperates well and contributes meaningfully to team efforts.",
-            "Learns from mistakes and shows a growth mindset.",
-            "Needs reminders but shows willingness to correct behavior.",
-            "Polite, respectful, and a joy to have in class.",
-            "An excellent role model for classmates."
-        ];
-
         // Fetch all student data
         $sql = "SELECT admission_number, photo, student, subject, class_score, exam_score, average, remarks, position 
                 FROM marks 
@@ -406,8 +344,8 @@ class mypdf extends FPDF {
         }
 
         $this->setTotalStudents(count($students));
-        $termEnds = isset($this->config['term_ends']) ? $this->config['term_ends'] : '7th August, 2025';
-        $termBegins = isset($this->config['term_begins']) ? $this->config['term_begins'] : '2nd September, 2025';
+        $termEnds = isset($this->config['term_ends']) ? $this->config['term_ends'] : 'December 15, 2024';
+        $termBegins = isset($this->config['term_begins']) ? $this->config['term_begins'] : 'January 8, 2025';
 
         foreach ($students as $admno => $data) {
             $this->current_student_index++;
@@ -416,74 +354,83 @@ class mypdf extends FPDF {
             $metrics = $this->calculatePerformanceMetrics($data['marks']);
             
             // Student information section with modern layout
-            $this->SetY(55);
+            $this->SetY(60);
             
-            // Student photo
-            $this->drawStudentPhoto($data['photo'], 160, 55);
+            // Student photo - positioned professionally
+            $this->drawStudentPhoto($data['photo'], 160, 60);
             
-            // Student details in a clean layout
-            $this->SetFont('Times', 'B', 12);
-            $this->SetTextColor(60, 60, 60);
-            $this->Cell(40, 8, 'STUDENT:', 0, 0, 'L');
-            $this->SetFont('Times', '', 12);
-            $this->SetTextColor(30, 30, 30);
-            $this->Cell(80, 8, $data['name'], 0, 1, 'L');
+            // Student details in a clean, modern layout
+            $this->SetFillColor(250, 250, 252);
+            $this->SetDrawColor(220, 220, 230);
+            $this->SetLineWidth(0.3);
+            $this->Rect(15, 58, 140, 32, 'D');
             
-            $this->SetFont('Times', 'B', 12);
-            $this->SetTextColor(60, 60, 60);
-            $this->Cell(40, 8, 'CLASS:', 0, 0, 'L');
-            $this->SetFont('Times', 'B', 13);
-            $this->SetTextColor(40, 80, 120);
-            $this->Cell(40, 8, $class, 0, 0, 'L');
+            $this->SetFont('Helvetica', 'B', 14);
+            $this->SetTextColor(60, 60, 80);
+            $this->SetXY(20, 62);
+            $this->Cell(50, 8, 'STUDENT:', 0, 0, 'L');
+            $this->SetFont('Helvetica', 'B', 16);
+            $this->SetTextColor(30, 70, 120);
+            $this->Cell(80, 8, strtoupper($data['name']), 0, 1, 'L');
             
-            $this->SetFont('Times', 'B', 12);
-            $this->SetTextColor(60, 60, 60);
-            $this->Cell(30, 8, 'EXAM:', 0, 0, 'L');
-            $this->SetFont('Times', 'B', 12);
-            $this->SetTextColor(40, 80, 120);
+            $this->SetFont('Helvetica', 'B', 12);
+            $this->SetTextColor(80, 80, 100);
+            $this->SetXY(20, 72);
+            $this->Cell(25, 8, 'CLASS:', 0, 0, 'L');
+            $this->SetFont('Helvetica', 'B', 14);
+            $this->SetTextColor(40, 100, 160);
+            $this->Cell(30, 8, $class, 0, 0, 'L');
+            
+            $this->SetFont('Helvetica', 'B', 12);
+            $this->SetTextColor(80, 80, 100);
+            $this->SetX(75);
+            $this->Cell(25, 8, 'EXAM:', 0, 0, 'L');
+            $this->SetFont('Helvetica', 'B', 13);
+            $this->SetTextColor(160, 80, 40);
             $this->Cell(40, 8, $exam, 0, 1, 'L');
             
-            $this->SetFont('Times', 'B', 12);
-            $this->SetTextColor(60, 60, 60);
-            $this->Cell(45, 8, 'TERM ENDS:', 0, 0, 'L');
-            $this->SetFont('Times', '', 12);
-            $this->SetTextColor(30, 30, 30);
-            $this->Cell(45, 8, $termEnds, 0, 0, 'L');
+            $this->SetFont('Helvetica', 'B', 11);
+            $this->SetTextColor(80, 80, 100);
+            $this->SetXY(20, 82);
+            $this->Cell(35, 6, 'TERM ENDS:', 0, 0, 'L');
+            $this->SetFont('Helvetica', '', 11);
+            $this->SetTextColor(50, 50, 70);
+            $this->Cell(40, 6, $termEnds, 0, 0, 'L');
             
-            $this->SetFont('Times', 'B', 12);
-            $this->SetTextColor(60, 60, 60);
-            $this->Cell(45, 8, 'NEXT TERM:', 0, 0, 'L');
-            $this->SetFont('Times', '', 12);
-            $this->SetTextColor(30, 30, 30);
-            $this->Cell(45, 8, $termBegins, 0, 1, 'L');
+            $this->SetFont('Helvetica', 'B', 11);
+            $this->SetTextColor(80, 80, 100);
+            $this->SetX(95);
+            $this->Cell(35, 6, 'NEXT TERM:', 0, 0, 'L');
+            $this->SetFont('Helvetica', '', 11);
+            $this->SetTextColor(50, 50, 70);
+            $this->Cell(40, 6, $termBegins, 0, 1, 'L');
 
-            // Academic performance table with enhanced styling
-            $this->Ln(5);
+            // Academic performance table with enhanced professional styling
+            $this->Ln(8);
             
-            // Table header with professional colors
-            $this->SetFillColor(60, 100, 150);
+            // Table header with modern colors
+            $this->SetFillColor(70, 130, 180);
             $this->SetTextColor(255, 255, 255);
-            $this->SetFont('Times', 'B', 11);
+            $this->SetFont('Helvetica', 'B', 11);
             $this->SetLineWidth(0.3);
             
             $headers = ['SUBJECT', 'CLASS (50%)', 'EXAM (50%)', 'TOTAL (100%)', 'GRADE', 'REMARKS', 'POSITION'];
-            $widths = [30, 25, 25, 25, 20, 35, 25];
+            $widths = [32, 26, 26, 28, 22, 38, 28];
             
             for ($i = 0; $i < count($headers); $i++) {
-                $this->Cell($widths[$i], 8, $headers[$i], 1, 0, 'C', true);
+                $this->Cell($widths[$i], 9, $headers[$i], 1, 0, 'C', true);
             }
             $this->Ln();
             
-            // Table content
+            // Table content with alternating row colors
             $this->SetTextColor(0, 0, 0);
-            $this->SetFillColor(245, 248, 250);
             $fill = false;
             
             foreach ($data['marks'] as $row) {
-                $this->SetFont('Arial', '', 9);
+                $this->SetFont('Helvetica', '', 9);
                 
                 if ($fill) {
-                    $this->SetFillColor(245, 248, 250);
+                    $this->SetFillColor(248, 250, 252);
                 } else {
                     $this->SetFillColor(255, 255, 255);
                 }
@@ -494,12 +441,12 @@ class mypdf extends FPDF {
                 $average = $row["average"];
                 $originalPosition = $row["position"];
 
-                $this->Cell($widths[0], 7, $subject, 1, 0, 'C', $fill);
-                $this->Cell($widths[1], 7, $classScore, 1, 0, 'C', $fill);
-                $this->Cell($widths[2], 7, $examScore, 1, 0, 'C', $fill);
-                $this->Cell($widths[3], 7, $average, 1, 0, 'C', $fill);
+                $this->Cell($widths[0], 8, $subject, 1, 0, 'C', $fill);
+                $this->Cell($widths[1], 8, $classScore, 1, 0, 'C', $fill);
+                $this->Cell($widths[2], 8, $examScore, 1, 0, 'C', $fill);
+                $this->Cell($widths[3], 8, $average, 1, 0, 'C', $fill);
 
-                // Determine grade with color coding
+                // Determine grade with professional color coding
                 if ($average >= 80) {
                     $grade = 'A'; $gradeColor = array(0, 128, 0); // Green
                     $remarks = 'Excellent';
@@ -521,19 +468,19 @@ class mypdf extends FPDF {
                 }
                 
                 $this->SetTextColor($gradeColor[0], $gradeColor[1], $gradeColor[2]);
-                $this->SetFont('Arial', 'B', 9);
-                $this->Cell($widths[4], 7, $grade, 1, 0, 'C', $fill);
+                $this->SetFont('Helvetica', 'B', 10);
+                $this->Cell($widths[4], 8, $grade, 1, 0, 'C', $fill);
                 
                 $this->SetTextColor(0, 0, 0);
-                $this->SetFont('Arial', '', 8);
-                $this->Cell($widths[5], 7, $remarks, 1, 0, 'C', $fill);
+                $this->SetFont('Helvetica', '', 8);
+                $this->Cell($widths[5], 8, $remarks, 1, 0, 'C', $fill);
                 
                 $this->SetTextColor(60, 60, 150);
-                $this->SetFont('Arial', 'B', 9);
+                $this->SetFont('Helvetica', 'B', 9);
                 if (is_numeric($originalPosition) && $originalPosition > 0) {
-                    $this->Cell($widths[6], 7, ordinal($originalPosition), 1, 0, 'C', $fill);
+                    $this->Cell($widths[6], 8, ordinal($originalPosition), 1, 0, 'C', $fill);
                 } else {
-                    $this->Cell($widths[6], 7, 'N/A', 1, 0, 'C', $fill);
+                    $this->Cell($widths[6], 8, 'N/A', 1, 0, 'C', $fill);
                 }
                 $this->Ln();
                 
@@ -541,30 +488,30 @@ class mypdf extends FPDF {
                 $this->SetTextColor(0, 0, 0);
             }
 
-            // Grading System in a clean box
-            $this->Ln(8);
-            $this->SetFillColor(240, 245, 250);
-            $this->SetDrawColor(200, 210, 230);
+            // Grading System in a modern info box
+            $this->Ln(10);
+            $this->SetFillColor(240, 248, 255);
+            $this->SetDrawColor(180, 210, 230);
             $this->SetLineWidth(0.5);
-            $this->Rect(10, $this->GetY(), 190, 22, 'DF');
+            $this->Rect(15, $this->GetY(), 180, 25, 'DF');
             
-            $this->SetFont('Arial', 'BU', 12);
-            $this->SetTextColor(50, 80, 120);
-            $this->Cell(190, 8, 'GRADING SYSTEM', 0, 1, 'C');
+            $this->SetFont('Helvetica', 'B', 13);
+            $this->SetTextColor(50, 100, 150);
+            $this->Cell(180, 8, 'GRADING SYSTEM', 0, 1, 'C');
             
-            $this->SetFont('Times', 'B', 10);
-            $this->SetTextColor(60, 60, 60);
-            $this->Cell(190, 5, 'A - Excellent (80 - 100)        B - Very Good (70 - 79)        C - Good (60 - 69)', 0, 1, 'C');
-            $this->Cell(190, 5, 'D - Average (50 - 59)           E - Credit (40 - 49)           F - Weak (0 - 39)', 0, 1, 'C');
+            $this->SetFont('Helvetica', 'B', 10);
+            $this->SetTextColor(70, 70, 90);
+            $this->Cell(180, 5, 'A (80-100) - Excellent • B (70-79) - Very Good • C (60-69) - Good', 0, 1, 'C');
+            $this->Cell(180, 5, 'D (50-59) - Average • E (40-49) - Credit • F (0-39) - Weak', 0, 1, 'C');
 
             // PERFORMANCE METRICS SECTION WITH PROGRESS CIRCLES
-            $this->Ln(10);
+            $this->Ln(12);
             
             // Section header
-            $this->SetFillColor(60, 100, 150);
+            $this->SetFillColor(60, 100, 160);
             $this->SetTextColor(255, 255, 255);
-            $this->SetFont('Arial', 'B', 12);
-            $this->Cell(190, 8, 'PERFORMANCE OVERVIEW', 1, 1, 'C', true);
+            $this->SetFont('Helvetica', 'B', 13);
+            $this->Cell(180, 10, 'PERFORMANCE OVERVIEW', 1, 1, 'C', true);
             
             $this->Ln(8);
             
@@ -572,110 +519,141 @@ class mypdf extends FPDF {
             $circleY = $this->GetY();
             
             // Academic Mastery Circle
-            $this->drawProgressCircle(40, $circleY + 20, 15, $metrics['academic_mastery'], 'ACADEMIC MASTERY');
+            $this->drawProgressCircle(45, $circleY + 20, 16, $metrics['academic_mastery'], 'ACADEMIC MASTERY');
             
             // Punctuality & Attendance Circle
-            $this->drawProgressCircle(105, $circleY + 20, 15, $metrics['punctuality_attendance'], 'PUNCTUALITY & ATTENDANCE');
+            $this->drawProgressCircle(105, $circleY + 20, 16, $metrics['punctuality_attendance'], 'PUNCTUALITY & ATTENDANCE');
             
             // Behavior & Conduct Circle
-            $this->drawProgressCircle(170, $circleY + 20, 15, $metrics['behavior_conduct'], 'BEHAVIOR & CONDUCT');
+            $this->drawProgressCircle(165, $circleY + 20, 16, $metrics['behavior_conduct'], 'BEHAVIOR & CONDUCT');
             
-            $this->Ln(35);
+            $this->Ln(38);
             
             // Class Participation Circle (centered below)
-            $this->drawProgressCircle(105, $this->GetY() + 15, 15, $metrics['class_participation'], 'CLASS PARTICIPATION');
+            $this->drawProgressCircle(105, $this->GetY() + 15, 16, $metrics['class_participation'], 'CLASS PARTICIPATION');
             
-            $this->Ln(25);
+            $this->Ln(28);
 
-            // Performance summary
-            $this->SetFillColor(245, 245, 245);
-            $this->SetDrawColor(220, 220, 220);
-            $this->SetLineWidth(0.3);
-            $this->Rect(10, $this->GetY(), 190, 20, 'D');
+            // Performance summary with modern styling
+            $this->SetFillColor(245, 248, 250);
+            $this->SetDrawColor(200, 210, 220);
+            $this->SetLineWidth(0.5);
+            $this->Rect(15, $this->GetY(), 180, 22, 'DF');
             
-            $this->SetFont('Arial', 'B', 10);
-            $this->SetTextColor(60, 60, 60);
-            $this->Cell(190, 6, 'PERFORMANCE SUMMARY', 0, 1, 'C');
+            $this->SetFont('Helvetica', 'B', 11);
+            $this->SetTextColor(60, 80, 100);
+            $this->Cell(180, 7, 'PERFORMANCE SUMMARY', 0, 1, 'C');
             
-            $this->SetFont('Arial', '', 9);
-            $this->SetTextColor(80, 80, 80);
+            $this->SetFont('Helvetica', '', 9);
+            $this->SetTextColor(70, 70, 80);
             
             $summaryText = "This student demonstrates ";
             $summaryText .= $metrics['academic_mastery'] >= 80 ? "exceptional" : ($metrics['academic_mastery'] >= 70 ? "strong" : ($metrics['academic_mastery'] >= 60 ? "satisfactory" : "developing"));
             $summaryText .= " academic mastery, ";
             $summaryText .= $metrics['punctuality_attendance'] >= 90 ? "excellent" : ($metrics['punctuality_attendance'] >= 80 ? "good" : ($metrics['punctuality_attendance'] >= 70 ? "adequate" : "needs improvement"));
-            $summaryText .= " attendance, and ";
+            $summaryText .= " attendance records, and ";
             $summaryText .= $metrics['behavior_conduct'] >= 85 ? "outstanding" : ($metrics['behavior_conduct'] >= 75 ? "positive" : ($metrics['behavior_conduct'] >= 65 ? "satisfactory" : "developing"));
-            $summaryText .= " behavioral conduct.";
+            $summaryText .= " behavioral conduct with active class participation.";
             
-            $this->MultiCell(180, 4, $summaryText, 0, 'C');
+            $this->MultiCell(170, 4, $summaryText, 0, 'C');
 
-            // Student status section
+            // Student status and promotion section
+            $this->Ln(10);
+            $this->SetFillColor(250, 252, 255);
+            $this->SetDrawColor(180, 200, 220);
+            $this->SetLineWidth(0.5);
+            $this->Rect(15, $this->GetY(), 180, 25, 'D');
+            
+            $this->SetFont('Helvetica', 'B', 11);
+            $this->SetTextColor(60, 80, 100);
+            $this->SetXY(20, $this->GetY() + 5);
+            $this->Cell(40, 6, 'Days Present:', 0, 0, 'L');
+            $this->SetFont('Helvetica', '', 11);
+            $this->SetTextColor(30, 30, 30);
+            $this->Cell(25, 6, '_______', 'B', 0, 'C');
+            
+            $this->SetFont('Helvetica', 'B', 11);
+            $this->SetTextColor(60, 80, 100);
+            $this->SetX(95);
+            $this->Cell(30, 6, 'Total Days:', 0, 0, 'L');
+            $this->SetFont('Helvetica', '', 11);
+            $this->SetTextColor(30, 30, 30);
+            $this->Cell(25, 6, '_______', 'B', 0, 'C');
+            
+            $this->SetFont('Helvetica', 'B', 12);
+            $this->SetTextColor(40, 120, 60);
+            $this->SetXY(20, $this->GetY() + 8);
+            $this->Cell(45, 8, 'Promotion Status:', 0, 0, 'L');
+            $this->SetFont('Helvetica', 'B', 13);
+            $this->SetTextColor(30, 100, 180);
+            $this->Cell(60, 8, 'PROMOTED TO BASIC 8', 0, 1, 'L');
+
+            // Comments section with professional layout
             $this->Ln(8);
-            $this->SetFont('Times', 'B', 11);
-            $this->SetTextColor(60, 60, 60);
-            
-            $this->Cell(40, 8, 'Attendance:', 0, 0, 'L');
-            $this->SetFont('Times', '', 11);
-            $this->SetTextColor(30, 30, 30);
-            $this->Cell(25, 8, '______', 'B', 0, 'C');
-            
-            $this->SetFont('Times', 'B', 11);
-            $this->SetTextColor(60, 60, 60);
-            $this->Cell(30, 8, 'Out of:', 0, 0, 'L');
-            $this->SetFont('Times', '', 11);
-            $this->SetTextColor(30, 30, 30);
-            $this->Cell(25, 8, '______', 'B', 0, 'C');
-            
-            $this->SetFont('Times', 'B', 11);
-            $this->SetTextColor(40, 100, 40);
-            $this->Cell(45, 8, 'Promoted to:', 0, 0, 'L');
-            $this->SetFont('Times', 'B', 11);
-            $this->SetTextColor(30, 80, 160);
-            $this->Cell(25, 8, 'Basic 8', 0, 1, 'L');
-
-            // Comments section with improved layout
-            $this->Ln(5);
-            $remarks = $this->getRemarks();
-            $conductRemark = $conductRemarks[array_rand($conductRemarks)];
             
             // Academic remarks
-            $this->SetFillColor(250, 250, 252);
-            $this->SetDrawColor(220, 220, 220);
-            $this->Rect(10, $this->GetY(), 190, 22, 'D');
+            $academicRemark = $this->getAcademicRemarks();
+            $this->SetFillColor(255, 255, 255);
+            $this->SetDrawColor(180, 200, 220);
+            $this->SetLineWidth(0.5);
+            $this->Rect(15, $this->GetY(), 180, 30, 'D');
             
-            $this->SetFont('Times', 'B', 11);
-            $this->SetTextColor(80, 80, 80);
-            $this->Cell(35, 6, 'Academic Remarks:', 0, 1, 'L');
-            $this->SetFont('Times', '', 10);
-            $this->SetTextColor(50, 50, 50);
-            $this->MultiCell(180, 5, $remarks, 0, 'L');
+            $this->SetFont('Helvetica', 'B', 12);
+            $this->SetTextColor(70, 100, 150);
+            $this->Cell(35, 7, '📚 Academic Remarks:', 0, 1, 'L');
+            $this->SetFont('Helvetica', '', 10);
+            $this->SetTextColor(50, 50, 60);
+            $this->MultiCell(170, 5, $academicRemark, 0, 'L');
             
             // Conduct remarks
-            $this->SetFont('Times', 'B', 11);
-            $this->SetTextColor(80, 80, 80);
-            $this->Cell(35, 6, 'Conduct Remarks:', 0, 1, 'L');
-            $this->SetFont('Times', '', 10);
-            $this->SetTextColor(50, 50, 50);
-            $this->MultiCell(180, 5, $conductRemark, 0, 'L');
+            $conductRemark = $this->getConductRemarks();
+            $this->SetFillColor(255, 255, 255);
+            $this->SetDrawColor(180, 200, 220);
+            $this->SetLineWidth(0.5);
+            $this->Rect(15, $this->GetY() + 2, 180, 30, 'D');
+            
+            $this->SetFont('Helvetica', 'B', 12);
+            $this->SetTextColor(70, 100, 150);
+            $this->Cell(35, 7, '⭐ Conduct Remarks:', 0, 1, 'L');
+            $this->SetFont('Helvetica', '', 10);
+            $this->SetTextColor(50, 50, 60);
+            $this->MultiCell(170, 5, $conductRemark, 0, 'L');
 
             // Signatures section with professional layout
-            $this->Ln(8);
+            $this->Ln(12);
             $signatureY = $this->GetY();
             
+            // Signature container
+            $this->SetFillColor(248, 250, 252);
+            $this->SetDrawColor(200, 210, 220);
+            $this->SetLineWidth(0.5);
+            $this->Rect(15, $signatureY, 180, 35, 'D');
+            
             // Class teacher signature
-            $this->SetFont('Times', 'B', 10);
-            $this->SetTextColor(80, 80, 80);
-            $this->Cell(80, 6, 'Class Teacher\'s Signature:', 0, 0, 'L');
+            $this->SetFont('Helvetica', 'B', 11);
+            $this->SetTextColor(80, 100, 120);
+            $this->SetXY(25, $signatureY + 8);
+            $this->Cell(70, 6, 'Class Teacher\'s Signature:', 0, 0, 'L');
             $this->SetDrawColor(150, 150, 150);
-            $this->Line(45, $signatureY + 8, 85, $signatureY + 8);
+            $this->Line(35, $signatureY + 20, 95, $signatureY + 20);
+            $this->SetFont('Helvetica', 'I', 9);
+            $this->SetTextColor(120, 120, 120);
+            $this->SetXY(35, $signatureY + 22);
+            $this->Cell(60, 4, 'Name & Date', 0, 0, 'C');
             
             // Headmistress signature
-            $this->SetX(110);
-            $this->Cell(80, 6, 'Headmistress\'s Signature:', 0, 1, 'L');
-            $this->Line(125, $signatureY + 8, 165, $signatureY + 8);
+            $this->SetFont('Helvetica', 'B', 11);
+            $this->SetTextColor(80, 100, 120);
+            $this->SetXY(115, $signatureY + 8);
+            $this->Cell(70, 6, 'Headmistress\'s Signature:', 0, 0, 'L');
+            $this->SetDrawColor(150, 150, 150);
+            $this->Line(125, $signatureY + 20, 175, $signatureY + 20);
+            $this->SetFont('Helvetica', 'I', 9);
+            $this->SetTextColor(120, 120, 120);
+            $this->SetXY(125, $signatureY + 22);
+            $this->Cell(50, 4, 'Name & Date', 0, 0, 'C');
             
-            // Add signature image if available
+            // Add official stamp/signature image if available
             $signatureImage = '';
             switch(strtolower(trim($class))) {
                 case 'basic 3b':
@@ -690,14 +668,19 @@ class mypdf extends FPDF {
             }
 
             if (file_exists($signatureImage)) {
-                $this->Image($signatureImage, 130, $signatureY - 2, 25, 12);
+                $this->Image($signatureImage, 140, $signatureY + 5, 25, 12);
             }
             
-            // Progress indicator
-            $this->Ln(5);
-            $this->SetFont('Arial', 'I', 8);
-            $this->SetTextColor(100, 100, 100);
-            $this->Cell(190, 4, "Report " . $this->current_student_index . " of " . $this->total_students, 0, 1, 'R');
+            // Progress indicator and report footer
+            $this->Ln(8);
+            $this->SetFont('Helvetica', 'I', 9);
+            $this->SetTextColor(100, 100, 120);
+            $this->Cell(180, 5, "Student Report " . $this->current_student_index . " of " . $this->total_students, 0, 1, 'R');
+
+            // School motto or closing message
+            $this->SetFont('Helvetica', 'B', 10);
+            $this->SetTextColor(70, 100, 150);
+            $this->Cell(180, 6, '"Quality Education for Future Leaders"', 0, 1, 'C');
 
             // Add page break for next student (except for the last one)
             if ($this->current_student_index < $this->total_students) {
@@ -726,11 +709,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $pdf->headertable($conn);
     
     // Output the PDF inline in the browser
-    $pdf->Output('student_academic_report.pdf', 'I');
+    $pdf->Output('Student_Academic_Report.pdf', 'I');
     
     // Flush the output buffer
     ob_end_flush();
 } else {
-    die("Invalid request method.");
+    die("Invalid request method. Please submit the form.");
 }
 ?>
