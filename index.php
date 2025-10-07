@@ -649,6 +649,11 @@
                         <a href="admin/qq/Parent_login.php" class="link-secondary animate__animated animate__fadeIn animate__delay-4s">
                             <i class="fas fa-user-friends link-icon"></i> Parent Access
                         </a>
+                        </a>
+                        <a href="student_login.php" class="link-secondary animate__animated animate__fadeIn animate__delay-4s">
+    <i class="fas fa-user-graduate link-icon"></i> Student Access
+</a>
+
                     </form>
                     
                     <p class="security-notice animate__animated animate__fadeIn animate__delay-5s">
