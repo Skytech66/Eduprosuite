@@ -1,4 +1,4 @@
-    <?php
+<?php
 session_start();
 require 'config.php'; // Database connection (assuming PDO)
 
@@ -9,21 +9,25 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $password = $_POST['password'] ?? '';
 
     if ($email && $password) {
-        $stmt = $conn->prepare("SELECT id, name, assigned_class, password FROM teacher WHERE email = ?");
-        $stmt->execute([$email]);
-        $teacher = $stmt->fetch(PDO::FETCH_ASSOC);
+        try {
+            $stmt = $conn->prepare("SELECT id, name, assigned_class, password FROM teacher WHERE email = ?");
+            $stmt->execute([$email]);
+            $teacher = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($teacher && password_verify($password, $teacher['password'])) {
-            $_SESSION['teacher_id'] = $teacher['id'];
-            $_SESSION['teacher_name'] = $teacher['name'];
-            $_SESSION['assigned_class'] = $teacher['assigned_class'];
-            header("Location: assignment.php");
-            exit;
-        } else {
-            $error = "Invalid email or password.";
+            if ($teacher && password_verify($password, $teacher['password'])) {
+                $_SESSION['teacher_id'] = $teacher['id'];
+                $_SESSION['teacher_name'] = $teacher['name'];
+                $_SESSION['assigned_class'] = $teacher['assigned_class'];
+                header("Location: assignment.php");
+                exit;
+            } else {
+                $error = "Invalid email or password.";
+            }
+        } catch (PDOException $e) {
+            $error = "Database error. Please try again.";
+            // Log the error if needed: error_log($e->getMessage());
         }
-
-        $stmt = null; // Optional: close statement
+        $stmt = null; // Free the statement
     } else {
         $error = "Please enter both email and password.";
     }
