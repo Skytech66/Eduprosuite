@@ -1,84 +1,54 @@
 <?php
 session_start();
-require 'config.php'; // Supabase configuration (e.g., $supabase_url and $anon_key)
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// Supabase connection (must use pooler)
+$host = "aws-1-eu-north-1.pooler.supabase.com"; 
+$port = "6543";                                
+$dbname = "postgres";                          
+$user = "postgres.mqtuzltstbshtjigzujz";       
+$password = "Ernestbizz..123";                  
+
+try {
+    $conn = new PDO(
+        "pgsql:host=$host;port=$port;dbname=$dbname",
+        $user,
+        $password,
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+        ]
+    );
+} catch (PDOException $e) {
+    die("Connection failed: " . $e->getMessage());
+}
 
 $error = '';
 
-// Helper function to sign in using Supabase Auth API
-function signIn($email, $password, $url, $key) {
-    $ch = curl_init($url . '/auth/v1/token?grant_type=password');
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
-        'email' => $email,
-        'password' => $password
-    ]));
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'apikey: ' . $key,
-        'Content-Type: application/json',
-    ]);
-    $response = curl_exec($ch);
-    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    if ($http_code === 200) {
-        return json_decode($response, true);
-    }
-    return false;
-}
-
-// Helper function to fetch teacher profile using Supabase REST API
-function getTeacher($user_id, $url, $key, $token) {
-    $ch = curl_init($url . '/rest/v1/teacher?select=name,assigned_class&user_id=eq.' . $user_id . '&limit=1');
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'apikey: ' . $key,
-        'Authorization: Bearer ' . $token,
-        'Content-Type: application/json',
-    ]);
-    $response = curl_exec($ch);
-    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    if ($http_code === 200) {
-        $data = json_decode($response, true);
-        return $data[0] ?? false; // Return the first (and only) matching row
-    }
-    return false;
-}
-
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $email = $_POST['email'] ?? '';
+    $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
 
-    if ($email && $password) {
-        // Attempt to sign in using Supabase Auth
-        $auth_response = signIn($email, $password, $supabase_url, $anon_key);
+    if (empty($email) || empty($password)) {
+        $error = "Please enter both email and password.";
+    } else {
+        // Query for teacher by email
+        $stmt = $conn->prepare("SELECT * FROM teacher WHERE email = :email LIMIT 1");
+        $stmt->execute(['email' => $email]);
+        $teacher = $stmt->fetch();
 
-        if ($auth_response && isset($auth_response['access_token']) && !isset($auth_response['error'])) {
-            $user = $auth_response['user'];
-
-            // Fetch additional teacher data from the 'teacher' table (assuming linked by user_id)
-            $teacher = getTeacher($user['id'], $supabase_url, $anon_key, $auth_response['access_token']);
-
-            if ($teacher && isset($teacher['name']) && isset($teacher['assigned_class'])) {
-                // Set session variables
-                $_SESSION['teacher_id'] = $user['id']; // Use Supabase user ID
-                $_SESSION['teacher_name'] = $teacher['name'];
-                $_SESSION['assigned_class'] = $teacher['assigned_class'];
-                // Store tokens for potential future API calls (e.g., in assignment.php)
-                $_SESSION['access_token'] = $auth_response['access_token'];
-                $_SESSION['refresh_token'] = $auth_response['refresh_token'];
-                header("Location: assignment.php");
-                exit;
-            } else {
-                $error = "Invalid email or password.";
-            }
+        if ($teacher && password_verify($password, $teacher['password'])) {
+            // Set session variables
+            $_SESSION['teacher_id'] = $teacher['id']; // Assuming 'id' column exists
+            $_SESSION['teacher_name'] = $teacher['name'];
+            $_SESSION['assigned_class'] = $teacher['assigned_class'];
+            // No tokens needed for direct DB approach
+            header("Location: assignment.php");
+            exit;
         } else {
             $error = "Invalid email or password.";
         }
-    } else {
-        $error = "Please enter both email and password.";
     }
 }
 ?>
@@ -329,4 +299,5 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     });
   </script>
 </body>
+
 </html>
