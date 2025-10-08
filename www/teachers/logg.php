@@ -1,33 +1,82 @@
 <?php
 session_start();
-require 'config.php'; // Database connection (assuming PDO)
+require 'config.php'; // Supabase configuration (e.g., $supabase_url and $anon_key)
 
 $error = '';
+
+// Helper function to sign in using Supabase Auth API
+function signIn($email, $password, $url, $key) {
+    $ch = curl_init($url . '/auth/v1/token?grant_type=password');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+        'email' => $email,
+        'password' => $password
+    ]));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'apikey: ' . $key,
+        'Content-Type: application/json',
+    ]);
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($http_code === 200) {
+        return json_decode($response, true);
+    }
+    return false;
+}
+
+// Helper function to fetch teacher profile using Supabase REST API
+function getTeacher($user_id, $url, $key, $token) {
+    $ch = curl_init($url . '/rest/v1/teacher?select=name,assigned_class&user_id=eq.' . $user_id . '&limit=1');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'apikey: ' . $key,
+        'Authorization: Bearer ' . $token,
+        'Content-Type: application/json',
+    ]);
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($http_code === 200) {
+        $data = json_decode($response, true);
+        return $data[0] ?? false; // Return the first (and only) matching row
+    }
+    return false;
+}
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $email = $_POST['email'] ?? '';
     $password = $_POST['password'] ?? '';
 
     if ($email && $password) {
-        try {
-            $stmt = $conn->prepare("SELECT id, name, assigned_class, password FROM teacher WHERE email = ?");
-            $stmt->execute([$email]);
-            $teacher = $stmt->fetch(PDO::FETCH_ASSOC);
+        // Attempt to sign in using Supabase Auth
+        $auth_response = signIn($email, $password, $supabase_url, $anon_key);
 
-            if ($teacher && password_verify($password, $teacher['password'])) {
-                $_SESSION['teacher_id'] = $teacher['id'];
+        if ($auth_response && isset($auth_response['access_token']) && !isset($auth_response['error'])) {
+            $user = $auth_response['user'];
+
+            // Fetch additional teacher data from the 'teacher' table (assuming linked by user_id)
+            $teacher = getTeacher($user['id'], $supabase_url, $anon_key, $auth_response['access_token']);
+
+            if ($teacher && isset($teacher['name']) && isset($teacher['assigned_class'])) {
+                // Set session variables
+                $_SESSION['teacher_id'] = $user['id']; // Use Supabase user ID
                 $_SESSION['teacher_name'] = $teacher['name'];
                 $_SESSION['assigned_class'] = $teacher['assigned_class'];
+                // Store tokens for potential future API calls (e.g., in assignment.php)
+                $_SESSION['access_token'] = $auth_response['access_token'];
+                $_SESSION['refresh_token'] = $auth_response['refresh_token'];
                 header("Location: assignment.php");
                 exit;
             } else {
                 $error = "Invalid email or password.";
             }
-        } catch (PDOException $e) {
-            $error = "Database error. Please try again.";
-            // Log the error if needed: error_log($e->getMessage());
+        } else {
+            $error = "Invalid email or password.";
         }
-        $stmt = null; // Free the statement
     } else {
         $error = "Please enter both email and password.";
     }
