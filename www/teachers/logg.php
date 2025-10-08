@@ -1,14 +1,14 @@
- <?php
+<?php
 session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Supabase connection
-$host = "aws-1-eu-north-1.pooler.supabase.com";
-$port = "6543";
-$dbname = "postgres";
-$user = "postgres.mqtuzltstbshtjigzujz";
-$password = "Ernestbizz..123";
+// Supabase connection (must use pooler)
+$host = "aws-1-eu-north-1.pooler.supabase.com"; 
+$port = "6543";                                
+$dbname = "postgres";                          
+$user = "postgres.mqtuzltstbshtjigzujz";       
+$password = "Ernestbizz..123";                  
 
 try {
     $conn = new PDO(
@@ -27,68 +27,27 @@ try {
 $error = '';
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    // LOGIN
-    if (isset($_POST['login'])) {
-        $email = trim($_POST['email'] ?? '');
-        $password = $_POST['password'] ?? '';
+    $email = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
 
-        if (empty($email) || empty($password)) {
-            $error = "Please enter both email and password.";
+    if (empty($email) || empty($password)) {
+        $error = "Please enter both email and password.";
+    } else {
+        // Query for teacher by email
+        $stmt = $conn->prepare("SELECT * FROM teacher WHERE email = :email LIMIT 1");
+        $stmt->execute(['email' => $email]);
+        $teacher = $stmt->fetch();
+
+        if ($teacher && password_verify($password, $teacher['password'])) {
+            // Set session variables
+            $_SESSION['teacher_id'] = $teacher['id']; // Assuming 'id' column exists
+            $_SESSION['teacher_name'] = $teacher['name'];
+            $_SESSION['assigned_class'] = $teacher['assigned_class'];
+            // No tokens needed for direct DB approach
+            header("Location: assignment.php");
+            exit;
         } else {
-            $stmt = $conn->prepare("SELECT * FROM teacher_system WHERE email = :email LIMIT 1");
-            $stmt->execute(['email' => $email]);
-            $teacher = $stmt->fetch();
-
-            if ($teacher && password_verify($password, $teacher['password'])) {
-                $_SESSION['teacher_id'] = $teacher['id'];
-                $_SESSION['teacher_name'] = $teacher['name'];
-                $_SESSION['assigned_class'] = $teacher['assigned_class'];
-
-                header("Location: assignment.php");
-                exit;
-            } else {
-                $error = "Invalid email or password.";
-            }
-        }
-    }
-
-    // REGISTRATION
-    if (isset($_POST['register'])) {
-        $name = trim($_POST['reg_name'] ?? '');
-        $email = trim($_POST['reg_email'] ?? '');
-        $class = trim($_POST['reg_class'] ?? '');
-        $password = $_POST['reg_password'] ?? '';
-
-        if (empty($name) || empty($email) || empty($class) || empty($password)) {
-            $error = "Please fill in all fields.";
-        } else {
-            // Check if email already exists
-            $stmt = $conn->prepare("SELECT * FROM teacher_system WHERE email = :email");
-            $stmt->execute(['email' => $email]);
-            $existing = $stmt->fetch();
-
-            if ($existing) {
-                $error = "Email already registered.";
-            } else {
-                $hashed = password_hash($password, PASSWORD_DEFAULT);
-                $stmt = $conn->prepare("INSERT INTO teacher_system (email, password, name, assigned_class)
-                                        VALUES (:email, :password, :name, :assigned_class)");
-                $stmt->execute([
-                    'email' => $email,
-                    'password' => $hashed,
-                    'name' => $name,
-                    'assigned_class' => $class
-                ]);
-
-                // Auto-login after registration
-                $teacher_id = $conn->lastInsertId();
-                $_SESSION['teacher_id'] = $teacher_id;
-                $_SESSION['teacher_name'] = $name;
-                $_SESSION['assigned_class'] = $class;
-
-                header("Location: assignment.php");
-                exit;
-            }
+            $error = "Invalid email or password.";
         }
     }
 }
@@ -111,7 +70,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         --success: #4cc9f0;
         --error: #f72585;
     }
-    * {margin:0;padding:0;box-sizing:border-box;}
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
     body {
         font-family: 'Inter', sans-serif;
         background-color: #f5f7ff;
@@ -149,18 +112,24 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         opacity: 0.9;
         font-size: 0.9rem;
     }
-    .login-form { padding: 30px; }
+    .login-form {
+        padding: 30px;
+    }
     .error-message {
         color: var(--error);
         font-size: 0.9rem;
+        margin-top: 5px;
         text-align: center;
         margin-bottom: 15px;
     }
-    .form-group { margin-bottom: 20px; }
+    .form-group {
+        margin-bottom: 20px;
+    }
     .form-group label {
         display: block;
         margin-bottom: 8px;
         font-weight: 500;
+        color: var(--dark);
         font-size: 0.9rem;
     }
     .form-control {
@@ -190,7 +159,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         background-color: var(--primary);
         color: white;
     }
-    .btn:hover { background-color: var(--primary-dark); transform: translateY(-2px); }
+    .btn:hover {
+        background-color: var(--primary-dark);
+        transform: translateY(-2px);
+    }
     .btn-secondary {
         background-color: white;
         color: var(--primary);
@@ -204,7 +176,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         transition: all 0.3s;
         text-align: center;
     }
-    .btn-secondary:hover { background-color: #f8f9ff; }
+    .btn-secondary:hover {
+        background-color: #f8f9ff;
+    }
     .divider {
         display: flex;
         align-items: center;
@@ -217,58 +191,78 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         flex: 1;
         border-bottom: 1px solid #e0e0e0;
     }
-    .divider::before { margin-right: 10px; }
-    .divider::after { margin-left: 10px; }
+    .divider::before {
+        margin-right: 10px;
+    }
+    .divider::after {
+        margin-left: 10px;
+    }
+    .login-footer {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 0.85rem;
+        color: var(--gray);
+    }
+    .login-footer a {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 500;
+    }
+    @media (max-width: 480px) {
+        .login-container {
+            border-radius: 12px;
+        }
+        .login-header, .login-form {
+            padding: 25px;
+        }
+    }
 
-    /* Modal Styles */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      padding-top: 100px;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.4);
+    /* Loader styles */
+    .loader-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.9);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
     }
-    .modal-content {
-      background-color: white;
-      margin: auto;
-      padding: 25px;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 400px;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-      position: relative;
-      animation: fadeInScale 0.3s ease;
+
+    .loader-logo {
+        width: 100px;
+        height: 100px;
+        opacity: 0;
+        animation: logoFadeInSpin 1.8s ease-out forwards;
     }
-    @keyframes fadeInScale {
-      from { transform: scale(0.8); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
-    .close {
-      position: absolute;
-      top: 10px;
-      right: 15px;
-      font-size: 24px;
-      font-weight: bold;
-      color: #333;
-      cursor: pointer;
+
+    @keyframes logoFadeInSpin {
+        0% {
+            transform: scale(2) rotate(0deg);
+            opacity: 0;
+        }
+        50% {
+            opacity: 1;
+        }
+        100% {
+            transform: scale(1) rotate(360deg);
+            opacity: 1;
+        }
     }
   </style>
 </head>
 <body>
   <div class="login-container">
     <div class="login-header">
-      <h2>Assignments/Tests</h2>
+      <h2>Assigments/Tests</h2>
       <p>Sign in to access your teacher dashboard</p>
     </div>
     <div class="login-form">
       <?php if ($error): ?>
         <div class="error-message"><?= htmlspecialchars($error) ?></div>
       <?php endif; ?>
-
       <form method="POST" action="">
         <div class="form-group">
           <label for="email">Email Address</label>
@@ -278,49 +272,32 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           <label for="password">Password</label>
           <input id="password" name="password" type="password" class="form-control" placeholder="Enter your password" required />
         </div>
-        <button type="submit" class="btn" name="login">Sign In</button>
+        <button type="submit" class="btn">Sign In</button>
       </form>
-
       <div class="divider">or</div>
-      <button type="button" class="btn-secondary" id="openRegisterModal">Register</button>
+      <div class="login-footer">
+        <a href="#">Forgot password?</a>
+      </div>
     </div>
   </div>
 
-  <!-- Registration Modal -->
-  <div id="registerModal" class="modal">
-    <div class="modal-content">
-      <span class="close" id="closeModal">&times;</span>
-      <h3>Teacher Registration</h3>
-      <form method="POST" action="">
-        <div class="form-group">
-          <label for="reg_name">Full Name</label>
-          <input id="reg_name" name="reg_name" type="text" class="form-control" placeholder="John Doe" required />
-        </div>
-        <div class="form-group">
-          <label for="reg_email">Email Address</label>
-          <input id="reg_email" name="reg_email" type="email" class="form-control" placeholder="your@email.com" required />
-        </div>
-        <div class="form-group">
-          <label for="reg_class">Assigned Class</label>
-          <input id="reg_class" name="reg_class" type="text" class="form-control" placeholder="Grade 6A" required />
-        </div>
-        <div class="form-group">
-          <label for="reg_password">Password</label>
-          <input id="reg_password" name="reg_password" type="password" class="form-control" placeholder="Enter password" required />
-        </div>
-        <button type="submit" class="btn" name="register">Register</button>
-      </form>
-    </div>
+  <!-- Loader HTML -->
+  <div class="loader-overlay" id="loader" style="display: none;">
+    <img src="logo.png" alt="Loading..." class="loader-logo" />
   </div>
 
+  <!-- Loader Scripts -->
   <script>
-    const modal = document.getElementById('registerModal');
-    const openBtn = document.getElementById('openRegisterModal');
-    const closeBtn = document.getElementById('closeModal');
+    // Show loader when form is submitted
+    document.querySelector('form').addEventListener('submit', function () {
+        document.getElementById('loader').style.display = 'flex';
+    });
 
-    openBtn.onclick = () => modal.style.display = 'block';
-    closeBtn.onclick = () => modal.style.display = 'none';
-    window.onclick = (e) => { if (e.target == modal) modal.style.display = 'none'; };
+    // Ensure loader is hidden when navigating back
+    window.addEventListener('pageshow', function () {
+        document.getElementById('loader').style.display = 'none';
+    });
   </script>
 </body>
+
 </html>
