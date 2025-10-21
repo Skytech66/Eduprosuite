@@ -1,240 +1,247 @@
 <?php
-// Include the database connection and DOMPDF library
-require_once "db_connection.php";
-require_once "vendor/autoload.php"; // Path to your autoload file for DOMPDF
+session_start();
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-use Dompdf\Dompdf;
-use Dompdf\Options;
-
-// Get the lesson note ID from the URL
-$lesson_id = isset($_GET['id']) ? $_GET['id'] : null;
-
-if ($lesson_id) {
-    try {
-        // Fetch the lesson note data from the database
-        $query = "SELECT * FROM lesson_notes WHERE id = :id";
-        $stmt = $conn->prepare($query);
-        $stmt->execute([':id' => $lesson_id]);
-        $lesson_note = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($lesson_note) {
-            // Set up DOMPDF options
-            $options = new Options();
-            $options->set("isHtml5ParserEnabled", true);
-            $options->set("isPhpEnabled", true);
-            $dompdf = new Dompdf($options);
-
-            // Create HTML content for the PDF
-            $html = '
-                <html>
-                <head>
-                    <style>
-                        body {
-                            font-family: "Helvetica", sans-serif;
-                            font-size: 18px;
-                            margin: 0;
-                            padding: 0;
-                            color: #333;
-                        }
-                        .container {
-                            padding: 20px;
-                            line-height: 1.5;
-                            position: relative;
-                        }
-                        .header {
-                            text-align: center;
-                            margin-bottom: 20px;
-                        }
-                        .header h1 {
-                            font-size: 32px;
-                            margin: 0;
-                            text-transform: uppercase;
-                            text-decoration: underline;
-                        }
-                        .header p {
-                            margin: 2px 0;
-                            font-size: 18px;
-                        }
-                        table {
-                            width: 100%;
-                            border-collapse: collapse;
-                            margin-bottom: 20px;
-                            background-color: #fff;
-                        }
-                        table th, table td {
-                            padding: 12px;
-                            text-align: left;
-                            border: 1px solid #BDC3C7;
-                        }
-                        table th {
-                            font-weight: bold;
-                            font-size: 18px;
-                        }
-                        .section {
-                            margin-bottom: 20px;
-                            padding: 15px;
-                            border-radius: 8px;
-                            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                        }
-                        .section h3 {
-                            font-size: 18px;
-                            margin-bottom: 10px;
-                            text-decoration: underline;
-                            font-weight: bold;
-                        }
-                        .footer {
-                            text-align: center;
-                            margin-top: 30px;
-                            font-size: 18px;
-                        }
-                        /* Watermark Styles */
-                        .watermark {
-                            position: absolute;
-                            top: 50%;
-                            left: 50%;
-                            transform: translate(-50%, -50%);
-                            font-size: 80px;
-                            font-weight: bold;
-                            color: rgba(0, 0, 0, 0.1); /* Semi-transparent */
-                            text-align: center;
-                            z-index: -1; /* Send behind content */
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="container">
-                        <!-- Watermark -->
-                        <div class="watermark">C.F.E.C</div>
-                        
-                        <!-- Header -->
-                        <div class="header">
-                            <h1>LESSON PLAN</h1>
-                            <p></p>
-                        </div>
-                        
-                        <!-- Section: Basic Information & Strand/Sub-Strand inside it -->
-                        <div class="section">
-                            <h3>Basic Information</h3>
-                            <table>
-                                <tr>
-                                    <th>Subject</th>
-                                    <td>' . htmlspecialchars($lesson_note['subject']) . '</td>
-                                </tr>
-                                <tr>
-                                    <th>Class</th>
-                                    <td>' . htmlspecialchars($lesson_note['class']) . '</td>
-                                </tr>
-                                <tr>
-                                    <th>Class Size</th>
-                                    <td>' . htmlspecialchars($lesson_note['class_size']) . '</td>
-                                </tr>
-                                <tr>
-                                    <th>Week Ending</th>
-                                    <td>' . htmlspecialchars($lesson_note['week_ending']) . '</td>
-                                </tr>
-                                <tr>
-                                    <th>Strand</th>
-                                    <td>' . htmlspecialchars($lesson_note['strand']) . '</td>
-                                </tr>
-                                <tr>
-                                    <th>Sub-Strand</th>
-                                    <td>' . htmlspecialchars($lesson_note['sub_strand']) . '</td>
-                                </tr>
-                            </table>
-                        </div>
-
-                        <!-- Section: Indicators & Standards -->
-                        <div class="section">
-                            <h3>Indicators & Standards</h3>
-                            <table>
-                                <tr>
-                                    <th>Indicator (Code)</th>
-                                    <td>' . htmlspecialchars($lesson_note['indicator']) . '</td>
-                                </tr>
-                                <tr>
-                                    <th>Content Standard</th>
-                                    <td>' . nl2br(htmlspecialchars($lesson_note['content_standard'])) . '</td>
-                                </tr>
-                                <tr>
-                                    <th>Performance Indicator</th>
-                                    <td>' . nl2br(htmlspecialchars($lesson_note['performance_indicator'])) . '</td>
-                                </tr>
-                            </table>
-                        </div>
-                        
-                        <!-- Section: Core Competencies -->
-                        <div class="section">
-                            <h3>Core Competencies</h3>
-                            <table>
-                                <tr>
-                                    <th>Competencies</th>
-                                    <td>' . nl2br(htmlspecialchars($lesson_note['core_competencies'])) . '</td>
-                                </tr>
-                            </table>
-                        </div>
-                        
-                        <!-- Section: Teaching and Learning Resources -->
-                        <div class="section">
-                            <h3>Teaching and Learning Resources (TLMs)</h3>
-                            <table>
-                                <tr>
-                                    <th>Resources</th>
-                                    <td>' . nl2br(htmlspecialchars($lesson_note['tlm'])) . '</td>
-                                </tr>
-                                <tr>
-                                    <th>Reference</th>
-                                    <td>' . htmlspecialchars($lesson_note['reference']) . '</td>
-                                </tr>
-                            </table>
-                        </div>
-                        
-                        <!-- Section: Phases -->
-                        <div class="section">
-                            <h3>Phases of Lesson</h3>
-                            <table>
-                                <tr>
-                                    <th>Starter</th>
-                                    <td>' . nl2br(htmlspecialchars($lesson_note['starter'])) . '</td>
-                                </tr>
-                                <tr>
-                                    <th>Main</th>
-                                    <td>' . nl2br(htmlspecialchars($lesson_note['main'])) . '</td>
-                                </tr>
-                                <tr>
-                                    <th>Plenary</th>
-                                    <td>' . nl2br(htmlspecialchars($lesson_note['plenary'])) . '</td>
-                                </tr>
-                            </table>
-                        </div>
-                        
-                        <!-- Footer -->
-                        <div class="footer">
-                            <p></p>
-                            <p>Vetted by.........................signature................................date....................</p>
-                        </div>
-                    </div>
-                </body>
-                </html>
-            ';
-
-            // Load the HTML content
-            $dompdf->loadHtml($html);
-
-            // Set paper size to A4, portrait mode
-            $dompdf->setPaper('A4', 'portrait');
-
-            // Render PDF
-            $dompdf->render();
-
-            // Output the PDF (force download)
-            $dompdf->stream("lesson_note_{$lesson_id}.pdf", ["Attachment" => 1]);
-        } else {
-            echo "Lesson note not found!";
-        }
-    } catch (PDOException $e) {
-        echo "Error fetching lesson note: " . $e->getMessage();
-    }
-} else {
-    echo "Invalid lesson note ID.";
+// Security check
+if (!isset($_SESSION['teacher_id']) || empty($_SESSION['teacher_id'])) {
+    header("Location: logginn.php");
+    exit;
 }
+
+// Database configuration
+$host = "aws-1-eu-north-1.pooler.supabase.com";
+$port = "6543";
+$dbname = "postgres";
+$user = "postgres.mqtuzltstbshtjigzujz";
+$password = "Ernestbizz..123";
+
+// Database connection
+try {
+    $pdo = new PDO("pgsql:host=$host;port=$port;dbname=$dbname", $user, $password, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES => false
+    ]);
+} catch (PDOException $e) {
+    error_log("Database connection failed: " . $e->getMessage());
+    die("Connection failed. Please try again later.");
+}
+
+// Sanitization
+function sanitize($data) {
+    if (is_array($data)) return array_map('sanitize', $data);
+    return htmlspecialchars(trim($data), ENT_QUOTES, 'UTF-8');
+}
+
+// Validate request
+if (!isset($_POST['note_id']) || !is_numeric($_POST['note_id'])) {
+    die("Invalid request: Lesson note ID is required.");
+}
+$note_id = (int)$_POST['note_id'];
+$teacher_id = $_SESSION['teacher_id'];
+
+// Fetch lesson note
+try {
+    $stmt = $pdo->prepare("SELECT * FROM lesson_notes WHERE id = ? AND teacher_id = ?");
+    $stmt->execute([$note_id, $teacher_id]);
+    $note = $stmt->fetch();
+    if (!$note) die("Lesson note not found or access denied.");
+} catch (PDOException $e) {
+    error_log("Database query failed: " . $e->getMessage());
+    die("Error retrieving lesson note. Please try again.");
+}
+
+// Include FPDF
+require('fpdf.php');
+
+class PDF extends FPDF {
+    private $primaryColor = [33, 37, 41];
+    private $accentColor = [52, 58, 64];
+    private $darkColor = [23, 32, 42];
+    private $borderColor = [200, 200, 200];
+    private $textColor = [33, 37, 41];
+    private $mutedColor = [108, 117, 125];
+
+    // Header
+    function Header() {
+        if ($this->PageNo() == 1) {
+            $this->SetFont('Arial', 'B', 20);
+            $this->SetTextColor(0, 0, 0);
+            $this->Cell(0, 12, 'LESSON PLAN', 0, 1, 'C');
+
+            $this->SetFont('Arial', 'I', 11);
+            $this->Cell(0, 6, 'Professional Teaching Resource Document', 0, 1, 'C');
+
+            // Accent line
+            $this->SetFillColor($this->accentColor[0], $this->accentColor[1], $this->accentColor[2]);
+            $this->Rect(10, 30, 190, 2, 'F');
+            $this->Ln(12);
+        }
+    }
+
+    // Footer
+    function Footer() {
+        $this->SetY(-20);
+        $this->SetFont('Arial', 'I', 9);
+        $this->SetTextColor($this->mutedColor[0], $this->mutedColor[1], $this->mutedColor[2]);
+        $this->SetDrawColor($this->borderColor[0], $this->borderColor[1], $this->borderColor[2]);
+        $this->Line(10, $this->GetY(), 200, $this->GetY());
+        $this->Ln(3);
+        $this->Cell(0, 10, 'Generated by LessonNotes Pro AI - Page ' . $this->PageNo(), 0, 0, 'C');
+    }
+
+    function SectionTitle($title) {
+        $this->SetFont('Arial', 'B', 14);
+        $this->SetTextColor($this->primaryColor[0], $this->primaryColor[1], $this->primaryColor[2]);
+        $this->Cell(0, 10, $title, 0, 1, 'L');
+        $this->Ln(3);
+    }
+
+    function ColoredCell($w, $h, $txt, $border, $ln, $align, $fill) {
+        $this->SetTextColor($this->darkColor[0], $this->darkColor[1], $this->darkColor[2]);
+        $this->SetFont('Arial', 'B', 11);
+        $this->SetDrawColor($this->borderColor[0], $this->borderColor[1], $this->borderColor[2]);
+        $this->Cell($w, $h, $txt, $border, $ln, $align, $fill);
+    }
+
+    function ContentCell($w, $h, $txt, $border, $ln, $align) {
+        $this->SetTextColor($this->textColor[0], $this->textColor[1], $this->textColor[2]);
+        $this->SetFont('Arial', '', 11);
+        $this->SetDrawColor($this->borderColor[0], $this->borderColor[1], $this->borderColor[2]);
+        $this->Cell($w, $h, $txt, $border, $ln, $align);
+    }
+
+    function PhaseBox($phaseNum, $content) {
+        $phaseTitles = [1 => '(Starter)', 2 => '(Main)', 3 => '(Reflection)'];
+        $titleText = "PHASE $phaseNum " . ($phaseTitles[$phaseNum] ?? "");
+        $this->SetTextColor($this->textColor[0], $this->textColor[1], $this->textColor[2]);
+        $this->SetFont('Arial', 'B', 12);
+        $this->Cell(0, 8, $titleText, 1, 1, 'L');
+
+        $this->SetFont('Arial', '', 11);
+        $this->SetDrawColor($this->borderColor[0], $this->borderColor[1], $this->borderColor[2]);
+
+        if (empty(trim($content))) {
+            $content = "No content provided for this phase.";
+            $this->SetTextColor($this->mutedColor[0], $this->mutedColor[1], $this->mutedColor[2]);
+            $this->SetFont('Arial', 'I', 11);
+        }
+
+        $this->MultiCell(0, 8, $content, 1, 'L');
+        $this->Ln(4);
+    }
+
+    function SafeMultiCell($w, $h, $txt, $border = 0, $align = 'J') {
+        $txt = mb_convert_encoding($txt, 'ISO-8859-1', 'UTF-8');
+        $this->MultiCell($w, $h, $txt, $border, $align);
+    }
+
+    // Getters
+    public function getBorderColor() { return $this->borderColor; }
+    public function getDarkColor() { return $this->darkColor; }
+    public function getMutedColor() { return $this->mutedColor; }
+    public function getPrimaryColor() { return $this->primaryColor; }
+    public function getTextColor() { return $this->textColor; }
+}
+
+// Create PDF
+$pdf = new PDF();
+$pdf->AddPage();
+$pdf->SetAutoPageBreak(true, 25);
+$sanitizedNote = sanitize($note);
+
+// --- BASIC INFORMATION ---
+$pdf->SectionTitle('Basic Information');
+$borderColor = $pdf->getBorderColor();
+$pdf->SetDrawColor($borderColor[0], $borderColor[1], $borderColor[2]);
+
+$pdf->ColoredCell(47, 10, 'Subject:', 1, 0, 'L', false);
+$pdf->ContentCell(47, 10, $sanitizedNote['subject'], 1, 0, 'L');
+$pdf->ColoredCell(48, 10, 'Class Size:', 1, 0, 'L', false);
+$pdf->ContentCell(48, 10, $sanitizedNote['class_size'], 1, 1, 'L');
+
+$pdf->ColoredCell(47, 10, 'Week Ending:', 1, 0, 'L', false);
+$pdf->ContentCell(47, 10, $sanitizedNote['week_ending'], 1, 0, 'L');
+$pdf->ColoredCell(48, 10, 'Day:', 1, 0, 'L', false);
+$pdf->ContentCell(48, 10, $sanitizedNote['day'], 1, 1, 'L');
+
+$pdf->ColoredCell(47, 10, 'Date:', 1, 0, 'L', false);
+$pdf->ContentCell(47, 10, $sanitizedNote['date'], 1, 0, 'L');
+$pdf->ColoredCell(48, 10, 'Period:', 1, 0, 'L', false);
+$pdf->ContentCell(48, 10, $sanitizedNote['period'], 1, 1, 'L');
+
+$pdf->Ln(10);
+
+// --- CURRICULUM DETAILS ---
+$pdf->SectionTitle('Curriculum Details');
+$pdf->ColoredCell(95, 10, 'Strand:', 1, 0, 'L', false);
+$pdf->ContentCell(95, 10, $sanitizedNote['strand'], 1, 1, 'L');
+$pdf->ColoredCell(95, 10, 'Sub-Strand:', 1, 0, 'L', false);
+$pdf->ContentCell(95, 10, $sanitizedNote['sub_strand'], 1, 1, 'L');
+$pdf->ColoredCell(95, 10, 'Indicator (Code):', 1, 0, 'L', false);
+$pdf->ContentCell(95, 10, $sanitizedNote['indicator_code'], 1, 1, 'L');
+$pdf->ColoredCell(95, 10, 'Content Standard (Code):', 1, 0, 'L', false);
+$pdf->ContentCell(95, 10, $sanitizedNote['content_standard_code'], 1, 1, 'L');
+
+$pdf->Ln(8);
+
+// --- PERFORMANCE INDICATOR AND CORE COMPETENCIES ---
+$pdf->SetFont('Arial','B',11);
+$pdf->MultiCell(0, 8, "Performance Indicator:", 1, 'L');
+$pdf->SetFont('Arial','',11);
+$pdf->SafeMultiCell(0, 8, $sanitizedNote['performance_indicator'], 1, 'L');
+$pdf->Ln(4);
+
+$pdf->SetFont('Arial','B',11);
+$pdf->MultiCell(0, 8, "Core Competencies:", 1, 'L');
+$pdf->SetFont('Arial','',11);
+$pdf->SafeMultiCell(0, 8, $sanitizedNote['core_competencies'], 1, 'L');
+$pdf->Ln(8);
+
+// --- RESOURCES ---
+$pdf->SectionTitle('Teaching Resources');
+$pdf->ColoredCell(140, 10, 'Teaching/Learning Resources:', 1, 0, 'L', false);
+$pdf->ContentCell(65, 10, $sanitizedNote['tls'], 1, 1, 'L');
+$pdf->ColoredCell(140, 10, 'References:', 1, 0, 'L', false);
+$pdf->ContentCell(65, 10, $sanitizedNote['ref'], 1, 1, 'L');
+
+$pdf->Ln(9);
+
+// --- LESSON PHASES ---
+$pdf->SectionTitle('Lesson Phases');
+for ($i = 1; $i <= 3; $i++) {
+    $phaseContent = $sanitizedNote['phase'.$i] ?? 'No content available';
+    $pdf->PhaseBox($i, $phaseContent);
+}
+
+// --- APPROVAL ---
+$pdf->SetY(-35);
+$pdf->SetFont('Arial', 'I', 12);
+$pdf->SetTextColor($pdf->getDarkColor()[0], $pdf->getDarkColor()[1], $pdf->getDarkColor()[2]);
+$pdf->Cell(0, 10, 'Vetted by: ....................................................', 0, 1, 'R');
+$pdf->SetFont('Arial', '', 10);
+$pdf->SetTextColor($pdf->getMutedColor()[0], $pdf->getMutedColor()[1], $pdf->getMutedColor()[2]);
+$pdf->Cell(0, 5, 'Signature & Date', 0, 1, 'R');
+
+// --- OUTPUT ---
+$filename = 'professional_lesson_plan_' . $note_id . '_' . date('Y-m-d') . '.pdf';
+$preview = isset($_GET['preview']) && $_GET['preview'] == 1;
+
+header('Content-Type: application/pdf');
+header('Cache-Control: private, must-revalidate, post-check=0, pre-check=0, max-age=1');
+
+if ($preview) {
+    // Inline preview in browser
+    header('Content-Disposition: inline; filename="' . $filename . '"');
+    $pdf->Output('I', $filename);
+} else {
+    // Force download
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Content-Transfer-Encoding: binary');
+    header('Accept-Ranges: bytes');
+    $pdf->Output('D', $filename);
+}
+
+exit;
 ?>
