@@ -1,859 +1,1806 @@
 <?php
 session_start();
-require_once 'config.php'; // Ensure this file correctly connects to your database
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-// Check if the teacher is logged in
+// Redirect if not logged in
 if (!isset($_SESSION['teacher_id'])) {
     header("Location: logginn.php");
-    exit();
+    exit;
 }
 
-// Get the assigned class from the session
-$assigned_class = $_SESSION['assigned_class'] ?? '';
+// Supabase connection
+$host = "aws-1-eu-north-1.pooler.supabase.com";
+$port = "6543";
+$dbname = "postgres";
+$user = "postgres.mqtuzltstbshtjigzujz";
+$password = "Ernestbizz..123";
 
-// Check if a class is specified in the URL
-$class_to_access = $_GET['class'] ?? '';
-
-// If the class in the URL does not match the assigned class, redirect
-if (!empty($class_to_access) && $class_to_access !== $assigned_class) {
-    $_SESSION['general_error_message'] = "You do not have permission to access this class.";
-    header("Location: lesson_notes.php");
-    exit();
+try {
+    $pdo = new PDO("pgsql:host=$host;port=$port;dbname=$dbname", $user, $password);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    die("Connection failed: " . $e->getMessage());
 }
 
-// Define variables and initialize with empty values for form
-$id = $class = $periods = $week_ending = $class_size = $strand = $sub_strand = $indicator = "";
-$content_standard = $performance_indicator = $core_competencies = $keywords = "";
-$tlm = $reference = $starter = $main = $plenary = $learning_objectives = $assessment_methods = "";
-
-// Define variables for error messages
-$class_err = $periods_err = $week_ending_err = $class_size_err = $strand_err = $sub_strand_err = $indicator_err = "";
-$general_error_message = "";
-$success_message = "";
-
-// --- Handle Messages from Session ---
-if (isset($_SESSION['success_message'])) {
-    $success_message = $_SESSION['success_message'];
-    unset($_SESSION['success_message']);
-}
-if (isset($_SESSION['general_error_message'])) {
-    $general_error_message = $_SESSION['general_error_message'];
-    unset($_SESSION['general_error_message']);
+// Sanitize input function
+function sanitize($data) {
+    return htmlspecialchars(trim($data), ENT_QUOTES, 'UTF-8');
 }
 
-// --- Handle Sticky Form Data and Errors from Session ---
-if (isset($_SESSION['form_data'])) {
-    $class = $_SESSION['form_data']['class'] ?? '';
-    $periods = $_SESSION['form_data']['periods'] ?? '';
-    $week_ending = $_SESSION['form_data']['week_ending'] ?? '';
-    $class_size = $_SESSION['form_data']['class_size'] ?? '';
-    $strand = $_SESSION['form_data']['strand'] ?? '';
-    $sub_strand = $_SESSION['form_data']['sub_strand'] ?? '';
-    $indicator = $_SESSION['form_data']['indicator'] ?? '';
-    $content_standard = $_SESSION['form_data']['content_standard'] ?? '';
-    $performance_indicator = $_SESSION['form_data']['performance_indicator'] ?? '';
-    $core_competencies = $_SESSION['form_data']['core_competencies'] ?? '';
-    $keywords = $_SESSION['form_data']['keywords'] ?? '';
-    $tlm = $_SESSION['form_data']['tlm'] ?? '';
-    $reference = $_SESSION['form_data']['reference'] ?? '';
-    $starter = $_SESSION['form_data']['starter'] ?? '';
-    $main = $_SESSION['form_data']['main'] ?? '';
-    $plenary = $_SESSION['form_data']['plenary'] ?? '';
-    $learning_objectives = $_SESSION['form_data']['learning_objectives'] ?? '';
-    $assessment_methods = $_SESSION['form_data']['assessment_methods'] ?? '';
-    $id = $_SESSION['form_data']['id'] ?? '';
-
-    $class_err = $_SESSION['form_errors']['class_err'] ?? '';
-    $periods_err = $_SESSION['form_errors']['periods_err'] ?? '';
-    $week_ending_err = $_SESSION['form_errors']['week_ending_err'] ?? '';
-    $class_size_err = $_SESSION['form_errors']['class_size_err'] ?? '';
-    $strand_err = $_SESSION['form_errors']['strand_err'] ?? '';
-    $sub_strand_err = $_SESSION['form_errors']['sub_strand_err'] ?? '';
-    $indicator_err = $_SESSION['form_errors']['indicator_err'] ?? '';
-
-    unset($_SESSION['form_data']);
-    unset($_SESSION['form_errors']);
+// Handle delete
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['delete_id'])) {
+    $delete_id = (int)$_POST['delete_id'];
+    $teacher_id = $_SESSION['teacher_id'];
+    $stmt = $pdo->prepare("DELETE FROM lesson_notes WHERE id = ? AND teacher_id = ?");
+    $stmt->execute([$delete_id, $teacher_id]);
+    header("Location: " . $_SERVER['PHP_SELF']);
+    exit;
 }
 
-// --- Handle GET Requests (for editing or initial load) ---
-if (isset($_GET["action"]) && $_GET["action"] == "edit" && isset($_GET["id"]) && !empty(trim($_GET["id"]))) {
-    $id_to_edit = trim($_GET["id"]);
-
-    $sql = "SELECT * FROM lesson_notes WHERE id = ?";
-    if ($stmt = $conn->prepare($sql)) {
-        $stmt->bind_param("i", $param_id);
-        $param_id = $id_to_edit;
-
-        if ($stmt->execute()) {
-            $result = $stmt->get_result();
-            if ($result->num_rows == 1) {
-                $row = $result->fetch_assoc();
-                $id = $row["id"];
-                $class = $row["class"];
-                $periods = $row["periods"];
-                $week_ending = $row["week_ending"];
-                $class_size = $row["class_size"];
-                $strand = $row["strand"];
-                $sub_strand = $row["sub_strand"];
-                $indicator = $row["indicator"];
-                $content_standard = $row["content_standard"];
-                $performance_indicator = $row["performance_indicator"];
-                $core_competencies = $row["core_competencies"];
-                $keywords = $row["keywords"];
-                $tlm = $row["tlm"];
-                $reference = $row["reference"];
-                $starter = $row["starter"];
-                $main = $row["main"];
-                $plenary = $row["plenary"];
-                $learning_objectives = $row["learning_objectives"];
-                $assessment_methods = $row["assessment_methods"];
-            } else {
-                $_SESSION['general_error_message'] = "Lesson note not found.";
-                header("location: lesson_notes.php");
-                exit();
-            }
-        } else {
-            $_SESSION['general_error_message'] = "Error fetching data for edit: " . $stmt->error;
-            header("location: lesson_notes.php");
-            exit();
-        }
-        $stmt->close();
-    } else {
-        $_SESSION['general_error_message'] = "Error preparing select statement: " . $conn->error;
-        header("location: lesson_notes.php");
-        exit();
-    }
-} elseif (isset($_GET["action"]) && $_GET["action"] == "delete" && isset($_GET["id"]) && !empty(trim($_GET["id"]))) {
-    $id_to_delete = trim($_GET["id"]);
-
-    $sql = "DELETE FROM lesson_notes WHERE id = ?";
-    if ($stmt = $conn->prepare($sql)) {
-        $stmt->bind_param("i", $param_id);
-        $param_id = $id_to_delete;
-
-        if ($stmt->execute()) {
-            $_SESSION['success_message'] = "Lesson note deleted successfully!";
-        } else {
-            $_SESSION['general_error_message'] = "Error deleting lesson note: " . $stmt->error;
-        }
-        $stmt->close();
-    } else {
-        $_SESSION['general_error_message'] = "Error preparing delete statement: " . $conn->error;
-    }
-    header("location: lesson_notes.php");
-    exit();
+// Handle edit (populate form)
+$edit_note = null;
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['edit_id'])) {
+    $edit_id = (int)$_POST['edit_id'];
+    $teacher_id = $_SESSION['teacher_id'];
+    $stmt = $pdo->prepare("SELECT * FROM lesson_notes WHERE id = ? AND teacher_id = ?");
+    $stmt->execute([$edit_id, $teacher_id]);
+    $edit_note = $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
-// --- Handle POST Requests (for Add or Update) ---
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $_SESSION['form_data'] = $_POST;
-
-    $id = trim($_POST["id"] ?? '');
-
-    // Validate inputs
-    $class = trim($_POST["class"] ?? '');
-    $periods = trim($_POST["periods"] ?? '');
-    $week_ending = trim($_POST["week_ending"] ?? '');
-    $class_size = trim($_POST["class_size"] ?? '');
-    $strand = trim($_POST["strand"] ?? '');
-    $sub_strand = trim($_POST["sub_strand"] ?? '');
-    $indicator = trim($_POST["indicator"] ?? '');
-
-    // Error handling
-    $class_err = empty($class) ? "Please enter the class." : "";
-    $periods_err = empty($periods) ? "Please enter the number of periods." : (!filter_var($periods, FILTER_VALIDATE_INT) ? "Periods must be an integer." : "");
-    $week_ending_err = empty($week_ending) ? "Please enter the week ending date." : "";
-    $class_size_err = empty($class_size) ? "Please enter the class size." : (!filter_var($class_size, FILTER_VALIDATE_INT) ? "Class size must be an integer." : "");
-    $strand_err = empty($strand) ? "Please enter the strand." : "";
-    $sub_strand_err = empty($sub_strand) ? "Please enter the sub-strand." : "";
-    $indicator_err = empty($indicator) ? "Please enter the indicator." : "";
-
-    $_SESSION['form_errors'] = [
-        'class_err' => $class_err,
-        'periods_err' => $periods_err,
-        'week_ending_err' => $week_ending_err,
-        'class_size_err' => $class_size_err,
-        'strand_err' => $strand_err,
-        'sub_strand_err' => $sub_strand_err,
-        'indicator_err' => $indicator_err
+// Add or update lesson note
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['add_note'])) {
+    $fields = [
+        'week', 'subject', 'week_ending', 'class_size', 'day', 'date', 'period',
+        'lesson', 'strand', 'sub_strand', 'indicator_code', 'content_standard_code',
+        'performance_indicator', 'core_competencies', 'keywords', 'tls', 'ref',
+        'phase1', 'phase2', 'phase3'
     ];
 
-    if (empty($class_err) && empty($periods_err) && empty($week_ending_err) && empty($class_size_err) && empty($strand_err) && empty($sub_strand_err) && empty($indicator_err)) {
-        if (empty($id)) {
-            $sql = "INSERT INTO lesson_notes (class, periods, week_ending, class_size, strand, sub_strand, indicator, content_standard, performance_indicator, core_competencies, keywords, tlm, reference, starter, main, plenary, learning_objectives, assessment_methods) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        } else {
-            $sql = "UPDATE lesson_notes SET class=?, periods=?, week_ending=?, class_size=?, strand=?, sub_strand=?, indicator=?, content_standard=?, performance_indicator=?, core_competencies=?, keywords=?, tlm=?, reference=?, starter=?, main=?, plenary=?, learning_objectives=?, assessment_methods=? WHERE id=?";
-        }
-
-        if ($stmt = $conn->prepare($sql)) {
-            if (empty($id)) {
-                $stmt->bind_param("sissssssssssssssss", $class, $periods, $week_ending, $class_size, $strand, $sub_strand, $indicator, $content_standard, $performance_indicator, $core_competencies, $keywords, $tlm, $reference, $starter, $main, $plenary, $learning_objectives, $assessment_methods);
-            } else {
-                $stmt->bind_param("sissssssssssssssssi", $class, $periods, $week_ending, $class_size, $strand, $sub_strand, $indicator, $content_standard, $performance_indicator, $core_competencies, $keywords, $tlm, $reference, $starter, $main, $plenary, $learning_objectives, $assessment_methods, $id);
-            }
-
-            if ($stmt->execute()) {
-                $_SESSION['success_message'] = empty($id) ? "Lesson note added successfully!" : "Lesson note updated successfully!";
-                unset($_SESSION['form_data']);
-                unset($_SESSION['form_errors']);
-                header("location: lesson_notes.php");
-                exit();
-            } else {
-                $_SESSION['general_error_message'] = "Error executing statement: " . $stmt->error;
-            }
-            $stmt->close();
-        } else {
-            $_SESSION['general_error_message'] = "Error preparing statement: " . $conn->error;
-        }
-    } else {
-        header("location: lesson_notes.php");
-        exit();
+    $values = [];
+    foreach ($fields as $field) {
+        $values[$field] = sanitize($_POST[$field] ?? '');
     }
-}
 
-// --- Fetch existing lesson notes to display ---
-$lesson_notes = [];
-$sql_select = "SELECT id, class, periods, week_ending, strand, sub_strand, indicator FROM lesson_notes WHERE class = ? ORDER BY week_ending DESC, class ASC";
-if ($stmt = $conn->prepare($sql_select)) {
-    $stmt->bind_param("s", $assigned_class);
+    $teacher_id = $_SESSION['teacher_id'];
+    $note_id = (int)($_POST['note_id'] ?? 0);
 
-    if ($stmt->execute()) {
-        $result = $stmt->get_result();
-        if ($result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-                $lesson_notes[] = $row;
-            }
+    // Check if indicator_code already exists; if yes, append next available one
+    $indicator_codes = explode(',', $values['indicator_code']);
+    $selected_indicator = '';
+    foreach ($indicator_codes as $code) {
+        $code = trim($code);
+        $check = $pdo->prepare("SELECT COUNT(*) FROM lesson_notes WHERE teacher_id = ? AND indicator_code = ? AND id != ?");
+        $check->execute([$teacher_id, $code, $note_id]);
+        if ($check->fetchColumn() == 0) {
+            $selected_indicator = $code;
+            break;
         }
-        $result->free();
-    } else {
-        $general_error_message = "Error fetching lesson notes: " . $stmt->error;
     }
-    $stmt->close();
-} else {
-    $general_error_message = "Error preparing statement: " . $conn->error;
+
+    // If all exist, use the last one anyway
+    if (empty($selected_indicator) && !empty($indicator_codes)) {
+        $selected_indicator = end($indicator_codes);
+    }
+
+    $values['indicator_code'] = $selected_indicator;
+
+    if ($note_id > 0) {
+        // Update existing note
+        $stmt = $pdo->prepare("
+            UPDATE lesson_notes SET
+                week = :week, subject = :subject, week_ending = :week_ending, class_size = :class_size,
+                day = :day, date = :date, period = :period, lesson = :lesson, strand = :strand,
+                sub_strand = :sub_strand, indicator_code = :indicator_code, content_standard_code = :content_standard_code,
+                performance_indicator = :performance_indicator, core_competencies = :core_competencies,
+                keywords = :keywords, tls = :tls, ref = :ref, phase1 = :phase1, phase2 = :phase2, phase3 = :phase3
+            WHERE id = :note_id AND teacher_id = :teacher_id
+        ");
+        $stmt->execute(array_merge($values, ['note_id' => $note_id, 'teacher_id' => $teacher_id]));
+    } else {
+        // Insert new note
+        $stmt = $pdo->prepare("
+            INSERT INTO lesson_notes (
+                teacher_id, week, subject, week_ending, class_size, day, date, period,
+                lesson, strand, sub_strand, indicator_code, content_standard_code,
+                performance_indicator, core_competencies, keywords, tls, ref,
+                phase1, phase2, phase3, created_at
+            ) VALUES (
+                :teacher_id, :week, :subject, :week_ending, :class_size, :day, :date, :period,
+                :lesson, :strand, :sub_strand, :indicator_code, :content_standard_code,
+                :performance_indicator, :core_competencies, :keywords, :tls, :ref,
+                :phase1, :phase2, :phase3, NOW()
+            )
+        ");
+        $stmt->execute(array_merge(['teacher_id' => $teacher_id], $values));
+    }
+
+    // Prevent resubmission: Redirect after successful POST
+    header("Location: " . $_SERVER['PHP_SELF']);
+    exit;
 }
 
-// Close database connection after all operations are complete
-if (isset($conn) && $conn->ping()) {
-    $conn->close();
-}
+// Fetch all notes
+$teacher_id = $_SESSION['teacher_id'];
+$stmt = $pdo->prepare("SELECT * FROM lesson_notes WHERE teacher_id = ? ORDER BY created_at DESC");
+$stmt->execute([$teacher_id]);
+$notes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Lesson Notes</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: #4361ee;
-            --primary-light: #3a56d4;
-            --secondary-color: #3f37c9;
-            --accent-color: #4cc9f0;
-            --success-color: #38b000;
-            --danger-color: #ef233c;
-            --warning-color: #ff9e00;
-            --light-bg: #f8f9fa;
-            --card-bg: #ffffff;
-            --text-color: #2b2d42;
-            --light-text: #8d99ae;
-            --border-color: #e9ecef;
-            --shadow-light: 0 2px 10px rgba(0, 0, 0, 0.05);
-            --shadow-medium: 0 4px 20px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            --border-radius: 12px;
-            --border-radius-sm: 8px;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LessonNotes Pro - AI-Powered Education Platform</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  <style>
+    :root {
+      --primary: #4361ee;
+      --primary-dark: #3a56d4;
+      --primary-light: #eef2ff;
+      --secondary: #7209b7;
+      --success: #4cc9f0;
+      --light: #f8f9fa;
+      --dark: #212529;
+      --gray: #6c757d;
+      --light-gray: #e9ecef;
+      --border-radius: 12px;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
+      --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      --ai-gradient: linear-gradient(135deg, #4361ee, #7209b7, #4cc9f0);
+    }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--light-bg);
-            color: var(--text-color);
-            line-height: 1.6;
-            -webkit-font-smoothing: antialiased;
-        }
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, sans-serif;
+      line-height: 1.6;
+      color: var(--dark);
+      background-color: #f5f7fb;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
-            display: grid;
-            grid-template-columns: 1.5fr 1fr;
-            gap: 30px;
-        }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
 
-        header {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            padding: 20px 0;
-            text-align: center;
-            box-shadow: var(--shadow-medium);
-            margin-bottom: 30px;
-            position: relative;
-            overflow: hidden;
-        }
+    /* AI-Inspired Header */
+    header {
+      background: var(--ai-gradient);
+      color: white;
+      padding: 18px 0;
+      box-shadow: var(--shadow);
+      margin-bottom: 30px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-radius: 0 0 var(--border-radius) var(--border-radius);
+    }
 
-        header::before {
-            content: "";
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
-            transform: rotate(30deg);
-        }
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-        header h1 {
-            margin: 0;
-            font-size: 2.2rem;
-            font-weight: 600;
-            position: relative;
-        }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
 
-        .form-section, .cards-section {
-            background-color: var(--card-bg);
-            padding: 30px;
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow-light);
-            transition: var(--transition);
-        }
+    .logo i {
+      font-size: 1.8rem;
+    }
 
-        .form-section:hover, .cards-section:hover {
-            box-shadow: var(--shadow-medium);
-        }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
 
-        h2 {
-            color: var(--secondary-color);
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid var(--primary-color);
-            font-weight: 600;
-            font-size: 1.5rem;
-            position: relative;
-        }
+    /* Enhanced Hero Slider */
+    .hero-slider {
+      position: relative;
+      height: 350px;
+      border-radius: var(--border-radius);
+      overflow: hidden;
+      margin-bottom: 30px;
+      box-shadow: var(--shadow);
+    }
 
-        h2::after {
-            content: "";
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            width: 50px;
-            height: 2px;
-            background-color: var(--accent-color);
-        }
+    .slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-        .form-group {
-            margin-bottom: 20px;
-            position: relative;
-        }
+    .slide.active {
+      opacity: 1;
+    }
 
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: var(--secondary-color);
-            font-size: 0.95rem;
-        }
+    .slide::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(rgba(67, 97, 238, 0.85), rgba(114, 9, 183, 0.8));
+      z-index: 1;
+    }
 
-        input[type="text"],
-        input[type="date"],
-        input[type="number"],
-        textarea,
-        select {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius-sm);
-            font-size: 0.95rem;
-            transition: var(--transition);
-            background-color: var(--light-bg);
-        }
+    .slide-content {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      max-width: 800px;
+      padding: 0 20px;
+    }
 
-        input[type="text"]:focus,
-        input[type="date"]:focus,
-        input[type="number"]:focus,
-        textarea:focus,
-        select:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
-            outline: none;
-            background-color: var(--card-bg);
-        }
+    .slide-title {
+      font-size: 2.8rem;
+      font-weight: 800;
+      color: white;
+      margin-bottom: 15px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+      line-height: 1.2;
+      font-family: 'Montserrat', sans-serif;
+      letter-spacing: -0.5px;
+    }
 
-        textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
+    .slide-subtitle {
+      font-size: 1.6rem;
+      font-weight: 600;
+      color: white;
+      margin-bottom: 20px;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+      font-family: 'Raleway', sans-serif;
+    }
 
-        .error-message {
-            color: var(--danger-color);
-            font-size: 0.85rem;
-            margin-top: 5px;
-            display: block;
-        }
+    .slide-tagline {
+      font-size: 1.2rem;
+      font-weight: 500;
+      color: white;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+      font-family: 'Raleway', sans-serif;
+      opacity: 0.95;
+    }
 
-        .message-box {
-            padding: 15px;
-            border-radius: var(--border-radius-sm);
-            margin-bottom: 25px;
-            text-align: center;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
+    .slider-nav {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      z-index: 3;
+    }
 
-        .success-message {
-            background-color: rgba(56, 176, 0, 0.1);
-            color: var(--success-color);
-            border-left: 4px solid var(--success-color);
-        }
+    .slider-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.5);
+      cursor: pointer;
+      transition: var(--transition);
+    }
 
-        .alert-message {
-            background-color: rgba(239, 35, 60, 0.1);
-            color: var(--danger-color);
-            border-left: 4px solid var(--danger-color);
-        }
+    .slider-dot.active {
+      background: white;
+      transform: scale(1.2);
+    }
 
-        .btn {
-            display: inline-flex;
-            align-items: center;
-                        justify-content: center;
-            padding: 12px 24px;
-            border: none;
-            border-radius: var(--border-radius-sm);
-            font-size: 0.95rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: var(--transition);
-            text-decoration: none;
-            color: white;
-            gap: 8px;
-        }
+    /* Toast Notification Styles */
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      max-width: 350px;
+    }
 
-        .btn i {
-            font-size: 1rem;
-        }
+    .toast {
+      background: white;
+      border-radius: var(--border-radius);
+      padding: 16px 20px;
+      margin-bottom: 10px;
+      box-shadow: var(--shadow-hover);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transform: translateX(400px);
+      transition: transform 0.3s ease;
+      border-left: 4px solid var(--primary);
+    }
 
-        .btn-primary {
-            background-color: var(--primary-color);
-        }
+    .toast.show {
+      transform: translateX(0);
+    }
 
-        .btn-primary:hover {
-            background-color: var(--secondary-color);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(63, 55, 201, 0.2);
-        }
+    .toast-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      flex-shrink: 0;
+    }
 
-        .btn-secondary {
-            background-color: var(--light-text);
-        }
+    .toast-success .toast-icon {
+      background-color: var(--success);
+    }
 
-        .btn-secondary:hover {
-            background-color: #6c757d;
-            transform: translateY(-2px);
-        }
+    .toast-info .toast-icon {
+      background-color: var(--primary);
+    }
 
-        .btn-success {
-            background-color: var(--success-color);
-        }
+    .toast-warning .toast-icon {
+      background-color: #ffc107;
+    }
 
-        .btn-success:hover {
-            background-color: #2d8a00;
-            transform: translateY(-2px);
-        }
+    .toast-error .toast-icon {
+      background-color: #e63946;
+    }
 
-        .btn-danger {
-            background-color: var(--danger-color);
-        }
+    .toast-content {
+      flex: 1;
+    }
 
-        .btn-danger:hover {
-            background-color: #d90429;
-            transform: translateY(-2px);
-        }
+    .toast-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: var(--dark);
+    }
 
-        .button-group {
-            display: flex;
-            justify-content: flex-end;
-            margin-top: 30px;
-            gap: 15px;
-        }
+    .toast-message {
+      font-size: 0.9rem;
+      color: var(--gray);
+    }
 
-        .lesson-note-card {
-            background-color: var(--card-bg);
-            padding: 20px;
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow-light);
-            margin-bottom: 20px;
-            transition: var(--transition);
-            border-left: 4px solid var(--primary-color);
-            position: relative;
-            overflow: hidden;
-        }
+    .toast-close {
+      background: none;
+      border: none;
+      color: var(--gray);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      transition: var(--transition);
+    }
 
-        .lesson-note-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-medium);
-        }
+    .toast-close:hover {
+      background-color: var(--light-gray);
+      color: var(--dark);
+    }
 
-        .lesson-note-card h3 {
-            margin-bottom: 10px;
-            color: var(--secondary-color);
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+    /* AI-Polished Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 22px;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      font-weight: 600;
+      transition: var(--transition);
+      text-decoration: none;
+      text-align: center;
+      font-size: 0.95rem;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      position: relative;
+      overflow: hidden;
+    }
 
-        .lesson-note-card p {
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-            color: var(--light-text);
-            display: flex;
-            align-items: flex-start;
-            gap: 8px;
-        }
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
 
-        .lesson-note-card p strong {
-            color: var(--text-color);
-            min-width: 100px;
-            display: inline-block;
-        }
+    .btn:hover::before {
+      left: 100%;
+    }
 
-        .lesson-note-card .actions {
-            margin-top: 15px;
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-        }
+    .btn:hover {
+      background-color: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
 
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--light-text);
-        }
+    .btn-secondary {
+      background-color: var(--gray);
+    }
 
-        .empty-state i {
-            font-size: 3rem;
-            color: var(--border-color);
-            margin-bottom: 20px;
-        }
+    .btn-secondary:hover {
+      background-color: #5a6268;
+    }
 
-        .empty-state p {
-            font-size: 1.1rem;
-        }
+    .btn-success {
+      background-color: var(--success);
+    }
 
-        /* Floating action button for mobile */
-        .fab {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 60px;
-            height: 60px;
-            background-color: var(--primary-color);
-            color: white;
-            border-radius: 50%;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-            z-index: 100;
-            transition: var(--transition);
-        }
+    .btn-danger {
+      background-color: #e63946;
+    }
 
-        .fab:hover {
-            transform: scale(1.1);
-            background-color: var(--secondary-color);
-        }
+    .btn-danger:hover {
+      background-color: #d00000;
+    }
 
-        /* Responsive adjustments */
-        @media (max-width: 1200px) {
-            .container {
-                grid-template-columns: 1fr;
-            }
-            
-            .cards-section {
-                order: -1;
-            }
-        }
+    .btn-outline {
+      background-color: transparent;
+      border: 2px solid var(--primary);
+      color: var(--primary);
+    }
 
-        @media (max-width: 768px) {
-            header h1 {
-                font-size: 1.8rem;
-            }
-            
-            .form-section, .cards-section {
-                padding: 20px;
-            }
-            
-            .button-group {
-                flex-direction: column;
-                gap: 10px;
-            }
-            
-            .btn {
-                width: 100%;
-                justify-content: center;
-            }
-            
-            .fab {
-                display: flex;
-            }
-        }
+    .btn-outline:hover {
+      background-color: var(--primary);
+      color: white;
+    }
 
-        @media (max-width: 576px) {
-            header {
-                padding: 15px 0;
-            }
-            
-            h2 {
-                font-size: 1.3rem;
-            }
-            
-            .lesson-note-card .actions {
-                flex-direction: column;
-            }
-            
-            .lesson-note-card p {
-                flex-direction: column;
-                gap: 2px;
-            }
-            
-            .lesson-note-card p strong {
-                min-width: auto;
-            }
-        }
+    .btn-ai {
+      background: var(--ai-gradient);
+      background-size: 200% 200%;
+      animation: gradientShift 3s ease infinite;
+    }
 
-        /* Scrollbar styling */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
 
-        ::-webkit-scrollbar-track {
-            background: var(--light-bg);
-        }
+    .btn-sm {
+      padding: 8px 14px;
+      font-size: 0.875rem;
+    }
 
-        ::-webkit-scrollbar-thumb {
-            background: var(--primary-light);
-            border-radius: 4px;
-        }
+    /* Enhanced Cards with AI Feel */
+    .card {
+      background-color: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      padding: 28px;
+      margin-bottom: 25px;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
 
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--primary-color);
-        }
-    </style>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--ai-gradient);
+    }
 
+    .card:hover {
+      box-shadow: var(--shadow-hover);
+      transform: translateY(-5px);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 22px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--light-gray);
+    }
+
+    .card-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--dark);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 22px;
+    }
+
+    .form-group {
+      margin-bottom: 22px;
+      position: relative;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: var(--dark);
+      font-size: 0.95rem;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid var(--light-gray);
+      border-radius: var(--border-radius);
+      font-size: 1rem;
+      transition: var(--transition);
+      background-color: #fff;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+    }
+
+    textarea.form-control {
+      min-height: 100px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    .voice-btn {
+      position: absolute;
+      right: 10px;
+      bottom: 10px;
+      background-color: var(--light-gray);
+      border: none;
+      border-radius: 50%;
+      width: 38px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition);
+      color: var(--gray);
+    }
+
+    .voice-btn:hover {
+      background-color: var(--primary);
+      color: white;
+      transform: scale(1.05);
+    }
+
+    .notes-container {
+      margin-top: 30px;
+    }
+
+    .notes-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 22px;
+    }
+
+    .filter-controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .note-card {
+      background-color: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      margin-bottom: 22px;
+      position: relative;
+      transition: var(--transition);
+      border-left: 4px solid var(--primary);
+    }
+
+    .note-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .note-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 18px;
+    }
+
+    .note-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 6px;
+    }
+
+    .note-meta {
+      color: var(--gray);
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .note-meta span {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .note-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .note-content {
+      margin-top: 18px;
+    }
+
+    .phase {
+      margin-bottom: 18px;
+      padding: 16px;
+      background-color: var(--primary-light);
+      border-radius: var(--border-radius);
+    }
+
+    .phase-title {
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--primary);
+      font-size: 1.05rem;
+    }
+
+    .hidden-content {
+      display: none;
+    }
+
+    .toggle-btn {
+      background: none;
+      border: none;
+      color: var(--primary);
+      cursor: pointer;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 12px;
+      padding: 8px 0;
+      transition: var(--transition);
+    }
+
+    .toggle-btn:hover {
+      color: var(--primary-dark);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--gray);
+    }
+
+    .empty-state i {
+      font-size: 4rem;
+      margin-bottom: 20px;
+      color: var(--light-gray);
+    }
+
+    .empty-state h3 {
+      font-size: 1.5rem;
+      margin-bottom: 12px;
+    }
+
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--light-gray);
+      margin-bottom: 25px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .tab {
+      padding: 14px 24px;
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--gray);
+      transition: var(--transition);
+      border-bottom: 3px solid transparent;
+      white-space: nowrap;
+    }
+
+    .tab.active {
+      color: var(--primary);
+      border-bottom: 3px solid var(--primary);
+    }
+
+    .tab:hover:not(.active) {
+      color: var(--primary);
+      background-color: rgba(67, 97, 238, 0.05);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.4s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .alert {
+      padding: 16px;
+      border-radius: var(--border-radius);
+      margin-bottom: 22px;
+    }
+
+    .alert-success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .alert-info {
+      background-color: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      background-color: var(--primary-light);
+      color: var(--primary);
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    /* Dashboard Navigation */
+    .dashboard-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    .nav-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    /* Loading animation */
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Accessibility improvements */
+    .high-contrast {
+      filter: contrast(1.2);
+    }
+
+    .text-large {
+      font-size: 1.1em;
+    }
+
+    .accessibility-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    /* Mobile optimizations */
+    @media (max-width: 768px) {
+      .container {
+        padding: 15px;
+      }
+      
+      .hero-slider {
+        height: 300px;
+      }
+      
+      .slide-title {
+        font-size: 2.2rem;
+      }
+      
+      .slide-subtitle {
+        font-size: 1.3rem;
+      }
+      
+      .slide-tagline {
+        font-size: 1rem;
+      }
+      
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .header-content {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+      }
+      
+      .notes-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+      }
+      
+      .filter-controls {
+        width: 100%;
+        flex-direction: column;
+      }
+      
+      .filter-controls .form-control {
+        width: 100%;
+      }
+      
+      .note-header {
+        flex-direction: column;
+        gap: 15px;
+      }
+      
+      .note-actions {
+        width: 100%;
+        justify-content: flex-start;
+      }
+      
+      .card {
+        padding: 20px;
+      }
+      
+      .tab {
+        padding: 12px 18px;
+        font-size: 0.9rem;
+      }
+      
+      .dashboard-nav {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .btn {
+        width: 100%;
+        justify-content: center;
+      }
+      
+      .note-meta {
+        flex-direction: column;
+        gap: 5px;
+      }
+      
+      .hero-slider {
+        height: 250px;
+      }
+      
+      .slide-title {
+        font-size: 1.8rem;
+      }
+      
+      .slide-subtitle {
+        font-size: 1.1rem;
+      }
+      
+      .slide-tagline {
+        font-size: 0.9rem;
+      }
+    }
+  </style>
 </head>
 <body>
-<header class="d-flex justify-content-between align-items-center p-3 bg-light border-bottom">
-    <h1 class="m-0">
-        <i class="fas fa-book-open"></i> Lesson Notes Management
-    </h1>
-    <div class="d-flex align-items-center">
-        <span class="me-3">Assigned Class: <strong><?= htmlspecialchars($_SESSION['assigned_class'] ?? 'N/A') ?></strong></span>
-        <a href="dashboard.php" class="btn btn-light">
-            <i class="fas fa-tachometer-alt"></i>
-            <span>Back to Dashboard</span>
-        </a>
-    </div>
-</header>
+  <!-- Toast Notifications Container -->
+  <div class="toast-container" id="toastContainer"></div>
 
+  <header>
     <div class="container">
-        <div class="form-section">
-            <h2><?php echo empty($id) ? "Add New Lesson Note" : "Edit Lesson Note"; ?></h2>
-                
-            <?php if (!empty($success_message)): ?>
-                <div class="message-box success-message">
-                    <i class="fas fa-check-circle"></i>
-                    <span><?php echo $success_message; ?></span>
-                </div>
-            <?php endif; ?>
-            <?php if (!empty($general_error_message)): ?>
-                <div class="message-box alert-message">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <span><?php echo $general_error_message; ?></span>
-                </div>
-            <?php endif; ?>
-
-            <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
-                <input type="hidden" name="id" value="<?php echo htmlspecialchars($id); ?>">
-
-                <div class="form-group">
-                    <label for="class"><i class="fas fa-users"></i> Class:</label>
-                    <input type="text" id="class" name="class" value="<?php echo htmlspecialchars($class); ?>" placeholder="Enter class name">
-                    <span class="error-message"><?php echo $class_err; ?></span>
-                </div>
-
-                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <div class="form-group">
-                        <label for="periods"><i class="fas fa-clock"></i> Periods:</label>
-                        <input type="number" id="periods" name="periods" value="<?php echo htmlspecialchars($periods); ?>" placeholder="Number of periods">
-                        <span class="error-message"><?php echo $periods_err; ?></span>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="class_size"><i class="fas fa-user-graduate"></i> Class Size:</label>
-                        <input type="number" id="class_size" name="class_size" value="<?php echo htmlspecialchars($class_size); ?>" placeholder="Number of students">
-                        <span class="error-message"><?php echo $class_size_err; ?></span>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="week_ending"><i class="fas fa-calendar-day"></i> Week Ending:</label>
-                    <input type="date" id="week_ending" name="week_ending" value="<?php echo htmlspecialchars($week_ending); ?>">
-                    <span class="error-message"><?php echo $week_ending_err; ?></span>
-                </div>
-
-                <div class="form-group">
-                    <label for="strand"><i class="fas fa-layer-group"></i> Strand: <span style="color:var(--danger-color)">*</span></label>
-                    <textarea id="strand" name="strand" placeholder="e.g., Number Sense"><?php echo htmlspecialchars($strand); ?></textarea>
-                    <span class="error-message"><?php echo $strand_err; ?></span>
-                </div>
-
-                <div class="form-group">
-                    <label for="sub_strand"><i class="fas fa-stream"></i> Sub-Strand: <span style="color:var(--danger-color)">*</span></label>
-                    <textarea id="sub_strand" name="sub_strand" placeholder="e.g., Counting and Cardinality"><?php echo htmlspecialchars($sub_strand); ?></textarea>
-                    <span class="error-message"><?php echo $sub_strand_err; ?></span>
-                </div>
-
-                <div class="form-group">
-                    <label for="indicator"><i class="fas fa-bullseye"></i> Indicator: <span style="color:var(--danger-color)">*</span></label>
-                    <textarea id="indicator" name="indicator" placeholder="e.g., Identify and count numbers up to 100"><?php echo htmlspecialchars($indicator); ?></textarea>
-                    <span class="error-message"><?php echo $indicator_err; ?></span>
-                </div>
-
-                <div class="form-group">
-                    <label for="content_standard"><i class="fas fa-graduation-cap"></i> Content Standard (Optional):</label>
-                    <textarea id="content_standard" name="content_standard" placeholder="e.g., MA.K.CC.A.1 - Count to 100 by ones and by tens."><?php echo htmlspecialchars($content_standard); ?></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="performance_indicator"><i class="fas fa-chart-line"></i> Performance Indicator (Optional):</label>
-                    <textarea id="performance_indicator" name="performance_indicator" placeholder="e.g., Students will be able to orally count from 1 to 50 and write numbers from 1 to 20."><?php echo htmlspecialchars($performance_indicator); ?></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="core_competencies"><i class="fas fa-brain"></i> Core Competencies (Optional):</label>
-                    <textarea id="core_competencies" name="core_competencies" placeholder="e.g., Critical thinking, Communication"><?php echo htmlspecialchars($core_competencies); ?></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="keywords"><i class="fas fa-key"></i> Keywords (Optional):</label>
-                    <textarea id="keywords" name="keywords" placeholder="e.g., numbers, counting, cardinality, tens, ones"><?php echo htmlspecialchars($keywords); ?></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="tlm"><i class="fas fa-tools"></i> TLM (Teaching/Learning Materials) (Optional):</label>
-                    <textarea id="tlm" name="tlm" placeholder="e.g., Number charts, counting blocks, flashcards"><?php echo htmlspecialchars($tlm); ?></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="reference"><i class="fas fa-book"></i> Reference (Optional):</label>
-                    <textarea id="reference" name="reference" placeholder="e.g., Mathematics Curriculum Guide - Grade K, Unit 2"><?php echo htmlspecialchars($reference); ?></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="starter"><i class="fas fa-play"></i> Starter (Optional):</label>
-                    <textarea id="starter" name="starter" placeholder="e.g., Sing a counting song from 1 to 20."><?php echo htmlspecialchars($starter); ?></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="main"><i class="fas fa-tasks"></i> Main (Optional):</label>
-                    <textarea id="main" name="main" placeholder="e.g., Introduce number chart. Practice counting by ones and tens. Group activities with counting blocks."><?php echo htmlspecialchars($main); ?></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="plenary"><i class="fas fa-stop"></i> Plenary (Optional):</label>
-                    <textarea id="plenary" name="plenary" placeholder="e.g., Quick number identification game. Review daily objectives."><?php echo htmlspecialchars($plenary); ?></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="learning_objectives"><i class="fas fa-bullseye"></i> Learning Objectives (Optional):</label>
-                    <textarea id="learning_objectives" name="learning_objectives" placeholder="e.g., Students will be able to count orally to 50. Students will be able to write numbers 1-20."><?php echo htmlspecialchars($learning_objectives); ?></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="assessment_methods"><i class="fas fa-clipboard-check"></i> Assessment Methods (Optional):</label>
-                    <textarea id="assessment_methods" name="assessment_methods" placeholder="e.g., Observation during group activity, informal quiz on number writing."><?php echo htmlspecialchars($assessment_methods); ?></textarea>
-                </div>
-
-                <div class="button-group">
-                    <?php if (!empty($id)): ?>
-                        <a href="lesson_notes.php" class="btn btn-secondary"><i class="fas fa-times"></i> Cancel</a>
-                    <?php endif; ?>
-                    <button type="submit" class="btn btn-primary">
-                        <?php if (empty($id)): ?>
-                            <i class="fas fa-plus-circle"></i> Add Lesson Note
-                        <?php else: ?>
-                            <i class="fas fa-save"></i> Update Lesson Note
-                        <?php endif; ?>
-                    </button>
-                </div>
-            </form>
+      <div class="header-content">
+        <div class="logo">
+          <i class="fas fa-robot"></i>
+          <span>LessonNotes Pro AI</span>
         </div>
-
-        <div class="cards-section">
-            <h2><i class="fas fa-clipboard-list"></i> Existing Lesson Notes</h2>
-            <?php if (!empty($lesson_notes)): ?>
-                <?php foreach ($lesson_notes as $note): ?>
-                    <div class="lesson-note-card">
-                        <h3><i class="fas fa-book"></i> <?php echo htmlspecialchars($note['class']); ?></h3>
-                        <p><strong><i class="fas fa-clock"></i> Periods:</strong> <?php echo htmlspecialchars($note['periods']); ?></p>
-                        <p><strong><i class="fas fa-calendar-day"></i> Week Ending:</strong> <?php echo htmlspecialchars($note['week_ending']); ?></p>
-                        <p><strong><i class="fas fa-layer-group"></i> Strand:</strong> <?php echo nl2br(htmlspecialchars($note['strand'])); ?></p>
-                        <p><strong><i class="fas fa-stream"></i> Sub-Strand:</strong> <?php echo nl2br(htmlspecialchars($note['sub_strand'])); ?></p>
-                        <p><strong><i class="fas fa-bullseye"></i> Indicator:</strong> <?php echo nl2br(htmlspecialchars($note['indicator'])); ?></p>
-                        <div class="actions">
-                            <a href="?action=edit&id=<?php echo $note['id']; ?>" class="btn btn-success"><i class="fas fa-edit"></i> Edit</a>
-                            <a href="?action=delete&id=<?php echo $note['id']; ?>" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this lesson note?');"><i class="fas fa-trash-alt"></i> Delete</a>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            <?php else: ?>
-                <div class="empty-state">
-                    <i class="fas fa-book-open"></i>
-                    <p>No lesson notes found. Add your first lesson note using the form!</p>
-                </div>
-            <?php endif; ?>
+        <div class="user-info">
+          <span>Welcome, <?= sanitize($_SESSION['teacher_name']) ?></span>
+          <a href="logout.php" class="btn btn-outline">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </a>
         </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Dashboard Navigation -->
+    <div class="dashboard-nav">
+      <a href="dashboard.php" class="btn btn-ai">
+        <i class="fas fa-tachometer-alt"></i> Back to Dashboard
+      </a>
+      <div class="nav-actions">
+        <button class="btn btn-outline" onclick="toggleHighContrast()">
+          <i class="fas fa-adjust"></i> High Contrast
+        </button>
+        <button class="btn btn-outline" onclick="toggleTextSize()">
+          <i class="fas fa-text-height"></i> Larger Text
+        </button>
+        <button class="btn btn-info" onclick="showAIAssistant()">
+          <i class="fas fa-robot"></i> AI Assistant
+        </button>
+      </div>
     </div>
 
-    <a href="#" class="fab" id="scrollToTop" title="Go to top">
-        <i class="fas fa-arrow-up"></i>
-    </a>
+    <!-- Enhanced Hero Slider -->
+    <div class="hero-slider" id="heroSlider">
+      <div class="slide active" style="background-image: url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')">
+        <div class="slide-content">
+          <h1 class="slide-title">Smart Tools for Smarter Education</h1>
+          <p class="slide-subtitle">Your School, Your Classroom, Your Control</p>
+          <p class="slide-tagline">Simplifying School Management, One Click at a Time</p>
+        </div>
+      </div>
+      <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1503676260728-1c00da094a0b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2022&q=80')">
+        <div class="slide-content">
+          <h1 class="slide-title">AI-Powered Lesson Planning</h1>
+          <p class="slide-subtitle">Create Engaging Lessons in Minutes</p>
+          <p class="slide-tagline">Voice Input, Smart Analysis, Instant Results</p>
+        </div>
+      </div>
+      <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1588072432836-e10032781450?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2072&q=80')">
+        <div class="slide-content">
+          <h1 class="slide-title">Streamlined Classroom Management</h1>
+          <p class="slide-subtitle">Organize, Track, and Analyze</p>
+          <p class="slide-tagline">Everything You Need in One Platform</p>
+        </div>
+      </div>
+      <div class="slider-nav" id="sliderNav">
+        <div class="slider-dot active" data-slide="0"></div>
+        <div class="slider-dot" data-slide="1"></div>
+        <div class="slider-dot" data-slide="2"></div>
+      </div>
+    </div>
 
-    <script>
-        // Scroll to top button
-        const scrollToTopBtn = document.getElementById('scrollToTop');
+    <div class="tabs">
+      <div class="tab active" data-tab="form">
+        <i class="fas fa-plus-circle"></i> Create Lesson Note
+      </div>
+      <div class="tab" data-tab="notes">
+        <i class="fas fa-clipboard-list"></i> My Lesson Notes
+        <?php if ($notes): ?>
+          <span class="badge" style="margin-left: 8px;"><?= count($notes) ?></span>
+        <?php endif; ?>
+      </div>
+    </div>
+
+    <div class="tab-content active" id="form-tab">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <i class="fas fa-<?= $edit_note ? 'edit' : 'plus-circle' ?>"></i>
+            <?= $edit_note ? 'Edit' : 'Create New' ?> Lesson Note
+          </h2>
+          <button type="button" class="btn btn-ai" onclick="showDemoAlert()">
+            <i class="fas fa-robot"></i> AI Assistant
+          </button>
+        </div>
         
-        window.addEventListener('scroll', () => {
-            if (window.pageYOffset > 300) {
-                scrollToTopBtn.style.display = 'flex';
-            } else {
-                scrollToTopBtn.style.display = 'none';
-            }
-        });
+        <form method="POST" id="lessonForm">
+          <input type="hidden" name="note_id" id="note_id" value="<?= $edit_note ? $edit_note['id'] : '' ?>">
+          
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="week">Week</label>
+              <input type="text" name="week" id="week" class="form-control" value="<?= $edit_note ? sanitize($edit_note['week']) : '' ?>">
+            </div>
+            
+            <div class="form-group">
+              <label for="subject">Subject</label>
+              <input type="text" name="subject" id="subject" class="form-control" value="<?= $edit_note ? sanitize($edit_note['subject']) : '' ?>">
+            </div>
+            
+            <div class="form-group">
+              <label for="week_ending">Week Ending</label>
+              <input type="date" name="week_ending" id="week_ending" class="form-control" value="<?= $edit_note ? sanitize($edit_note['week_ending']) : '' ?>">
+            </div>
+            
+            <div class="form-group">
+              <label for="class_size">Class Size</label>
+              <input type="text" name="class_size" id="class_size" class="form-control" value="<?= $edit_note ? sanitize($edit_note['class_size']) : '' ?>">
+            </div>
+            
+            <div class="form-group">
+              <label for="day">Day</label>
+              <select name="day" id="day" class="form-control">
+                <option value="">Select Day</option>
+                <option value="Monday" <?= $edit_note && $edit_note['day'] == 'Monday' ? 'selected' : '' ?>>Monday</option>
+                <option value="Tuesday" <?= $edit_note && $edit_note['day'] == 'Tuesday' ? 'selected' : '' ?>>Tuesday</option>
+                <option value="Wednesday" <?= $edit_note && $edit_note['day'] == 'Wednesday' ? 'selected' : '' ?>>Wednesday</option>
+                <option value="Thursday" <?= $edit_note && $edit_note['day'] == 'Thursday' ? 'selected' : '' ?>>Thursday</option>
+                <option value="Friday" <?= $edit_note && $edit_note['day'] == 'Friday' ? 'selected' : '' ?>>Friday</option>
+                <option value="Saturday" <?= $edit_note && $edit_note['day'] == 'Saturday' ? 'selected' : '' ?>>Saturday</option>
+                <option value="Sunday" <?= $edit_note && $edit_note['day'] == 'Sunday' ? 'selected' : '' ?>>Sunday</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="date">Date</label>
+              <input type="date" name="date" id="date" class="form-control" value="<?= $edit_note ? sanitize($edit_note['date']) : '' ?>">
+            </div>
+            
+            <div class="form-group">
+              <label for="period">Period</label>
+              <input type="text" name="period" id="period" class="form-control" value="<?= $edit_note ? sanitize($edit_note['period']) : '' ?>">
+            </div>
+            
+            <div class="form-group">
+              <label for="lesson">Lesson</label>
+              <input type="text" name="lesson" id="lesson" class="form-control" value="<?= $edit_note ? sanitize($edit_note['lesson']) : '' ?>">
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="strand">Strand</label>
+            <input type="text" name="strand" id="strand" class="form-control" value="<?= $edit_note ? sanitize($edit_note['strand']) : '' ?>">
+          </div>
+          
+          <div class="form-group">
+            <label for="sub_strand">Sub-Strand</label>
+            <input type="text" name="sub_strand" id="sub_strand" class="form-control" value="<?= $edit_note ? sanitize($edit_note['sub_strand']) : '' ?>">
+          </div>
+          
+          <div class="form-group">
+            <label for="indicator_code">Indicator (Code)</label>
+            <input type="text" name="indicator_code" id="indicator_code" class="form-control" value="<?= $edit_note ? sanitize($edit_note['indicator_code']) : '' ?>" placeholder="Enter codes separated by commas, e.g., A1.1.1.1.1, A1.1.1.1.2">
+          </div>
+          
+          <div class="form-group">
+            <label for="content_standard_code">Content Standard (Code)</label>
+            <input type="text" name="content_standard_code" id="content_standard_code" class="form-control" value="<?= $edit_note ? sanitize($edit_note['content_standard_code']) : '' ?>">
+          </div>
+          
+          <div class="form-group">
+            <label for="performance_indicator">Performance Indicator</label>
+            <input type="text" name="performance_indicator" id="performance_indicator" class="form-control" value="<?= $edit_note ? sanitize($edit_note['performance_indicator']) : '' ?>">
+          </div>
+          
+          <div class="form-group">
+            <label for="core_competencies">Core Competencies</label>
+            <input type="text" name="core_competencies" id="core_competencies" class="form-control" value="<?= $edit_note ? sanitize($edit_note['core_competencies']) : '' ?>">
+          </div>
+          
+          <div class="form-group">
+            <label for="keywords">Keywords</label>
+            <input type="text" name="keywords" id="keywords" class="form-control" value="<?= $edit_note ? sanitize($edit_note['keywords']) : '' ?>">
+          </div>
+          
+          <div class="form-group">
+            <label for="tls">T.L.S</label>
+            <input type="text" name="tls" id="tls" class="form-control" value="<?= $edit_note ? sanitize($edit_note['tls']) : '' ?>">
+          </div>
+          
+          <div class="form-group">
+            <label for="ref">Reference</label>
+            <input type="text" name="ref" id="ref" class="form-control" value="<?= $edit_note ? sanitize($edit_note['ref']) : '' ?>">
+          </div>
+          
+          <div class="form-group">
+            <label for="curriculum_text">Paste Curriculum Here</label>
+            <textarea id="curriculum_text" class="form-control" rows="6"></textarea>
+            <button type="button" class="btn btn-ai" onclick="analyzeCurriculum()">
+              <i class="fas fa-magic"></i> AI Curriculum Analysis
+            </button>
+          </div>
+          
+          <div class="form-group">
+            <label for="phase1">Phase 1 (Starter)</label>
+            <textarea name="phase1" id="phase1" class="form-control" rows="3"><?= $edit_note ? sanitize($edit_note['phase1']) : '' ?></textarea>
+            <button type="button" class="voice-btn" onclick="startListening('phase1')" title="Voice Input">
+              <i class="fas fa-microphone"></i>
+            </button>
+          </div>
+          
+          <div class="form-group">
+            <label for="phase2">Phase 2 (Main)</label>
+            <textarea name="phase2" id="phase2" class="form-control" rows="3"><?= $edit_note ? sanitize($edit_note['phase2']) : '' ?></textarea>
+            <button type="button" class="voice-btn" onclick="startListening('phase2')" title="Voice Input">
+              <i class="fas fa-microphone"></i>
+            </button>
+          </div>
+          
+          <div class="form-group">
+            <label for="phase3">Phase 3 (Plenary/Reflections)</label>
+            <textarea name="phase3" id="phase3" class="form-control" rows="3"><?= $edit_note ? sanitize($edit_note['phase3']) : '' ?></textarea>
+            <button type="button" class="voice-btn" onclick="startListening('phase3')" title="Voice Input">
+              <i class="fas fa-microphone"></i>
+            </button>
+          </div>
+          
+          <div style="display: flex; gap: 15px; margin-top: 25px; flex-wrap: wrap;">
+            <button type="submit" name="add_note" class="btn btn-success" onclick="showSuccessToast()">
+              <i class="fas fa-save"></i> <?= $edit_note ? 'Update' : 'Save' ?> Lesson Note
+            </button>
+            <?php if ($edit_note): ?>
+              <a href="<?= $_SERVER['PHP_SELF'] ?>" class="btn btn-secondary">Cancel Edit</a>
+            <?php endif; ?>
+            <button type="button" class="btn btn-outline" onclick="clearForm()">
+              <i class="fas fa-eraser"></i> Clear Form
+            </button>
+            <button type="button" class="btn btn-info" onclick="showFeatureToast()">
+              <i class="fas fa-bell"></i> Test Notification
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+   <div class="tab-content" id="notes-tab">
+  <div class="notes-container">
+    <div class="notes-header">
+      <h2 class="card-title">
+        <i class="fas fa-clipboard-list"></i> My Lesson Notes
+      </h2>
+      <div class="filter-controls">
+        <input type="text" id="search-notes" class="form-control" placeholder="Search notes...">
+        <select id="filter-subject" class="form-control">
+          <option value="">All Subjects</option>
+          <?php
+          $subjects = array_unique(array_column($notes, 'subject'));
+          foreach ($subjects as $subject) {
+            echo "<option value=\"$subject\">$subject</option>";
+          }
+          ?>
+        </select>
+        <!-- NaCCA Button -->
+        <a href="https://nacca.gov.gh/learning-areas-subjects/new-standards-based-curriculum-2019/#1554979862938-431d18ec-e24e" 
+           class="btn btn-info" 
+           target="_blank" 
+           style="margin-left: 10px;">
+          View NaCCA Curriculum
+        </a>
+      </div>
+    </div>
+
         
-        scrollToTopBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
-        });
-    </script>
+        <?php if ($notes): ?>
+          <div id="notes-list">
+            <?php foreach ($notes as $note): ?>
+              <div class="note-card" data-subject="<?= sanitize($note['subject']) ?>">
+                <div class="note-header">
+                  <div>
+                    <h3 class="note-title"><?= sanitize($note['lesson']) ?></h3>
+                    <div class="note-meta">
+                      <span><i class="fas fa-calendar-week"></i> <strong>Week:</strong> <?= sanitize($note['week']) ?></span>
+                      <span><i class="fas fa-book"></i> <strong>Subject:</strong> <?= sanitize($note['subject']) ?></span>
+                      <span><i class="fas fa-calendar-day"></i> <strong>Date:</strong> <?= sanitize($note['date']) ?></span>
+                    </div>
+                  </div>
+                  <div class="note-actions">
+                    <form method="POST" style="display:inline;">
+                      <input type="hidden" name="edit_id" value="<?= $note['id'] ?>">
+                      <button type="submit" class="btn btn-sm btn-outline" title="Edit">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                    </form>
+                    <form method="POST" style="display:inline;" onsubmit="return confirmDelete(this);">
+                      <input type="hidden" name="delete_id" value="<?= $note['id'] ?>">
+                      <button type="submit" class="btn btn-sm btn-danger" title="Delete">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </form>
+                    <form method="POST" action="generate_pdf.php" style="display:inline;">
+                      <input type="hidden" name="note_id" value="<?= $note['id'] ?>">
+                      <button type="submit" class="btn btn-sm btn-success" title="Download PDF">
+                        <i class="fas fa-download"></i>
+                      </button>
+                    </form>
+                  </div>
+                </div>
+                
+                <div class="note-content">
+                  <p><strong>Strand:</strong> <?= sanitize($note['strand']) ?></p>
+                  <p><strong>Sub-Strand:</strong> <?= sanitize($note['sub_strand']) ?></p>
+                  <p><strong>Indicator:</strong> <?= sanitize($note['indicator_code']) ?></p>
+                  
+                  <button class="toggle-btn" onclick="toggleContent(this)">
+                    <i class="fas fa-chevron-down"></i> Show Lesson Details
+                  </button>
+                  
+                  <div class="hidden-content">
+                    <div class="phase">
+                      <div class="phase-title">Phase 1 (Starter)</div>
+                      <p><?= nl2br(sanitize($note['phase1'])) ?></p>
+                    </div>
+                    
+                    <div class="phase">
+                      <div class="phase-title">Phase 2 (Main)</div>
+                      <p><?= nl2br(sanitize($note['phase2'])) ?></p>
+                    </div>
+                    
+                    <div class="phase">
+                      <div class="phase-title">Phase 3 (Plenary/Reflections)</div>
+                      <p><?= nl2br(sanitize($note['phase3'])) ?></p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <?php endforeach; ?>
+          </div>
+        <?php else: ?>
+          <div class="empty-state">
+            <i class="fas fa-clipboard-list"></i>
+            <h3>No Lesson Notes Yet</h3>
+            <p>Create your first lesson note to get started!</p>
+            <a href="#" class="btn btn-ai" style="margin-top: 15px;" onclick="switchToFormTab()">
+              <i class="fas fa-plus-circle"></i> Create Your First Note
+            </a>
+          </div>
+        <?php endif; ?>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    // Slider functionality
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const dots = document.querySelectorAll('.slider-dot');
+    const slideInterval = 5000; // 5 seconds
+
+    function showSlide(index) {
+      // Hide all slides
+      slides.forEach(slide => slide.classList.remove('active'));
+      dots.forEach(dot => dot.classList.remove('active'));
+      
+      // Show selected slide
+      slides[index].classList.add('active');
+      dots[index].classList.add('active');
+      currentSlide = index;
+    }
+
+    function nextSlide() {
+      let next = currentSlide + 1;
+      if (next >= slides.length) next = 0;
+      showSlide(next);
+    }
+
+    // Initialize slider
+    dots.forEach((dot, index) => {
+      dot.addEventListener('click', () => {
+        showSlide(index);
+        resetTimer();
+      });
+    });
+
+    // Auto-advance slides
+    let slideTimer = setInterval(nextSlide, slideInterval);
+
+    function resetTimer() {
+      clearInterval(slideTimer);
+      slideTimer = setInterval(nextSlide, slideInterval);
+    }
+
+    // Accessibility functions
+    function toggleHighContrast() {
+      document.body.classList.toggle('high-contrast');
+      showToast('info', 'Accessibility', 
+        document.body.classList.contains('high-contrast') 
+          ? 'High contrast mode enabled' 
+          : 'High contrast mode disabled');
+    }
+
+    function toggleTextSize() {
+      document.body.classList.toggle('text-large');
+      showToast('info', 'Accessibility', 
+        document.body.classList.contains('text-large') 
+          ? 'Large text mode enabled' 
+          : 'Large text mode disabled');
+    }
+
+    // Toast Notification Functions
+    function showToast(type, title, message, duration = 5000) {
+      const toastContainer = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.innerHTML = `
+        <div class="toast-icon">
+          <i class="fas fa-${getToastIcon(type)}"></i>
+        </div>
+        <div class="toast-content">
+          <div class="toast-title">${title}</div>
+          <div class="toast-message">${message}</div>
+        </div>
+        <button class="toast-close" onclick="this.parentElement.remove()">
+          <i class="fas fa-times"></i>
+        </button>
+      `;
+      
+      toastContainer.appendChild(toast);
+      
+      // Show toast with animation
+      setTimeout(() => {
+        toast.classList.add('show');
+      }, 100);
+      
+      // Auto remove after duration
+      if (duration > 0) {
+        setTimeout(() => {
+          if (toast.parentElement) {
+            toast.classList.remove('show');
+            setTimeout(() => {
+              if (toast.parentElement) {
+                toast.remove();
+              }
+            }, 300);
+          }
+        }, duration);
+      }
+    }
+    
+    function getToastIcon(type) {
+      const icons = {
+        success: 'check',
+        info: 'info',
+        warning: 'exclamation-triangle',
+        error: 'exclamation-circle'
+      };
+      return icons[type] || 'info';
+    }
+    
+    // Demo toast functions
+    function showSuccessToast() {
+      showToast('success', 'Success!', 'Lesson note saved successfully.');
+    }
+    
+    function showFeatureToast() {
+      showToast('info', 'New Feature', 'Voice input is now available for lesson phases!');
+    }
+    
+    // SweetAlert Modal Functions
+    function showDemoAlert() {
+      Swal.fire({
+        title: 'AI Assistant - LessonNotes Pro',
+        html: `
+          <div style="text-align: left;">
+            <p><strong>How can I help you today?</strong></p>
+            <ul>
+              <li>📝 Create engaging lesson plans with AI suggestions</li>
+              <li>🎤 Use voice input for faster note creation</li>
+              <li>🔍 Analyze curriculum standards automatically</li>
+              <li>📊 Get insights on your teaching patterns</li>
+              <li>📄 Generate professional PDF reports</li>
+            </ul>
+            <p>Try the voice input feature by clicking the microphone icons next to text areas!</p>
+          </div>
+        `,
+        icon: 'info',
+        confirmButtonText: 'Got It!',
+        confirmButtonColor: '#4361ee',
+        width: 600
+      });
+    }
+
+    function showAIAssistant() {
+      Swal.fire({
+        title: 'AI Teaching Assistant',
+        html: `
+          <div style="text-align: left;">
+            <p>I can help you with:</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0;">
+              <button class="btn btn-outline" onclick="Swal.close(); analyzeCurriculum();" style="padding: 10px;">
+                <i class="fas fa-magic"></i> Analyze Curriculum
+              </button>
+              <button class="btn btn-outline" onclick="Swal.close(); generateLessonIdeas();" style="padding: 10px;">
+                <i class="fas fa-lightbulb"></i> Lesson Ideas
+              </button>
+              <button class="btn btn-outline" onclick="Swal.close(); showAssessmentTips();" style="padding: 10px;">
+                <i class="fas fa-clipboard-check"></i> Assessment Tips
+              </button>
+              <button class="btn btn-outline" onclick="Swal.close(); showDemoAlert();" style="padding: 10px;">
+                <i class="fas fa-info-circle"></i> Platform Guide
+              </button>
+            </div>
+          </div>
+        `,
+        showConfirmButton: false,
+        showCloseButton: true,
+        width: 500
+      });
+    }
+
+    function generateLessonIdeas() {
+      Swal.fire({
+        title: 'AI Lesson Ideas',
+        html: `
+          <div style="text-align: left;">
+            <p>Based on your subject and curriculum, here are some engaging activity ideas:</p>
+            <ul>
+              <li><strong>Interactive Quiz:</strong> Use Kahoot or Quizlet for vocabulary review</li>
+              <li><strong>Group Project:</strong> Collaborative problem-solving activity</li>
+              <li><strong>Role Play:</strong> Historical reenactment or scenario simulation</li>
+              <li><strong>Digital Storytelling:</strong> Create multimedia presentations</li>
+              <li><strong>Hands-on Experiment:</strong> Practical application of concepts</li>
+            </ul>
+            <p>Would you like me to add any of these to your lesson plan?</p>
+          </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Add to Phase 2',
+        cancelButtonText: 'Maybe Later',
+        confirmButtonColor: '#4361ee'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          document.getElementById('phase2').value += "\n• Interactive group activity based on AI suggestions";
+          showToast('success', 'AI Suggestion Added', 'Lesson activity added to Phase 2');
+        }
+      });
+    }
+
+    function showAssessmentTips() {
+      Swal.fire({
+        title: 'AI Assessment Strategies',
+        html: `
+          <div style="text-align: left;">
+            <p>Effective assessment strategies for your lesson:</p>
+            <ul>
+              <li><strong>Exit Tickets:</strong> Quick formative assessment at lesson end</li>
+              <li><strong>Think-Pair-Share:</strong> Collaborative understanding check</li>
+              <li><strong>One-Minute Paper:</strong> Brief written reflection</li>
+              <li><strong>Traffic Light System:</strong> Visual understanding indicators</li>
+              <li><strong>Peer Assessment:</strong> Students evaluate each other's work</li>
+            </ul>
+            <p>Consider adding 1-2 of these to your lesson reflection phase.</p>
+          </div>
+        `,
+        confirmButtonText: 'Thanks!',
+        confirmButtonColor: '#4361ee',
+        width: 550
+      });
+    }
+    
+    function confirmDelete(form) {
+      Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#e63946',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          form.submit();
+        }
+      });
+      return false;
+    }
+
+    // Tab functionality
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        // Remove active class from all tabs and contents
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        
+        // Add active class to clicked tab and corresponding content
+        tab.classList.add('active');
+        document.getElementById(`${tab.dataset.tab}-tab`).classList.add('active');
+        
+        // Store active tab in localStorage
+        localStorage.setItem('activeTab', tab.dataset.tab);
+      });
+    });
+
+    // Restore active tab on page load
+    window.addEventListener('load', function() {
+      const activeTab = localStorage.getItem('activeTab') || 'form';
+      document.querySelector(`.tab[data-tab="${activeTab}"]`).click();
+      
+      // Restore form data
+      const savedData = localStorage.getItem('lessonFormData');
+      if (savedData) {
+        const data = JSON.parse(savedData);
+        for (let key in data) {
+          const element = document.getElementById(key);
+          if (element && key !== 'note_id') {
+            element.value = data[key];
+          }
+        }
+      }
+      
+      // Show welcome toast on first load
+      setTimeout(() => {
+        showToast('info', 'Welcome to LessonNotes Pro AI!', 'Your AI-powered lesson planning assistant is ready to help.');
+      }, 1000);
+    });
+
+    // Toggle content visibility
+    function toggleContent(button) {
+      const content = button.nextElementSibling;
+      const icon = button.querySelector('i');
+      
+      if (content.style.display === 'block') {
+        content.style.display = 'none';
+        icon.className = 'fas fa-chevron-down';
+        button.innerHTML = '<i class="fas fa-chevron-down"></i> Show Lesson Details';
+      } else {
+        content.style.display = 'block';
+        icon.className = 'fas fa-chevron-up';
+        button.innerHTML = '<i class="fas fa-chevron-up"></i> Hide Lesson Details';
+      }
+    }
+
+    // Search and filter functionality
+    document.getElementById('search-notes').addEventListener('input', filterNotes);
+    document.getElementById('filter-subject').addEventListener('change', filterNotes);
+    
+    function filterNotes() {
+      const searchTerm = document.getElementById('search-notes').value.toLowerCase();
+      const subjectFilter = document.getElementById('filter-subject').value;
+      
+      document.querySelectorAll('.note-card').forEach(card => {
+        const text = card.textContent.toLowerCase();
+        const subject = card.dataset.subject;
+        
+        const matchesSearch = text.includes(searchTerm);
+        const matchesSubject = !subjectFilter || subject === subjectFilter;
+        
+        if (matchesSearch && matchesSubject) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    // Auto-save form data to localStorage every 5 seconds
+    function autoSave() {
+      const form = document.getElementById('lessonForm');
+      const formData = new FormData(form);
+      const data = {};
+      for (let [key, value] of formData.entries()) {
+        data[key] = value;
+      }
+      localStorage.setItem('lessonFormData', JSON.stringify(data));
+    }
+    setInterval(autoSave, 5000); // Save every 5 seconds
+
+    // Clear form data
+    function clearForm() {
+      Swal.fire({
+        title: 'Clear Form?',
+        text: 'This will remove all entered data from the form.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#4361ee',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, clear it!',
+        cancelButtonText: 'Cancel'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          document.getElementById('lessonForm').reset();
+          localStorage.removeItem('lessonFormData');
+          showToast('success', 'Form Cleared', 'All form data has been cleared.');
+        }
+      });
+    }
+
+    // Switch to form tab
+    function switchToFormTab() {
+      document.querySelector('.tab[data-tab="form"]').click();
+    }
+
+    // Clear localStorage after successful submission
+    document.getElementById('lessonForm').addEventListener('submit', function() {
+      localStorage.removeItem('lessonFormData');
+    });
+
+    function analyzeCurriculum() {
+      const text = document.getElementById('curriculum_text').value;
+      if (!text.trim()) {
+        showToast('warning', 'Empty Input', 'Please paste curriculum content first.');
+        return;
+      }
+
+      const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+
+      let strand = '';
+      let subStrand = '';
+      let contentStandardCode = '';
+      let contentStandardText = '';
+      let indicatorCodes = [];
+      let indicatorsText = [];
+
+      for (let line of lines) {
+        if (line.startsWith('STRAND')) {
+          const match = line.match(/STRAND \d+: (.+)/);
+          if (match) strand = match[1];
+        } else if (line.startsWith('Sub-Strand')) {
+          const match = line.match(/Sub-Strand \d+: (.+)/);
+          if (match) subStrand = match[1];
+        } else if (/^[A-Z]\d+\.\d+\.\d+\.\d+:\s/.test(line)) { 
+          const match = line.match(/^([A-Z]\d+\.\d+\.\d+\.\d+):\s(.+)/);
+          if (match) {
+            contentStandardCode = match[1];
+            contentStandardText = match[2];
+          }
+        } else if (/^[A-Z]\d+\.\d+\.\d+\.\d+\.\d+:\s/.test(line)) { 
+          const match = line.match(/^([A-Z]\d+\.\d+\.\d+\.\d+\.\d+):\s(.+)/);
+          if (match) {
+            indicatorCodes.push(match[1]);
+            indicatorsText.push(match[2]);
+          }
+        }
+      }
+
+      // Extract bullet sentence for performance indicator
+      const bulletMatch = text.match(/•\s*([^•]+?\.)/);
+      let performanceText = '';
+      if (bulletMatch) {
+        const bulletSentence = bulletMatch[1].trim();
+        performanceText = "Learners can " + bulletSentence.charAt(0).toLowerCase() + bulletSentence.slice(1);
+      } else {
+        performanceText = indicatorsText[0] || contentStandardText;
+      }
+
+      // Smart core competency detection (subject-independent)
+      function detectCoreCompetency(txt) {
+        const t = txt.toLowerCase();
+        const categories = {
+          "Communication and Collaboration": ["explain", "discuss", "share", "express", "present", "communicate", "listen", "describe", "report", "argue"],
+          "Personal Development and Leadership": ["lead", "organize", "participate", "motivate", "responsibility", "teamwork", "support", "guide", "confidence", "initiative"],
+          "Critical Thinking and Problem Solving": ["solve", "analyze", "decide", "evaluate", "investigate", "reason", "compare", "judge", "interpret", "examine"],
+          "Creativity and Innovation": ["design", "create", "invent", "imagine", "develop", "compose", "construct", "build", "plan", "produce"],
+          "Cultural Identity and Global Citizenship": ["respect", "culture", "tradition", "diversity", "values", "citizenship", "responsible", "rights", "community", "heritage"],
+          "Digital Literacy": ["use", "apply", "technology", "computer", "digital", "internet", "online", "data", "device", "software"]
+        };
+
+        let bestMatch = "Communication and Collaboration";
+        let highestScore = 0;
+        for (const [competency, keywords] of Object.entries(categories)) {
+          let score = 0;
+          keywords.forEach(word => {
+            const regex = new RegExp(`\\b${word}\\b`, "g");
+            const matches = t.match(regex);
+            if (matches) score += matches.length;
+          });
+          if (score > highestScore) {
+            highestScore = score;
+            bestMatch = competency;
+          }
+        }
+        return bestMatch;
+      }
+
+      // Generate at least five keywords intelligently
+      function extractKeywords(...texts) {
+        const combined = texts.join(' ').toLowerCase();
+        const words = combined.match(/\b[a-z]{4,}\b/g) || [];
+        const freq = {};
+        words.forEach(w => freq[w] = (freq[w] || 0) + 1);
+        const sorted = Object.keys(freq).sort((a, b) => freq[b] - freq[a]);
+        return sorted.slice(0, 5).join(', ');
+      }
+
+      const detectedCompetency = detectCoreCompetency(performanceText);
+      const extractedKeywords = extractKeywords(contentStandardText, indicatorsText.join(' '), performanceText);
+
+      // Fill form fields
+      document.querySelector('[name="strand"]').value = strand;
+      document.querySelector('[name="sub_strand"]').value = subStrand;
+      document.querySelector('[name="content_standard_code"]').value = contentStandardCode;
+      document.querySelector('[name="indicator_code"]').value = indicatorCodes.join(', ');
+      document.querySelector('[name="performance_indicator"]').value = performanceText;
+      document.querySelector('[name="core_competencies"]').value = detectedCompetency;
+      document.querySelector('[name="keywords"]').value = extractedKeywords;
+      
+      // Show success message
+      showToast('success', 'AI Analysis Complete', 'Curriculum successfully analyzed and form fields populated!');
+    }
+
+    function startListening(fieldId) {
+      if (!('webkitSpeechRecognition' in window)) {
+        showToast('error', 'Browser Not Supported', 'Your browser does not support speech recognition.');
+        return;
+      }
+
+      const recognition = new webkitSpeechRecognition();
+      recognition.lang = "en-US";
+      recognition.interimResults = true;
+      recognition.continuous = true;
+
+      const textarea = document.getElementById(fieldId);
+      textarea.placeholder = "🎤 Listening... Speak naturally...";
+
+      let finalTranscript = '';
+
+      recognition.onresult = function(event) {
+        let interimTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          let transcript = event.results[i][0].transcript.trim().toLowerCase();
+          transcript = transcript
+            .replace(/\b(full stop|period)\b/g, ".")
+            .replace(/\b(comma)\b/g, ",")
+            .replace(/\b(question mark)\b/g, "?")
+            .replace(/\b(exclamation mark|exclamation point)\b/g, "!")
+            .replace(/\b(colon)\b/g, ":")
+            .replace(/\b(semi colon|semicolon)\b/g, ";");
+          if (/\b(clear all|delete all)\b/.test(transcript)) {
+            finalTranscript = "";
+            transcript = "";
+          } else if (/\berase\b/.test(transcript)) {
+            let words = finalTranscript.trim().split(" ");
+            words.pop();
+            finalTranscript = words.join(" ");
+            transcript = "";
+          }
+          if (event.results[i].isFinal) {
+            finalTranscript += (finalTranscript && transcript ? " " : "") + transcript;
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+        textarea.value = (finalTranscript + " " + interimTranscript).trim();
+        textarea.scrollTop = textarea.scrollHeight;
+      };
+      recognition.onerror = (event) => console.error("Speech recognition error:", event.error);
+      recognition.onend = () => recognition.start();
+      recognition.start();
+      
+      showToast('info', 'Voice Input Active', 'Speak now to add text to the field.');
+    }
+  </script>
 </body>
 </html>
