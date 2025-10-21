@@ -1,6 +1,21 @@
 <?php
 session_start();
-require 'config.php'; // Database connection
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// Supabase connection
+$host = "aws-1-eu-north-1.pooler.supabase.com";
+$port = "6543";
+$dbname = "postgres";
+$user = "postgres.mqtuzltstbshtjigzujz";
+$password = "Ernestbizz..123";
+
+try {
+    $pdo = new PDO("pgsql:host=$host;port=$port;dbname=$dbname", $user, $password);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    die("Connection failed: " . $e->getMessage());
+}
 
 $error = '';
 
@@ -9,23 +24,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $password = $_POST['password'] ?? '';
 
     if ($email && $password) {
-        $stmt = $conn->prepare("SELECT id, name, assigned_class, password FROM teacher WHERE email = ?");
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $teacher = $result->fetch_assoc();
+        $stmt = $pdo->prepare("SELECT id, name, password FROM teacher_account WHERE email = ?");
+        $stmt->execute([$email]);
+        $teacher = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($teacher && password_verify($password, $teacher['password'])) {
+if ($teacher && $password === $teacher['password']) {
             $_SESSION['teacher_id'] = $teacher['id'];
             $_SESSION['teacher_name'] = $teacher['name'];
-            $_SESSION['assigned_class'] = $teacher['assigned_class'];
+            // Note: assigned_class not in the table as per user specification, so not setting it
             header("Location: lesson_notes.php");
             exit;
         } else {
             $error = "Invalid email or password.";
         }
 
-        $stmt->close();
+        $stmt->closeCursor();
     } else {
         $error = "Please enter both email and password.";
     }
