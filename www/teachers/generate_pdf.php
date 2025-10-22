@@ -1,4 +1,7 @@
 <?php
+// Start output buffering to prevent any premature output that could interfere with PDF headers
+ob_start();
+
 session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -225,6 +228,9 @@ $pdf->SetTextColor($pdf->getMutedColor()[0], $pdf->getMutedColor()[1], $pdf->get
 $pdf->Cell(0, 5, 'Signature & Date', 0, 1, 'R');
 
 // --- OUTPUT ---
+// Clean the output buffer to ensure no previous output interferes with PDF headers
+ob_end_clean();
+
 $filename = 'professional_lesson_plan_' . $note_id . '_' . date('Y-m-d') . '.pdf';
 $preview = isset($_GET['preview']) && $_GET['preview'] == 1;
 
