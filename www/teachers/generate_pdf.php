@@ -4,7 +4,9 @@ ob_start();
 
 session_start();
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+ini_set('display_errors', 0); // disable direct display to prevent header corruption
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/error_log.txt'); // log errors instead
 
 // Security check
 if (!isset($_SESSION['teacher_id']) || empty($_SESSION['teacher_id'])) {
@@ -66,7 +68,6 @@ class PDF extends FPDF {
     private $textColor = [33, 37, 41];
     private $mutedColor = [108, 117, 125];
 
-    // Header
     function Header() {
         if ($this->PageNo() == 1) {
             $this->SetFont('Arial', 'B', 20);
@@ -76,14 +77,12 @@ class PDF extends FPDF {
             $this->SetFont('Arial', 'I', 11);
             $this->Cell(0, 6, 'Professional Teaching Resource Document', 0, 1, 'C');
 
-            // Accent line
             $this->SetFillColor($this->accentColor[0], $this->accentColor[1], $this->accentColor[2]);
             $this->Rect(10, 30, 190, 2, 'F');
             $this->Ln(12);
         }
     }
 
-    // Footer
     function Footer() {
         $this->SetY(-20);
         $this->SetFont('Arial', 'I', 9);
@@ -112,7 +111,7 @@ class PDF extends FPDF {
         $this->SetTextColor($this->textColor[0], $this->textColor[1], $this->textColor[2]);
         $this->SetFont('Arial', '', 11);
         $this->SetDrawColor($this->borderColor[0], $this->borderColor[1], $this->borderColor[2]);
-        $this->Cell($w, $h, $txt, $border, $ln, $align);
+        $this->Cell($w, $h, utf8_decode($txt), $border, $ln, $align);
     }
 
     function PhaseBox($phaseNum, $content) {
@@ -131,12 +130,12 @@ class PDF extends FPDF {
             $this->SetFont('Arial', 'I', 11);
         }
 
-        $this->MultiCell(0, 8, $content, 1, 'L');
+        $this->MultiCell(0, 8, utf8_decode($content), 1, 'L');
         $this->Ln(4);
     }
 
     function SafeMultiCell($w, $h, $txt, $border = 0, $align = 'J') {
-        $txt = mb_convert_encoding($txt, 'ISO-8859-1', 'UTF-8');
+        $txt = utf8_decode($txt);
         $this->MultiCell($w, $h, $txt, $border, $align);
     }
 
@@ -228,8 +227,10 @@ $pdf->SetTextColor($pdf->getMutedColor()[0], $pdf->getMutedColor()[1], $pdf->get
 $pdf->Cell(0, 5, 'Signature & Date', 0, 1, 'R');
 
 // --- OUTPUT ---
-// Clean the output buffer to ensure no previous output interferes with PDF headers
-ob_end_clean();
+// Clean *all* output buffers before sending PDF
+while (ob_get_level()) {
+    ob_end_clean();
+}
 
 $filename = 'professional_lesson_plan_' . $note_id . '_' . date('Y-m-d') . '.pdf';
 $preview = isset($_GET['preview']) && $_GET['preview'] == 1;
@@ -238,16 +239,10 @@ header('Content-Type: application/pdf');
 header('Cache-Control: private, must-revalidate, post-check=0, pre-check=0, max-age=1');
 
 if ($preview) {
-    // Inline preview in browser
     header('Content-Disposition: inline; filename="' . $filename . '"');
     $pdf->Output('I', $filename);
 } else {
-    // Force download
     header('Content-Disposition: attachment; filename="' . $filename . '"');
-    header('Content-Transfer-Encoding: binary');
-    header('Accept-Ranges: bytes');
     $pdf->Output('D', $filename);
 }
-
 exit;
-?>
