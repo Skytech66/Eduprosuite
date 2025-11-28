@@ -480,7 +480,7 @@ class mypdf extends FPDF {
             }
 
             if (file_exists($signatureImage)) {
-                $this->Image($signatureImage', 140, $this->GetY() - 22, 22, 10);
+                $this->Image($signatureImage, 140, $this->GetY() - 22, 22, 10);
             }
             
             // Progress indicator
@@ -529,3 +529,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     die("Invalid request method. Please submit the form.");
 }
 ?>
+
