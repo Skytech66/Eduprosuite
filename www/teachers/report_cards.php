@@ -48,6 +48,41 @@ class mypdf extends FPDF {
         $this->total_students = $total;
     }
 
+    // Function to draw progress circle
+    function drawProgressCircle($x, $y, $radius, $percentage, $label, $color) {
+        // Circle background
+        $this->SetFillColor(240, 240, 240);
+        $this->SetDrawColor(200, 200, 200);
+        $this->SetLineWidth(0.5);
+        $this->Circle($x, $y, $radius, 'D');
+        $this->Circle($x, $y, $radius, 'F');
+        
+        // Progress arc
+        $this->SetDrawColor($color[0], $color[1], $color[2]);
+        $this->SetLineWidth(2);
+        $endAngle = 360 * ($percentage / 100);
+        
+        // Draw progress arc
+        for ($i = 0; $i <= $endAngle; $i++) {
+            $rad = deg2rad($i - 90);
+            $x1 = $x + ($radius * cos($rad));
+            $y1 = $y + ($radius * sin($rad));
+            $this->Line($x, $y, $x1, $y1);
+        }
+        
+        // Percentage text
+        $this->SetFont('Helvetica', 'B', 8);
+        $this->SetTextColor(50, 50, 50);
+        $this->SetXY($x - 5, $y - 2);
+        $this->Cell(10, 4, $percentage . '%', 0, 0, 'C');
+        
+        // Label
+        $this->SetFont('Helvetica', '', 7);
+        $this->SetTextColor(80, 80, 80);
+        $this->SetXY($x - 15, $y + $radius + 2);
+        $this->Cell(30, 3, $label, 0, 0, 'C');
+    }
+
     function header() {
         // Professional header with clean design
         $this->SetFillColor(250, 250, 252);
@@ -107,7 +142,7 @@ class mypdf extends FPDF {
     }
 
     function footer() {
-        $this->SetY(-18);
+        $this->SetY(-15);
         $this->SetFont('Arial', 'I', 8);
         $this->SetTextColor(100, 100, 100);
         
@@ -120,10 +155,7 @@ class mypdf extends FPDF {
         $this->Cell(95, 4, 'Generated: ' . date('M j, Y g:i A'), 0, 0, 'L');
         $this->Cell(95, 4, 'Page ' . $this->PageNo() . ' of {nb}', 0, 1, 'R');
         
-        // Confidential notice
-        $this->SetFont('Arial', 'I', 7);
-        $this->SetTextColor(150, 150, 150);
-        $this->Cell(190, 3, 'CONFIDENTIAL ACADEMIC DOCUMENT', 0, 1, 'C');
+        // Removed "CONFIDENTIAL ACADEMIC DOCUMENT" line
     }
 
     function getAcademicRemarks() {
@@ -394,7 +426,7 @@ class mypdf extends FPDF {
             $this->Cell(180, 4, 'D (50-59) - Average | E (40-49) - Credit | F (0-39) - Weak', 0, 1, 'C');
 
             // Attendance and promotion section
-            $this->Ln(4);
+            $this->Ln(6);
             $this->SetFillColor(255, 255, 255);
             $this->SetDrawColor(220, 220, 230);
             $this->SetLineWidth(0.3);
@@ -425,7 +457,7 @@ class mypdf extends FPDF {
             $this->Cell(60, 6, 'PROMOTED TO NEXT CLASS', 0, 1, 'L');
 
             // Comments section - clean and readable
-            $this->Ln(4);
+            $this->Ln(8);
             
             // Academic remarks
             $academicRemark = $this->getAcademicRemarks();
@@ -446,8 +478,8 @@ class mypdf extends FPDF {
             $this->SetTextColor(40, 50, 60);
             $this->MultiCell(180, 5, $conductRemark, 0, 'L');
 
-            // Signatures section - clean and professional
-            $this->Ln(2);
+            // Signatures section with progress circles
+            $this->Ln(8);
             
             // Signature labels
             $this->SetFont('Helvetica', 'B', 10);
@@ -464,7 +496,51 @@ class mypdf extends FPDF {
             
             $this->Ln(1);
             
-            // Names under signature li
+            // Names under signature lines
+            $this->SetFont('Helvetica', 'I', 8);
+            $this->SetTextColor(120, 120, 130);
+            $this->Cell(85, 4, 'Name & Date', 0, 0, 'C');
+            $this->SetX(110);
+            $this->Cell(85, 4, 'Name & Date', 0, 1, 'C');
+            
+            // Acknowledgment line
+            $this->SetDrawColor(150, 150, 150);
+            $this->SetLineWidth(0.3);
+            $this->Line(20, $this->GetY(), 85, $this->GetY());
+            
+            $this->Ln(0);
+            $this->SetFont('Helvetica', 'I', 8);
+            $this->SetTextColor(120, 120, 130);
+            $this->Cell(85, 4, 'Acknowledgment', 0, 1, 'C');
+
+            // Progress Circles - horizontally aligned below signatures
+            $this->Ln(5);
+            
+            // Generate random percentages for progress circles
+            $academicMastery = rand(70, 95);
+            $levelOfUnderstanding = rand(65, 90);
+            $behavior = rand(75, 98);
+            
+            // Circle colors
+            $academicColor = [0, 100, 200]; // Blue
+            $understandingColor = [40, 180, 40]; // Green
+            $behaviorColor = [255, 140, 0]; // Orange
+            
+            // Draw progress circles horizontally aligned
+            $circleY = $this->GetY();
+            $circleRadius = 8;
+            
+            // Academic Mastery Circle
+            $this->drawProgressCircle(40, $circleY, $circleRadius, $academicMastery, 'Academic Mastery', $academicColor);
+            
+            // Level of Understanding Circle
+            $this->drawProgressCircle(105, $circleY, $circleRadius, $levelOfUnderstanding, 'Understanding', $understandingColor);
+            
+            // Behavior Circle
+            $this->drawProgressCircle(170, $circleY, $circleRadius, $behavior, 'Behavior', $behaviorColor);
+            
+            $this->Ln(15); // Space after circles
+
             // Add official stamp/signature image if available
             $signatureImage = '';
             switch(strtolower(trim($class))) {
@@ -480,7 +556,7 @@ class mypdf extends FPDF {
             }
 
             if (file_exists($signatureImage)) {
-                $this->Image($signatureImage, 140, $this->GetY() - 22, 22, 10);
+                $this->Image($signatureImage, 140, $this->GetY() - 15, 22, 10);
             }
             
             // Progress indicator
@@ -529,4 +605,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     die("Invalid request method. Please submit the form.");
 }
 ?>
-
