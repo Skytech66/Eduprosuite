@@ -228,7 +228,7 @@ $this->Cell(145, 6, 'EMAIL: starsonearth@gmail.com', 0, 1, 'C');
         // Confidential notice
         $this->SetFont('Arial', 'I', 8);
         $this->SetTextColor(150, 150, 150);
-        $this->Cell(190, 4, 'OFFICIAL DOCUMENT • CONFIDENTIAL • FOR AUTHORIZED RECIPIENTS ONLY', 0, 1, 'C');
+        $this->Cell(190, 4, 'OFFICIAL DOCUMENT', 0, 1, 'C');
     }
 
     function getAcademicRemarks() {
@@ -466,26 +466,24 @@ $this->Cell(145, 6, 'EMAIL: starsonearth@gmail.com', 0, 1, 'C');
                 $this->Cell($widths[2], 8, $examScore, 1, 0, 'C', $fill);
                 $this->Cell($widths[3], 8, $average, 1, 0, 'C', $fill);
 
-                // Determine grade with professional color coding
-                if ($average >= 80) {
-                    $grade = 'A'; $gradeColor = array(0, 128, 0); // Green
-                    $remarks = 'Excellent';
-                } elseif ($average >= 70) {
-                    $grade = 'B'; $gradeColor = array(0, 100, 200); // Blue
-                    $remarks = 'Very Good';
-                } elseif ($average >= 60) {
-                    $grade = 'C'; $gradeColor = array(255, 140, 0); // Orange
-                    $remarks = 'Good';
-                } elseif ($average >= 50) {
-                    $grade = 'D'; $gradeColor = array(165, 42, 42); // Brown
-                    $remarks = 'Average';
-                } elseif ($average >= 40) {
-                    $grade = 'E'; $gradeColor = array(128, 0, 128); // Purple
-                    $remarks = 'Credit';
-                } else {
-                    $grade = 'F'; $gradeColor = array(220, 0, 0); // Red
-                    $remarks = 'Weak';
-                }
+                // // Determine grade with professional color coding (4-grade system)/Determine grade with professional color coding (4-grade system)
+if ($average >= 70 && $average <= 100) {
+    $grade = 'A'; 
+    $gradeColor = array(0, 128, 0); // Green
+    $remarks = 'Advanced';
+} elseif ($average >= 55 && $average < 70) {
+    $grade = 'B'; 
+    $gradeColor = array(0, 100, 200); // Blue
+    $remarks = 'Proficient';
+} elseif ($average >= 40 && $average < 55) {
+    $grade = 'C'; 
+    $gradeColor = array(255, 140, 0); // Orange
+    $remarks = 'Developing';
+} else { // anything below 40
+    $grade = 'D'; 
+    $gradeColor = array(220, 0, 0); // Red
+    $remarks = 'Beginning';
+}
                 
                 $this->SetTextColor($gradeColor[0], $gradeColor[1], $gradeColor[2]);
                 $this->SetFont('Helvetica', 'B', 10);
@@ -737,6 +735,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     die("Invalid request method. Please submit the form.");
 }
 ?>
+
 
 
 
