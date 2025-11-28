@@ -175,11 +175,11 @@ class mypdf extends FPDF {
         }
 
         // School information - centered
-        $this->SetFont('Times', 'B', 18);
-        $this->SetTextColor(40, 80, 120);
-        $this->SetXY(60, 12);
-        $this->Cell(140, 8, isset($this->config['school_name']) ? strtoupper($this->config['school_name']) : 'EXCELLENCE ACADEMY', 0, 1, 'C');
         
+        $this->SetFont('Times', 'B', 18);
+$this->SetTextColor(40, 80, 120);
+$this->SetXY(60, 12);
+$this->Cell(140, 8, 'STARTS ON EARTH ACADEMY', 0, 1, 'C');
         $this->SetFont('Times', 'B', 12);
         $this->SetTextColor(80, 80, 80);
         $this->SetX(60);
@@ -735,3 +735,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     die("Invalid request method. Please submit the form.");
 }
 ?>
+
