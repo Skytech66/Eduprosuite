@@ -155,8 +155,8 @@ class mypdf extends FPDF {
 
     function header() {
         // Subtle background pattern/texture
-        if (file_exists('gat.png')) {
-            $this->Image('gat.png', 0, 0, 210, 297);
+        if (file_exists('')) {
+            $this->Image('', 0, 0, 210, 297);
         }
 
         // School header with professional styling
@@ -737,6 +737,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     die("Invalid request method. Please submit the form.");
 }
 ?>
+
 
 
 
