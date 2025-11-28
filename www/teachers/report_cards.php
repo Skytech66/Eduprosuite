@@ -526,55 +526,70 @@ if ($average >= 70 && $average <= 100) {
             $this->Ln(12);
             
             // Section header
-            $this->SetFillColor(60, 100, 160);
-            $this->SetTextColor(255, 255, 255);
-            $this->SetFont('Helvetica', 'B', 13);
-            $this->Cell(180, 10, 'PERFORMANCE OVERVIEW', 1, 1, 'C', true);
             
-            $this->Ln(8);
-            
-            // Progress circles container
-            $circleY = $this->GetY();
-            
-            // Academic Mastery Circle
-            $this->drawProgressCircle(45, $circleY + 20, 16, $metrics['academic_mastery'], 'ACADEMIC MASTERY');
-            
-            // Punctuality & Attendance Circle
-            $this->drawProgressCircle(105, $circleY + 20, 16, $metrics['punctuality_attendance'], 'PUNCTUALITY & ATTENDANCE');
-            
-            // Behavior & Conduct Circle
-            $this->drawProgressCircle(165, $circleY + 20, 16, $metrics['behavior_conduct'], 'BEHAVIOR & CONDUCT');
-            
-            $this->Ln(38);
-            
-            // Class Participation Circle (centered below)
-            $this->drawProgressCircle(105, $this->GetY() + 15, 16, $metrics['class_participation'], 'CLASS PARTICIPATION');
-            
-            $this->Ln(28);
 
             // Performance summary with modern styling
-            $this->SetFillColor(245, 248, 250);
-            $this->SetDrawColor(200, 210, 220);
-            $this->SetLineWidth(0.5);
-            $this->Rect(15, $this->GetY(), 180, 22, 'DF');
-            
-            $this->SetFont('Helvetica', 'B', 11);
-            $this->SetTextColor(60, 80, 100);
-            $this->Cell(180, 7, 'PERFORMANCE SUMMARY', 0, 1, 'C');
-            
-            $this->SetFont('Helvetica', '', 9);
-            $this->SetTextColor(70, 70, 80);
-            
-            $summaryText = "This student demonstrates ";
-            $summaryText .= $metrics['academic_mastery'] >= 80 ? "exceptional" : ($metrics['academic_mastery'] >= 70 ? "strong" : ($metrics['academic_mastery'] >= 60 ? "satisfactory" : "developing"));
-            $summaryText .= " academic mastery, ";
-            $summaryText .= $metrics['punctuality_attendance'] >= 90 ? "excellent" : ($metrics['punctuality_attendance'] >= 80 ? "good" : ($metrics['punctuality_attendance'] >= 70 ? "adequate" : "needs improvement"));
-            $summaryText .= " attendance records, and ";
-            $summaryText .= $metrics['behavior_conduct'] >= 85 ? "outstanding" : ($metrics['behavior_conduct'] >= 75 ? "positive" : ($metrics['behavior_conduct'] >= 65 ? "satisfactory" : "developing"));
-            $summaryText .= " behavioral conduct with active class participation.";
-            
-            $this->MultiCell(170, 4, $summaryText, 0, 'C');
+        
+// ===============================
+// PERFORMANCE OVERVIEW SECTION
+// ===============================
 
+// Section header
+$this->SetFillColor(60, 100, 160);
+$this->SetTextColor(255, 255, 255);
+$this->SetFont('Helvetica', 'B', 13);
+$this->Cell(180, 10, 'PERFORMANCE OVERVIEW', 1, 1, 'C', true);
+
+$this->Ln(6);
+
+// ---- FIX: Lock all circles inside one stable container ----
+
+$startY = $this->GetY();   // Save beginning Y
+
+$topRowY = $startY + 22;    // Same level for first 3 circles
+$bottomRowY = $startY + 65; // Second row circle
+
+// TOP ROW (aligned)
+$this->drawProgressCircle(45,  $topRowY, 16, $metrics['academic_mastery'],        'ACADEMIC MASTERY');
+$this->drawProgressCircle(105, $topRowY, 16, $metrics['punctuality_attendance'], 'PUNCTUALITY & ATTENDANCE');
+$this->drawProgressCircle(165, $topRowY, 16, $metrics['behavior_conduct'],       'BEHAVIOR & CONDUCT');
+
+// SECOND ROW (centered)
+$this->drawProgressCircle(105, $bottomRowY, 16, $metrics['class_participation'], 'CLASS PARTICIPATION');
+
+// Set Y to bottom of container so summary doesn't move up
+$this->SetY($startY + 95);
+
+// -----------------
+// PERFORMANCE SUMMARY
+// -----------------
+$this->SetFillColor(245, 248, 250);
+$this->SetDrawColor(200, 210, 220);
+$this->SetLineWidth(0.5);
+$this->Rect(15, $this->GetY(), 180, 22, 'DF');
+
+$this->SetFont('Helvetica', 'B', 11);
+$this->SetTextColor(60, 80, 100);
+$this->Cell(180, 7, 'PERFORMANCE SUMMARY', 0, 1, 'C');
+
+$this->SetFont('Helvetica', '', 9);
+$this->SetTextColor(70, 70, 80);
+
+$summaryText = "This student demonstrates ";
+$summaryText .= $metrics['academic_mastery'] >= 80 ? "exceptional" :
+                 ($metrics['academic_mastery'] >= 70 ? "strong" :
+                 ($metrics['academic_mastery'] >= 60 ? "satisfactory" : "developing"));
+$summaryText .= " academic mastery, ";
+$summaryText .= $metrics['punctuality_attendance'] >= 90 ? "excellent" :
+                 ($metrics['punctuality_attendance'] >= 80 ? "good" :
+                 ($metrics['punctuality_attendance'] >= 70 ? "adequate" : "needs improvement"));
+$summaryText .= " attendance records, and ";
+$summaryText .= $metrics['behavior_conduct'] >= 85 ? "outstanding" :
+                 ($metrics['behavior_conduct'] >= 75 ? "positive" :
+                 ($metrics['behavior_conduct'] >= 65 ? "satisfactory" : "developing"));
+$summaryText .= " behavioral conduct with active class participation.";
+
+$this->MultiCell(180, 5, $summaryText);
             // Student status and promotion section
             $this->Ln(10);
             $this->SetFillColor(250, 252, 255);
@@ -735,6 +750,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     die("Invalid request method. Please submit the form.");
 }
 ?>
+
 
 
 
