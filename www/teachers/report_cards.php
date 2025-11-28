@@ -48,111 +48,6 @@ class mypdf extends FPDF {
         $this->total_students = $total;
     }
 
-    /**
-     * Draw a circle
-     */
-    function Circle($x, $y, $r, $style='D')
-    {
-        // $style can be:
-        // 'D' = Draw only, 'F' = Fill only, 'DF' or 'FD' = Draw and Fill
-        $op = ($style=='F') ? 'f' : (($style=='FD' || $style=='DF') ? 'b' : 's');
-        $h = $this->h;
-        $this->_out(sprintf(
-            '%.2F %.2F %.2F 0 360 arc %s',
-            $x * $this->k,
-            ($h - $y) * $this->k,
-            $r * $this->k,
-            $op
-        ));
-    }
-
-    /**
-     * Draw a progress circle with percentage and label
-     */
-    function drawProgressCircle($x, $y, $radius, $percent, $label) {
-        // Ensure percentage is within bounds
-        $percent = max(0, min(100, $percent));
-        
-        // Draw background circle (light gray)
-        $this->SetFillColor(240, 240, 240);
-        $this->SetDrawColor(200, 200, 200);
-        $this->SetLineWidth(0.5);
-        $this->Circle($x, $y, $radius, 'D');
-        $this->Circle($x, $y, $radius, 'F');
-        
-        // Draw progress arc if percentage > 0
-        if ($percent > 0) {
-            // Determine color based on percentage
-            if ($percent >= 80) {
-                $this->SetFillColor(76, 175, 80);   // Green
-                $this->SetDrawColor(76, 175, 80);
-            } elseif ($percent >= 60) {
-                $this->SetFillColor(255, 152, 0);   // Orange
-                $this->SetDrawColor(255, 152, 0);
-            } else {
-                $this->SetFillColor(244, 67, 54);   // Red
-                $this->SetDrawColor(244, 67, 54);
-            }
-            
-            // Draw progress sector
-            $this->Sector($x, $y, $radius, 0, ($percent / 100) * 360);
-        }
-        
-        // Add percentage text in center
-        $this->SetFont('Arial', 'B', 10);
-        $this->SetTextColor(50, 50, 50);
-        $this->SetXY($x - 5, $y - 2);
-        $this->Cell(10, 5, $percent . '%', 0, 0, 'C');
-        
-        // Add label below circle
-        $this->SetFont('Arial', '', 8);
-        $this->SetTextColor(80, 80, 80);
-        $this->SetXY($x - 15, $y + $radius + 3);
-        $this->Cell(30, 4, $label, 0, 0, 'C');
-    }
-    
-    /**
-     * Sector function for drawing pie chart segments
-     */
-    function Sector($xc, $yc, $r, $a, $b, $style='FD', $init=true) {
-        if ($a > $b) {
-            $b += 360;
-        }
-        
-        if ($init) {
-            $this->_out('q');
-        }
-        
-        $this->_out(sprintf('%.2F %.2F m', $xc, $yc));
-        
-        $ar = deg2rad($a);
-        $br = deg2rad($b);
-        $n = ceil(($b - $a) / 10);
-        
-        for ($i = 0; $i <= $n; $i++) {
-            $alpha = $a + ($b - $a) * $i / $n;
-            $x = $xc + $r * cos(deg2rad($alpha));
-            $y = $yc - $r * sin(deg2rad($alpha));
-            $this->_out(sprintf('%.2F %.2F l', $x, $y));
-        }
-        
-        $this->_out(sprintf('%.2F %.2F l', $xc, $yc));
-        
-        if ($style == 'F') {
-            $op = 'f';
-        } elseif ($style == 'FD' || $style == 'DF') {
-            $op = 'b';
-        } else {
-            $op = 's';
-        }
-        
-        $this->_out($op);
-        
-        if ($init) {
-            $this->_out('Q');
-        }
-    }
-
     function header() {
         // Subtle background pattern/texture
         if (file_exists('')) {
@@ -161,40 +56,41 @@ class mypdf extends FPDF {
 
         // School header with professional styling
         // Header background
-$this->SetFillColor(245, 245, 245);
-$this->Rect(0, 0, 210, 45, 'F');
+        $this->SetFillColor(245, 245, 245);
+        $this->Rect(0, 0, 210, 45, 'F');
 
-// School logo
-if (file_exists('gat.png')) {
-    $this->Image('gat.png', 12, 8, 32, 30); 
-} else {
-    $this->SetFillColor(220, 220, 220);
-    $this->Rect(12, 8, 32, 30, 'F');
-    $this->SetFont('Arial', 'I', 8);
-    $this->SetXY(12, 20);
-    $this->Cell(32, 5, 'SCHOOL LOGO', 0, 0, 'C');
-}
+        // School logo
+        if (file_exists('gat.png')) {
+            $this->Image('gat.png', 12, 8, 32, 30); 
+        } else {
+            $this->SetFillColor(220, 220, 220);
+            $this->Rect(12, 8, 32, 30, 'F');
+            $this->SetFont('Arial', 'I', 8);
+            $this->SetXY(12, 20);
+            $this->Cell(32, 5, 'SCHOOL LOGO', 0, 0, 'C');
+        }
 
-// School Information
-$this->SetFont('Times', 'B', 18);
-$this->SetTextColor(30, 60, 110);
-$this->SetXY(55, 8);
-$this->Cell(145, 10, 'STARS ON EARTH ACADEMY', 0, 1, 'C');
+        // School Information
+        $this->SetFont('Times', 'B', 18);
+        $this->SetTextColor(30, 60, 110);
+        $this->SetXY(55, 8);
+        $this->Cell(145, 10, 'STARS ON EARTH ACADEMY', 0, 1, 'C');
 
-$this->SetFont('Times', '', 12);
-$this->SetTextColor(70, 70, 70);
+        $this->SetFont('Times', '', 12);
+        $this->SetTextColor(70, 70, 70);
 
-// Address
-$this->SetX(55);
-$this->Cell(145, 6, 'LOCATION: ABOKOBI-AKPORMAN, ACCRA', 0, 1, 'C');
+        // Address
+        $this->SetX(55);
+        $this->Cell(145, 6, 'LOCATION: ABOKOBI-AKPORMAN, ACCRA', 0, 1, 'C');
 
-// Telephone
-$this->SetX(55);
-$this->Cell(145, 6, 'TEL: +233246484366 / +233244457834', 0, 1, 'C');
+        // Telephone
+        $this->SetX(55);
+        $this->Cell(145, 6, 'TEL: +233246484366 / +233244457834', 0, 1, 'C');
 
-// Email
-$this->SetX(55);
-$this->Cell(145, 6, 'EMAIL: starsonearth@gmail.com', 0, 1, 'C');
+        // Email
+        $this->SetX(55);
+        $this->Cell(145, 6, 'EMAIL: starsonearth@gmail.com', 0, 1, 'C');
+        
         // Decorative line with accent color
         $this->SetLineWidth(1);
         $this->SetDrawColor(70, 130, 180);
@@ -393,7 +289,7 @@ $this->Cell(145, 6, 'EMAIL: starsonearth@gmail.com', 0, 1, 'C');
             $this->SetTextColor(30, 70, 120);
             $this->Cell(80, 8, strtoupper($data['name']), 0, 1, 'L');
             
-                        $this->SetFont('Helvetica', 'B', 12);
+            $this->SetFont('Helvetica', 'B', 12);
             $this->SetTextColor(80, 80, 100);
             $this->SetXY(20, 72);
             $this->Cell(25, 8, 'CLASS:', 0, 0, 'L');
@@ -466,24 +362,24 @@ $this->Cell(145, 6, 'EMAIL: starsonearth@gmail.com', 0, 1, 'C');
                 $this->Cell($widths[2], 8, $examScore, 1, 0, 'C', $fill);
                 $this->Cell($widths[3], 8, $average, 1, 0, 'C', $fill);
 
-                // // Determine grade with professional color coding (4-grade system)/Determine grade with professional color coding (4-grade system)
-if ($average >= 70 && $average <= 100) {
-    $grade = 'A'; 
-    $gradeColor = array(0, 128, 0); // Green
-    $remarks = 'Advanced';
-} elseif ($average >= 55 && $average < 70) {
-    $grade = 'B'; 
-    $gradeColor = array(0, 100, 200); // Blue
-    $remarks = 'Proficient';
-} elseif ($average >= 40 && $average < 55) {
-    $grade = 'C'; 
-    $gradeColor = array(255, 140, 0); // Orange
-    $remarks = 'Developing';
-} else { // anything below 40
-    $grade = 'D'; 
-    $gradeColor = array(220, 0, 0); // Red
-    $remarks = 'Beginning';
-}
+                // Determine grade with professional color coding (4-grade system)
+                if ($average >= 70 && $average <= 100) {
+                    $grade = 'A'; 
+                    $gradeColor = array(0, 128, 0); // Green
+                    $remarks = 'Advanced';
+                } elseif ($average >= 55 && $average < 70) {
+                    $grade = 'B'; 
+                    $gradeColor = array(0, 100, 200); // Blue
+                    $remarks = 'Proficient';
+                } elseif ($average >= 40 && $average < 55) {
+                    $grade = 'C'; 
+                    $gradeColor = array(255, 140, 0); // Orange
+                    $remarks = 'Developing';
+                } else { // anything below 40
+                    $grade = 'D'; 
+                    $gradeColor = array(220, 0, 0); // Red
+                    $remarks = 'Beginning';
+                }
                 
                 $this->SetTextColor($gradeColor[0], $gradeColor[1], $gradeColor[2]);
                 $this->SetFont('Helvetica', 'B', 10);
@@ -522,74 +418,67 @@ if ($average >= 70 && $average <= 100) {
             $this->Cell(180, 5, 'A (80-100) - Excellent • B (70-79) - Very Good • C (60-69) - Good', 0, 1, 'C');
             $this->Cell(180, 5, 'D (50-59) - Average • E (40-49) - Credit • F (0-39) - Weak', 0, 1, 'C');
 
-            // PERFORMANCE METRICS SECTION WITH PROGRESS CIRCLES
+            // PERFORMANCE OVERVIEW SECTION (REMOVED CIRCLES)
             $this->Ln(12);
             
             // Section header
+            $this->SetFillColor(60, 100, 160);
+            $this->SetTextColor(255, 255, 255);
+            $this->SetFont('Helvetica', 'B', 13);
+            $this->Cell(180, 10, 'PERFORMANCE OVERVIEW', 1, 1, 'C', true);
+
+            $this->Ln(6);
+
+            // Performance metrics in a clean table format instead of circles
+            $this->SetFillColor(245, 248, 250);
+            $this->SetDrawColor(200, 210, 220);
+            $this->SetLineWidth(0.3);
             
+            // Table header
+            $this->SetFont('Helvetica', 'B', 11);
+            $this->SetTextColor(60, 80, 100);
+            $this->SetFillColor(230, 235, 240);
+            $this->Cell(120, 8, 'PERFORMANCE AREA', 1, 0, 'C', true);
+            $this->Cell(60, 8, 'SCORE (%)', 1, 1, 'C', true);
+            
+            // Performance metrics rows
+            $this->SetFont('Helvetica', '', 10);
+            $this->SetTextColor(70, 70, 80);
+            
+            $performanceAreas = [
+                'Academic Mastery' => $metrics['academic_mastery'],
+                'Punctuality & Attendance' => $metrics['punctuality_attendance'],
+                'Behavior & Conduct' => $metrics['behavior_conduct'],
+                'Class Participation' => $metrics['class_participation']
+            ];
+            
+            $fill = false;
+            foreach ($performanceAreas as $area => $score) {
+                if ($fill) {
+                    $this->SetFillColor(248, 250, 252);
+                } else {
+                    $this->SetFillColor(255, 255, 255);
+                }
+                
+                $this->Cell(120, 8, $area, 1, 0, 'L', $fill);
+                
+                // Color code the scores
+                if ($score >= 80) {
+                    $this->SetTextColor(0, 128, 0); // Green
+                } elseif ($score >= 60) {
+                    $this->SetTextColor(255, 140, 0); // Orange
+                } else {
+                    $this->SetTextColor(220, 0, 0); // Red
+                }
+                
+                $this->SetFont('Helvetica', 'B', 10);
+                $this->Cell(60, 8, $score . '%', 1, 1, 'C', $fill);
+                
+                $this->SetTextColor(70, 70, 80);
+                $this->SetFont('Helvetica', '', 10);
+                $fill = !$fill;
+            }
 
-            // Performance summary with modern styling
-        
-// ===============================
-// PERFORMANCE OVERVIEW SECTION
-// ===============================
-
-// Section header
-$this->SetFillColor(60, 100, 160);
-$this->SetTextColor(255, 255, 255);
-$this->SetFont('Helvetica', 'B', 13);
-$this->Cell(180, 10, 'PERFORMANCE OVERVIEW', 1, 1, 'C', true);
-
-$this->Ln(6);
-
-// ---- FIX: Lock all circles inside one stable container ----
-
-$startY = $this->GetY();   // Save beginning Y
-
-$topRowY = $startY + 22;    // Same level for first 3 circles
-$bottomRowY = $startY + 65; // Second row circle
-
-// TOP ROW (aligned)
-$this->drawProgressCircle(45,  $topRowY, 16, $metrics['academic_mastery'],        'ACADEMIC MASTERY');
-$this->drawProgressCircle(105, $topRowY, 16, $metrics['punctuality_attendance'], 'PUNCTUALITY & ATTENDANCE');
-$this->drawProgressCircle(165, $topRowY, 16, $metrics['behavior_conduct'],       'BEHAVIOR & CONDUCT');
-
-// SECOND ROW (centered)
-$this->drawProgressCircle(105, $bottomRowY, 16, $metrics['class_participation'], 'CLASS PARTICIPATION');
-
-// Set Y to bottom of container so summary doesn't move up
-$this->SetY($startY + 95);
-
-// -----------------
-// PERFORMANCE SUMMARY
-// -----------------
-$this->SetFillColor(245, 248, 250);
-$this->SetDrawColor(200, 210, 220);
-$this->SetLineWidth(0.5);
-$this->Rect(15, $this->GetY(), 180, 22, 'DF');
-
-$this->SetFont('Helvetica', 'B', 11);
-$this->SetTextColor(60, 80, 100);
-$this->Cell(180, 7, 'PERFORMANCE SUMMARY', 0, 1, 'C');
-
-$this->SetFont('Helvetica', '', 9);
-$this->SetTextColor(70, 70, 80);
-
-$summaryText = "This student demonstrates ";
-$summaryText .= $metrics['academic_mastery'] >= 80 ? "exceptional" :
-                 ($metrics['academic_mastery'] >= 70 ? "strong" :
-                 ($metrics['academic_mastery'] >= 60 ? "satisfactory" : "developing"));
-$summaryText .= " academic mastery, ";
-$summaryText .= $metrics['punctuality_attendance'] >= 90 ? "excellent" :
-                 ($metrics['punctuality_attendance'] >= 80 ? "good" :
-                 ($metrics['punctuality_attendance'] >= 70 ? "adequate" : "needs improvement"));
-$summaryText .= " attendance records, and ";
-$summaryText .= $metrics['behavior_conduct'] >= 85 ? "outstanding" :
-                 ($metrics['behavior_conduct'] >= 75 ? "positive" :
-                 ($metrics['behavior_conduct'] >= 65 ? "satisfactory" : "developing"));
-$summaryText .= " behavioral conduct with active class participation.";
-
-$this->MultiCell(180, 5, $summaryText);
             // Student status and promotion section
             $this->Ln(10);
             $this->SetFillColor(250, 252, 255);
@@ -621,15 +510,15 @@ $this->MultiCell(180, 5, $summaryText);
             $this->SetTextColor(30, 100, 180);
             $this->Cell(60, 8, 'PROMOTED TO BASIC 8', 0, 1, 'L');
 
-            // Comments section with professional layout
+            // Enhanced Comments section with more space
             $this->Ln(8);
             
-            // Academic remarks
+            // Academic remarks with more space
             $academicRemark = $this->getAcademicRemarks();
             $this->SetFillColor(255, 255, 255);
             $this->SetDrawColor(180, 200, 220);
             $this->SetLineWidth(0.5);
-            $this->Rect(15, $this->GetY(), 180, 30, 'D');
+            $this->Rect(15, $this->GetY(), 180, 35, 'D');
             
             $this->SetFont('Helvetica', 'B', 12);
             $this->SetTextColor(70, 100, 150);
@@ -638,12 +527,12 @@ $this->MultiCell(180, 5, $summaryText);
             $this->SetTextColor(50, 50, 60);
             $this->MultiCell(170, 5, $academicRemark, 0, 'L');
             
-            // Conduct remarks
+            // Conduct remarks with more space
             $conductRemark = $this->getConductRemarks();
             $this->SetFillColor(255, 255, 255);
             $this->SetDrawColor(180, 200, 220);
             $this->SetLineWidth(0.5);
-            $this->Rect(15, $this->GetY() + 2, 180, 30, 'D');
+            $this->Rect(15, $this->GetY() + 2, 180, 35, 'D');
             
             $this->SetFont('Helvetica', 'B', 12);
             $this->SetTextColor(70, 100, 150);
@@ -652,39 +541,51 @@ $this->MultiCell(180, 5, $summaryText);
             $this->SetTextColor(50, 50, 60);
             $this->MultiCell(170, 5, $conductRemark, 0, 'L');
 
-            // Signatures section with professional layout
+            // Enhanced Signatures section with more space
             $this->Ln(12);
             $signatureY = $this->GetY();
             
-            // Signature container
+            // Signature container with more height
             $this->SetFillColor(248, 250, 252);
             $this->SetDrawColor(200, 210, 220);
             $this->SetLineWidth(0.5);
-            $this->Rect(15, $signatureY, 180, 35, 'D');
+            $this->Rect(15, $signatureY, 180, 45, 'D');
             
             // Class teacher signature
             $this->SetFont('Helvetica', 'B', 11);
             $this->SetTextColor(80, 100, 120);
-            $this->SetXY(25, $signatureY + 8);
+            $this->SetXY(25, $signatureY + 10);
             $this->Cell(70, 6, 'Class Teacher\'s Signature:', 0, 0, 'L');
             $this->SetDrawColor(150, 150, 150);
-            $this->Line(35, $signatureY + 20, 95, $signatureY + 20);
+            $this->Line(35, $signatureY + 25, 95, $signatureY + 25);
             $this->SetFont('Helvetica', 'I', 9);
             $this->SetTextColor(120, 120, 120);
-            $this->SetXY(35, $signatureY + 22);
+            $this->SetXY(35, $signatureY + 27);
             $this->Cell(60, 4, 'Name & Date', 0, 0, 'C');
             
             // Headmistress signature
             $this->SetFont('Helvetica', 'B', 11);
             $this->SetTextColor(80, 100, 120);
-            $this->SetXY(115, $signatureY + 8);
+            $this->SetXY(115, $signatureY + 10);
             $this->Cell(70, 6, 'Headmistress\'s Signature:', 0, 0, 'L');
             $this->SetDrawColor(150, 150, 150);
-            $this->Line(125, $signatureY + 20, 175, $signatureY + 20);
+            $this->Line(125, $signatureY + 25, 175, $signatureY + 25);
             $this->SetFont('Helvetica', 'I', 9);
             $this->SetTextColor(120, 120, 120);
-            $this->SetXY(125, $signatureY + 22);
+            $this->SetXY(125, $signatureY + 27);
             $this->Cell(50, 4, 'Name & Date', 0, 0, 'C');
+            
+            // Parent's acknowledgment section
+            $this->SetFont('Helvetica', 'B', 11);
+            $this->SetTextColor(80, 100, 120);
+            $this->SetXY(25, $signatureY + 35);
+            $this->Cell(70, 6, 'Parent\'s Signature:', 0, 0, 'L');
+            $this->SetDrawColor(150, 150, 150);
+            $this->Line(35, $signatureY + 40, 95, $signatureY + 40);
+            $this->SetFont('Helvetica', 'I', 9);
+            $this->SetTextColor(120, 120, 120);
+            $this->SetXY(35, $signatureY + 42);
+            $this->Cell(60, 4, 'Acknowledgment', 0, 0, 'C');
             
             // Add official stamp/signature image if available
             $signatureImage = '';
@@ -712,7 +613,7 @@ $this->MultiCell(180, 5, $summaryText);
 
             // School motto or closing message
             $this->SetFont('Helvetica', 'B', 10);
-                        $this->SetTextColor(70, 100, 150);
+            $this->SetTextColor(70, 100, 150);
             $this->Cell(180, 6, '"Quality Education for Future Leaders"', 0, 1, 'C');
 
             // Add page break for next student (except for the last one)
@@ -750,9 +651,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     die("Invalid request method. Please submit the form.");
 }
 ?>
-
-
-
-
-
-
