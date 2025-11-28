@@ -199,33 +199,6 @@ class mypdf extends FPDF {
         }
     }
 
-    function calculatePerformanceMetrics($marks) {
-        // Calculate academic mastery based on average scores
-        $totalScore = 0;
-        $subjectCount = 0;
-        
-        foreach ($marks as $mark) {
-            if (is_numeric($mark['average'])) {
-                $totalScore += $mark['average'];
-                $subjectCount++;
-            }
-        }
-        
-        $academicMastery = $subjectCount > 0 ? round($totalScore / $subjectCount) : 0;
-        
-        // Generate realistic related metrics
-        $punctuality = max(70, min(98, $academicMastery + rand(-10, 15)));
-        $behavior = max(75, min(99, $academicMastery + rand(-5, 20)));
-        $participation = max(65, min(95, $academicMastery + rand(-15, 10)));
-        
-        return [
-            'academic_mastery' => $academicMastery,
-            'punctuality_attendance' => $punctuality,
-            'behavior_conduct' => $behavior,
-            'class_participation' => $participation
-        ];
-    }
-
     function headertable($conn) {
         $class = $_POST['askclass'];
         $exam = $_POST['exam'];
@@ -265,9 +238,6 @@ class mypdf extends FPDF {
 
         foreach ($students as $admno => $data) {
             $this->current_student_index++;
-            
-            // Calculate performance metrics
-            $metrics = $this->calculatePerformanceMetrics($data['marks']);
             
             // Student information section with modern layout
             $this->SetY(60);
@@ -418,69 +388,8 @@ class mypdf extends FPDF {
             $this->Cell(180, 5, 'A (80-100) - Excellent • B (70-79) - Very Good • C (60-69) - Good', 0, 1, 'C');
             $this->Cell(180, 5, 'D (50-59) - Average • E (40-49) - Credit • F (0-39) - Weak', 0, 1, 'C');
 
-            // PERFORMANCE OVERVIEW SECTION (REMOVED CIRCLES)
-            $this->Ln(12);
-            
-            // Section header
-            $this->SetFillColor(60, 100, 160);
-            $this->SetTextColor(255, 255, 255);
-            $this->SetFont('Helvetica', 'B', 13);
-            $this->Cell(180, 10, 'PERFORMANCE OVERVIEW', 1, 1, 'C', true);
-
-            $this->Ln(6);
-
-            // Performance metrics in a clean table format instead of circles
-            $this->SetFillColor(245, 248, 250);
-            $this->SetDrawColor(200, 210, 220);
-            $this->SetLineWidth(0.3);
-            
-            // Table header
-            $this->SetFont('Helvetica', 'B', 11);
-            $this->SetTextColor(60, 80, 100);
-            $this->SetFillColor(230, 235, 240);
-            $this->Cell(120, 8, 'PERFORMANCE AREA', 1, 0, 'C', true);
-            $this->Cell(60, 8, 'SCORE (%)', 1, 1, 'C', true);
-            
-            // Performance metrics rows
-            $this->SetFont('Helvetica', '', 10);
-            $this->SetTextColor(70, 70, 80);
-            
-            $performanceAreas = [
-                'Academic Mastery' => $metrics['academic_mastery'],
-                'Punctuality & Attendance' => $metrics['punctuality_attendance'],
-                'Behavior & Conduct' => $metrics['behavior_conduct'],
-                'Class Participation' => $metrics['class_participation']
-            ];
-            
-            $fill = false;
-            foreach ($performanceAreas as $area => $score) {
-                if ($fill) {
-                    $this->SetFillColor(248, 250, 252);
-                } else {
-                    $this->SetFillColor(255, 255, 255);
-                }
-                
-                $this->Cell(120, 8, $area, 1, 0, 'L', $fill);
-                
-                // Color code the scores
-                if ($score >= 80) {
-                    $this->SetTextColor(0, 128, 0); // Green
-                } elseif ($score >= 60) {
-                    $this->SetTextColor(255, 140, 0); // Orange
-                } else {
-                    $this->SetTextColor(220, 0, 0); // Red
-                }
-                
-                $this->SetFont('Helvetica', 'B', 10);
-                $this->Cell(60, 8, $score . '%', 1, 1, 'C', $fill);
-                
-                $this->SetTextColor(70, 70, 80);
-                $this->SetFont('Helvetica', '', 10);
-                $fill = !$fill;
-            }
-
-            // Student status and promotion section
-            $this->Ln(10);
+            // Student status and promotion section - moved up to use the space
+            $this->Ln(8);
             $this->SetFillColor(250, 252, 255);
             $this->SetDrawColor(180, 200, 220);
             $this->SetLineWidth(0.5);
@@ -518,7 +427,7 @@ class mypdf extends FPDF {
             $this->SetFillColor(255, 255, 255);
             $this->SetDrawColor(180, 200, 220);
             $this->SetLineWidth(0.5);
-            $this->Rect(15, $this->GetY(), 180, 35, 'D');
+            $this->Rect(15, $this->GetY(), 180, 40, 'D');
             
             $this->SetFont('Helvetica', 'B', 12);
             $this->SetTextColor(70, 100, 150);
@@ -532,7 +441,7 @@ class mypdf extends FPDF {
             $this->SetFillColor(255, 255, 255);
             $this->SetDrawColor(180, 200, 220);
             $this->SetLineWidth(0.5);
-            $this->Rect(15, $this->GetY() + 2, 180, 35, 'D');
+            $this->Rect(15, $this->GetY() + 2, 180, 40, 'D');
             
             $this->SetFont('Helvetica', 'B', 12);
             $this->SetTextColor(70, 100, 150);
@@ -542,43 +451,43 @@ class mypdf extends FPDF {
             $this->MultiCell(170, 5, $conductRemark, 0, 'L');
 
             // Enhanced Signatures section with more space
-            $this->Ln(12);
+            $this->Ln(8);
             $signatureY = $this->GetY();
             
             // Signature container with more height
             $this->SetFillColor(248, 250, 252);
             $this->SetDrawColor(200, 210, 220);
             $this->SetLineWidth(0.5);
-            $this->Rect(15, $signatureY, 180, 45, 'D');
+            $this->Rect(15, $signatureY, 180, 50, 'D');
             
             // Class teacher signature
             $this->SetFont('Helvetica', 'B', 11);
             $this->SetTextColor(80, 100, 120);
-            $this->SetXY(25, $signatureY + 10);
+            $this->SetXY(25, $signatureY + 8);
             $this->Cell(70, 6, 'Class Teacher\'s Signature:', 0, 0, 'L');
             $this->SetDrawColor(150, 150, 150);
-            $this->Line(35, $signatureY + 25, 95, $signatureY + 25);
+            $this->Line(35, $signatureY + 20, 95, $signatureY + 20);
             $this->SetFont('Helvetica', 'I', 9);
             $this->SetTextColor(120, 120, 120);
-            $this->SetXY(35, $signatureY + 27);
+            $this->SetXY(35, $signatureY + 22);
             $this->Cell(60, 4, 'Name & Date', 0, 0, 'C');
             
             // Headmistress signature
             $this->SetFont('Helvetica', 'B', 11);
             $this->SetTextColor(80, 100, 120);
-            $this->SetXY(115, $signatureY + 10);
+            $this->SetXY(115, $signatureY + 8);
             $this->Cell(70, 6, 'Headmistress\'s Signature:', 0, 0, 'L');
             $this->SetDrawColor(150, 150, 150);
-            $this->Line(125, $signatureY + 25, 175, $signatureY + 25);
+            $this->Line(125, $signatureY + 20, 175, $signatureY + 20);
             $this->SetFont('Helvetica', 'I', 9);
             $this->SetTextColor(120, 120, 120);
-            $this->SetXY(125, $signatureY + 27);
+            $this->SetXY(125, $signatureY + 22);
             $this->Cell(50, 4, 'Name & Date', 0, 0, 'C');
             
             // Parent's acknowledgment section
             $this->SetFont('Helvetica', 'B', 11);
             $this->SetTextColor(80, 100, 120);
-            $this->SetXY(25, $signatureY + 35);
+            $this->SetXY(25, $signatureY + 32);
             $this->Cell(70, 6, 'Parent\'s Signature:', 0, 0, 'L');
             $this->SetDrawColor(150, 150, 150);
             $this->Line(35, $signatureY + 40, 95, $signatureY + 40);
