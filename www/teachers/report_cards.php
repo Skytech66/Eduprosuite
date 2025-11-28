@@ -388,7 +388,7 @@ class mypdf extends FPDF {
             $this->Cell(180, 5, 'A (80-100) - Excellent • B (70-79) - Very Good • C (60-69) - Good', 0, 1, 'C');
             $this->Cell(180, 5, 'D (50-59) - Average • E (40-49) - Credit • F (0-39) - Weak', 0, 1, 'C');
 
-            // Student status and promotion section - moved up to use the space
+            // Student status and promotion section
             $this->Ln(8);
             $this->SetFillColor(250, 252, 255);
             $this->SetDrawColor(180, 200, 220);
@@ -419,82 +419,77 @@ class mypdf extends FPDF {
             $this->SetTextColor(30, 100, 180);
             $this->Cell(60, 8, 'PROMOTED TO BASIC 8', 0, 1, 'L');
 
-            // Enhanced Comments section with more space
-            $this->Ln(8);
+            // Enhanced Comments section WITHOUT tables - more visible text
+            $this->Ln(10);
             
-            // Academic remarks with more space
+            // Academic remarks - NO TABLE, just clean text
             $academicRemark = $this->getAcademicRemarks();
-            $this->SetFillColor(255, 255, 255);
-            $this->SetDrawColor(180, 200, 220);
-            $this->SetLineWidth(0.5);
-            $this->Rect(15, $this->GetY(), 180, 40, 'D');
-            
             $this->SetFont('Helvetica', 'B', 12);
             $this->SetTextColor(70, 100, 150);
-            $this->Cell(35, 7, '📚 Academic Remarks:', 0, 1, 'L');
-            $this->SetFont('Helvetica', '', 10);
-            $this->SetTextColor(50, 50, 60);
-            $this->MultiCell(170, 5, $academicRemark, 0, 'L');
+            $this->Cell(180, 7, '📚 ACADEMIC REMARKS:', 0, 1, 'L');
+            $this->SetFont('Helvetica', '', 11);
+            $this->SetTextColor(40, 40, 50);
+            $this->MultiCell(180, 6, $academicRemark, 0, 'L');
             
-            // Conduct remarks with more space
+            // Conduct remarks - NO TABLE, just clean text
+            $this->Ln(5);
             $conductRemark = $this->getConductRemarks();
-            $this->SetFillColor(255, 255, 255);
-            $this->SetDrawColor(180, 200, 220);
-            $this->SetLineWidth(0.5);
-            $this->Rect(15, $this->GetY() + 2, 180, 40, 'D');
-            
             $this->SetFont('Helvetica', 'B', 12);
             $this->SetTextColor(70, 100, 150);
-            $this->Cell(35, 7, '⭐ Conduct Remarks:', 0, 1, 'L');
-            $this->SetFont('Helvetica', '', 10);
-            $this->SetTextColor(50, 50, 60);
-            $this->MultiCell(170, 5, $conductRemark, 0, 'L');
+            $this->Cell(180, 7, '⭐ CONDUCT REMARKS:', 0, 1, 'L');
+            $this->SetFont('Helvetica', '', 11);
+            $this->SetTextColor(40, 40, 50);
+            $this->MultiCell(180, 6, $conductRemark, 0, 'L');
 
-            // Enhanced Signatures section with more space
+            // Signatures section DIRECTLY under remarks
             $this->Ln(8);
-            $signatureY = $this->GetY();
             
-            // Signature container with more height
-            $this->SetFillColor(248, 250, 252);
-            $this->SetDrawColor(200, 210, 220);
+            // Class teacher signature - LEFT SIDE
+            $this->SetFont('Helvetica', 'B', 11);
+            $this->SetTextColor(80, 100, 120);
+            $this->Cell(85, 6, 'Class Teacher\'s Signature:', 0, 0, 'L');
+            
+            // Headteacher signature - RIGHT SIDE  
+            $this->SetX(110);
+            $this->Cell(85, 6, 'Headteacher\'s Signature:', 0, 1, 'L');
+            
+            // Signature lines
+            $this->SetDrawColor(150, 150, 150);
             $this->SetLineWidth(0.5);
-            $this->Rect(15, $signatureY, 180, 50, 'D');
             
-            // Class teacher signature
-            $this->SetFont('Helvetica', 'B', 11);
-            $this->SetTextColor(80, 100, 120);
-            $this->SetXY(25, $signatureY + 8);
-            $this->Cell(70, 6, 'Class Teacher\'s Signature:', 0, 0, 'L');
-            $this->SetDrawColor(150, 150, 150);
-            $this->Line(35, $signatureY + 20, 95, $signatureY + 20);
+            // Class teacher line
+            $this->Line(20, $this->GetY(), 85, $this->GetY());
+            
+            // Headteacher line
+            $this->Line(110, $this->GetY(), 175, $this->GetY());
+            
+            $this->Ln(4);
+            
+            // Names under signature lines
             $this->SetFont('Helvetica', 'I', 9);
             $this->SetTextColor(120, 120, 120);
-            $this->SetXY(35, $signatureY + 22);
-            $this->Cell(60, 4, 'Name & Date', 0, 0, 'C');
             
-            // Headmistress signature
+            // Class teacher name
+            $this->Cell(85, 4, 'Name & Date', 0, 0, 'C');
+            
+            // Headteacher name
+            $this->SetX(110);
+            $this->Cell(85, 4, 'Name & Date', 0, 1, 'C');
+
+            // Parent's acknowledgment
+            $this->Ln(8);
             $this->SetFont('Helvetica', 'B', 11);
             $this->SetTextColor(80, 100, 120);
-            $this->SetXY(115, $signatureY + 8);
-            $this->Cell(70, 6, 'Headmistress\'s Signature:', 0, 0, 'L');
-            $this->SetDrawColor(150, 150, 150);
-            $this->Line(125, $signatureY + 20, 175, $signatureY + 20);
-            $this->SetFont('Helvetica', 'I', 9);
-            $this->SetTextColor(120, 120, 120);
-            $this->SetXY(125, $signatureY + 22);
-            $this->Cell(50, 4, 'Name & Date', 0, 0, 'C');
+            $this->Cell(85, 6, 'Parent\'s Signature:', 0, 1, 'L');
             
-            // Parent's acknowledgment section
-            $this->SetFont('Helvetica', 'B', 11);
-            $this->SetTextColor(80, 100, 120);
-            $this->SetXY(25, $signatureY + 32);
-            $this->Cell(70, 6, 'Parent\'s Signature:', 0, 0, 'L');
             $this->SetDrawColor(150, 150, 150);
-            $this->Line(35, $signatureY + 40, 95, $signatureY + 40);
+            $this->SetLineWidth(0.5);
+            $this->Line(20, $this->GetY(), 85, $this->GetY());
+            
+            $this->Ln(4);
             $this->SetFont('Helvetica', 'I', 9);
             $this->SetTextColor(120, 120, 120);
-            $this->SetXY(35, $signatureY + 42);
-            $this->Cell(60, 4, 'Acknowledgment', 0, 0, 'C');
+            $this->Cell(85, 4, 'Acknowledgment', 0, 1, 'C');
             
             // Add official stamp/signature image if available
             $signatureImage = '';
@@ -511,7 +506,7 @@ class mypdf extends FPDF {
             }
 
             if (file_exists($signatureImage)) {
-                $this->Image($signatureImage, 140, $signatureY + 5, 25, 12);
+                $this->Image($signatureImage, 140, $this->GetY() - 25, 25, 12);
             }
             
             // Progress indicator and report footer
