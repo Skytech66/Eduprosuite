@@ -426,7 +426,7 @@ class mypdf extends FPDF {
             $academicRemark = $this->getAcademicRemarks();
             $this->SetFont('Helvetica', 'B', 12);
             $this->SetTextColor(70, 100, 150);
-            $this->Cell(180, 7, '📚 ACADEMIC REMARKS:', 0, 1, 'L');
+            $this->Cell(180, 7, 'ACADEMIC REMARKS:', 0, 1, 'L');
             $this->SetFont('Helvetica', '', 11);
             $this->SetTextColor(40, 40, 50);
             $this->MultiCell(180, 6, $academicRemark, 0, 'L');
@@ -436,13 +436,13 @@ class mypdf extends FPDF {
             $conductRemark = $this->getConductRemarks();
             $this->SetFont('Helvetica', 'B', 12);
             $this->SetTextColor(70, 100, 150);
-            $this->Cell(180, 7, '⭐ CONDUCT REMARKS:', 0, 1, 'L');
+            $this->Cell(180, 7, 'CONDUCT REMARKS:', 0, 1, 'L');
             $this->SetFont('Helvetica', '', 11);
             $this->SetTextColor(40, 40, 50);
             $this->MultiCell(180, 6, $conductRemark, 0, 'L');
 
             // Signatures section DIRECTLY under remarks
-            $this->Ln(8);
+            $this->Ln(3);
             
             // Class teacher signature - LEFT SIDE
             $this->SetFont('Helvetica', 'B', 11);
@@ -463,7 +463,7 @@ class mypdf extends FPDF {
             // Headteacher line
             $this->Line(110, $this->GetY(), 175, $this->GetY());
             
-            $this->Ln(4);
+            $this->Ln(1);
             
             // Names under signature lines
             $this->SetFont('Helvetica', 'I', 9);
@@ -475,18 +475,12 @@ class mypdf extends FPDF {
             // Headteacher name
             $this->SetX(110);
             $this->Cell(85, 4, 'Name & Date', 0, 1, 'C');
-
-            // Parent's acknowledgment
-            $this->Ln(8);
-            $this->SetFont('Helvetica', 'B', 11);
-            $this->SetTextColor(80, 100, 120);
-            $this->Cell(85, 6, 'Parent\'s Signature:', 0, 1, 'L');
             
             $this->SetDrawColor(150, 150, 150);
             $this->SetLineWidth(0.5);
             $this->Line(20, $this->GetY(), 85, $this->GetY());
             
-            $this->Ln(4);
+            $this->Ln(0);
             $this->SetFont('Helvetica', 'I', 9);
             $this->SetTextColor(120, 120, 120);
             $this->Cell(85, 4, 'Acknowledgment', 0, 1, 'C');
@@ -555,3 +549,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     die("Invalid request method. Please submit the form.");
 }
 ?>
+
