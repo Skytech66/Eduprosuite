@@ -155,42 +155,46 @@ class mypdf extends FPDF {
 
     function header() {
         // Subtle background pattern/texture
-        if (file_exists('watermark_transparent_v3.png')) {
-            $this->Image('watermark_transparent_v3.png', 0, 0, 210, 297);
+        if (file_exists('gat.png')) {
+            $this->Image('gat.png', 0, 0, 210, 297);
         }
 
         // School header with professional styling
-        $this->SetFillColor(240, 240, 240);
-        $this->Rect(0, 0, 210, 45, 'F');
-        
-        // School logo
-        if (file_exists('bob.png')) {
-            $this->Image('bob.png', 15, 10, 35, 28);
-        } else {
-            $this->SetFillColor(220, 220, 220);
-            $this->Rect(15, 10, 35, 28, 'F');
-            $this->SetFont('Arial', 'I', 8);
-            $this->SetXY(15, 20);
-            $this->Cell(35, 5, 'SCHOOL LOGO', 0, 0, 'C');
-        }
+        // Header background
+$this->SetFillColor(245, 245, 245);
+$this->Rect(0, 0, 210, 45, 'F');
 
-        // School information - centered
-        
-        $this->SetFont('Times', 'B', 18);
-$this->SetTextColor(40, 80, 120);
-$this->SetXY(60, 12);
-$this->Cell(140, 8, 'STARTS ON EARTH ACADEMY', 0, 1, 'C');
-        $this->SetFont('Times', 'B', 12);
-        $this->SetTextColor(80, 80, 80);
-        $this->SetX(60);
-        $addressLine = 'LOCATION: ABOKOBI-AKPORMAN, ACCRA';
-$this->Cell(140, 6, $addressLine, 0, 1, 'C');
+// School logo
+if (file_exists('gat.png')) {
+    $this->Image('gat.png', 12, 8, 32, 30); 
+} else {
+    $this->SetFillColor(220, 220, 220);
+    $this->Rect(12, 8, 32, 30, 'F');
+    $this->SetFont('Arial', 'I', 8);
+    $this->SetXY(12, 20);
+    $this->Cell(32, 5, 'SCHOOL LOGO', 0, 0, 'C');
+}
 
-$this->SetX(60);
-$this->Cell(140, 6, 'TEL: +233246484366 / +233244457834', 0, 1, 'C');
+// School Information
+$this->SetFont('Times', 'B', 18);
+$this->SetTextColor(30, 60, 110);
+$this->SetXY(55, 8);
+$this->Cell(145, 10, 'STARS ON EARTH ACADEMY', 0, 1, 'C');
 
-$this->SetX(60);
-$this->Cell(140, 6, 'EMAIL: starsonearth@gmail.com', 0, 1, 'C');
+$this->SetFont('Times', '', 12);
+$this->SetTextColor(70, 70, 70);
+
+// Address
+$this->SetX(55);
+$this->Cell(145, 6, 'LOCATION: ABOKOBI-AKPORMAN, ACCRA', 0, 1, 'C');
+
+// Telephone
+$this->SetX(55);
+$this->Cell(145, 6, 'TEL: +233246484366 / +233244457834', 0, 1, 'C');
+
+// Email
+$this->SetX(55);
+$this->Cell(145, 6, 'EMAIL: starsonearth@gmail.com', 0, 1, 'C');
         // Decorative line with accent color
         $this->SetLineWidth(1);
         $this->SetDrawColor(70, 130, 180);
@@ -733,5 +737,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     die("Invalid request method. Please submit the form.");
 }
 ?>
+
 
 
