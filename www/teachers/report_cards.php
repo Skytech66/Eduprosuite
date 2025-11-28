@@ -183,16 +183,14 @@ $this->Cell(140, 8, 'STARTS ON EARTH ACADEMY', 0, 1, 'C');
         $this->SetFont('Times', 'B', 12);
         $this->SetTextColor(80, 80, 80);
         $this->SetX(60);
-        $addressLine = isset($this->config['po_box']) && isset($this->config['address']) ? 
-            $this->config['po_box'] . ', ' . $this->config['address'] : 'P.M.B 40, Madina - Accra';
-        $this->Cell(140, 6, $addressLine, 0, 1, 'C');
-        
-        $this->SetX(60);
-        $this->Cell(140, 6, '📞 0277411866 • 0541622751', 0, 1, 'C');
-        
-        $this->SetX(60);
-        $this->Cell(140, 6, '📍 Abokobi / Boi New Town', 0, 1, 'C');
+        $addressLine = 'LOCATION: ABOKOBI-AKPORMAN, ACCRA';
+$this->Cell(140, 6, $addressLine, 0, 1, 'C');
 
+$this->SetX(60);
+$this->Cell(140, 6, 'TEL: +233246484366 / +233244457834', 0, 1, 'C');
+
+$this->SetX(60);
+$this->Cell(140, 6, 'EMAIL: starsonearth@gmail.com', 0, 1, 'C');
         // Decorative line with accent color
         $this->SetLineWidth(1);
         $this->SetDrawColor(70, 130, 180);
@@ -206,7 +204,7 @@ $this->Cell(140, 8, 'STARTS ON EARTH ACADEMY', 0, 1, 'C');
         
         $this->SetFont('Arial', 'I', 12);
         $this->SetTextColor(100, 100, 150);
-        $this->Cell(190, 6, 'Comprehensive Student Assessment', 0, 1, 'C');
+        $this->Cell(190, 6, '', 0, 1, 'C');
     }
 
     function footer() {
@@ -735,4 +733,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     die("Invalid request method. Please submit the form.");
 }
 ?>
+
 
