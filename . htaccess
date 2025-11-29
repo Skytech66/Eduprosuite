@@ -1,0 +1,24 @@
+# ---------------------------------------------------------
+# Custom Smart 404 Handler
+# ---------------------------------------------------------
+# Any missing page will load smart-404.php instead of Apache's default error page
+ErrorDocument 404 /smart-404.php
+
+# ---------------------------------------------------------
+# Enable Rewrite Engine
+# ---------------------------------------------------------
+Options +FollowSymLinks
+RewriteEngine On
+
+# ---------------------------------------------------------
+# Serve existing files and folders normally
+# ---------------------------------------------------------
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# ---------------------------------------------------------
+# Fallback to index.php for all other requests
+# (Prevents 404 for routes that should load through PHP)
+# ---------------------------------------------------------
+RewriteRule ^ index.php [L]
