@@ -40,57 +40,6 @@ class mypdf extends FPDF {
     var $current_student_index = 0;
     var $total_students = 0;
 
-    // Add Circle and Ellipse methods to FPDF
-    function Circle($x, $y, $r, $style='D') {
-        $this->Ellipse($x, $y, $r, $r, $style);
-    }
-
-    function Ellipse($x, $y, $rx, $ry, $style='D') {
-        if($style=='F')
-            $op = 'f';
-        elseif($style=='FD' || $style=='DF')
-            $op = 'B';
-        else
-            $op = 'S';
-
-        $lx = 4/3*(M_SQRT2-1)*$rx;
-        $ly = 4/3*(M_SQRT2-1)*$ry;
-
-        $k = $this->k;
-        $h = $this->h;
-
-        $this->_out(sprintf(
-            '%.2F %.2F m %.2F %.2F %.2F %.2F %.2F %.2F c',
-            ($x+$rx)*$k, ($h-$y)*$k,
-            ($x+$rx)*$k, ($h-($y-$ly))*$k,
-            ($x+$lx)*$k, ($h-($y-$ry))*$k,
-            $x*$k, ($h-($y-$ry))*$k
-        ));
-
-        $this->_out(sprintf(
-            '%.2F %.2F %.2F %.2F %.2F %.2F c',
-            ($x-$lx)*$k, ($h-($y-$ry))*$k,
-            ($x-$rx)*$k, ($h-($y-$ly))*$k,
-            ($x-$rx)*$k, ($h-$y)*$k
-        ));
-        
-        $this->_out(sprintf(
-            '%.2F %.2F %.2F %.2F %.2F %.2F c',
-            ($x-$rx)*$k, ($h-($y+$ly))*$k,
-            ($x-$lx)*$k, ($h-($y+$ry))*$k,
-            $x*$k, ($h-($y+$ry))*$k
-        ));
-        
-        $this->_out(sprintf(
-            '%.2F %.2F %.2F %.2F %.2F %.2F c',
-            ($x+$lx)*$k, ($h-($y+$ry))*$k,
-            ($x+$rx)*$k, ($h-($y+$ly))*$k,
-            ($x+$rx)*$k, ($h-$y)*$k
-        ));
-
-        $this->_out($op);
-    }
-
     function setConfig($config) {
         $this->config = $config;
     }
@@ -108,17 +57,18 @@ class mypdf extends FPDF {
         $this->Circle($x, $y, $radius, 'D');
         $this->Circle($x, $y, $radius, 'F');
         
-        // Progress arc - simplified version without complex arc drawing
+        // Progress arc
         $this->SetDrawColor($color[0], $color[1], $color[2]);
         $this->SetLineWidth(2);
+        $endAngle = 360 * ($percentage / 100);
         
-        // Draw a simple circle for progress (simplified approach)
-        $this->SetFillColor($color[0], $color[1], $color[2]);
-        $this->SetTextColor(255, 255, 255);
-        
-        // Draw filled circle based on percentage (simplified visual)
-        $fillRadius = $radius * 0.7;
-        $this->Circle($x, $y, $fillRadius, 'F');
+        // Draw progress arc
+        for ($i = 0; $i <= $endAngle; $i++) {
+            $rad = deg2rad($i - 90);
+            $x1 = $x + ($radius * cos($rad));
+            $y1 = $y + ($radius * sin($rad));
+            $this->Line($x, $y, $x1, $y1);
+        }
         
         // Percentage text
         $this->SetFont('Helvetica', 'B', 8);
