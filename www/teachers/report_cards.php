@@ -211,11 +211,22 @@ class mypdf extends FPDF {
                 $students[$admno]['photo'] = $row["photo"];
                 $students[$admno]['marks'] = [];
             }
+            
+            // Format numbers to remove .00 and convert to integers
+            $class_score = $row["class_score"];
+            $exam_score = $row["exam_score"];
+            $average = $row["average"];
+            
+            // Remove .00 and convert to integer if it's a whole number
+            $class_score = (float)$class_score == (int)$class_score ? (int)$class_score : (float)$class_score;
+            $exam_score = (float)$exam_score == (int)$exam_score ? (int)$exam_score : (float)$exam_score;
+            $average = (float)$average == (int)$average ? (int)$average : (float)$average;
+            
             $students[$admno]['marks'][] = [
                 'subject' => $row["subject"],
-                'class_score' => $row["class_score"],
-                'exam_score' => $row["exam_score"],
-                'average' => $row["average"],
+                'class_score' => $class_score,
+                'exam_score' => $exam_score,
+                'average' => $average,
                 'remarks' => $row["remarks"],
                 'position' => $row["position"]
             ];
@@ -227,6 +238,11 @@ class mypdf extends FPDF {
 
         foreach ($students as $admno => $data) {
             $this->current_student_index++;
+            
+            // Add a new page for each student (except don't add before first student)
+            if ($this->current_student_index > 1) {
+                $this->AddPage();
+            }
             
             // Student information section - LARGER FONTS
             $this->SetY(58);
@@ -484,11 +500,6 @@ class mypdf extends FPDF {
             $this->Cell(180, 5, "Student Report " . $this->current_student_index . " of " . $this->total_students, 0, 1, 'R');
 
             // REMOVED School motto "Quality Education for Future Leaders"
-
-            // Add page break for next student (except for the last one)
-            if ($this->current_student_index < $this->total_students) {
-                $this->AddPage();
-            }
         }
     }
 }
@@ -508,7 +519,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $pdf = new mypdf();
     $pdf->setConfig($config);
     $pdf->AliasNbPages();
-    $pdf->AddPage('P', 'A4', 0);
     $pdf->headertable($conn);
     
     // Output the PDF inline in the browser
