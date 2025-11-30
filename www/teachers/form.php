@@ -364,10 +364,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <label for="classSelect" class="block text-sm font-medium text-gray-700">Select Class</label>
                         <select id="classSelect" name="class" class="select-custom w-full" onchange="updateClass(this.value)">
                             <option value="" disabled selected hidden>Select Class</option>
-                            <option value="Basic 1">Basic One B</option>
-                            <option value="Basic 6">Basic Six A</option>
-                            <option value="Basic 3A">Basic Three A</option>
-                            <option value="Basic 3B">Basic Three B</option>
+                            <option value="Basic 1">Basic 1</option>
+                            <option value="Basic 2">Basic 2</option>
+                            <option value="Basic 3">Basic 3</option>
+                            <option value="Basic 4">Basic 4</option>
+                            <option value="Basic 5">Basic 5</option>
+                            <option value="Basic 6">Basic 6</option>
+                            <option value="Basic 7">Basic 7</option>
+                            <option value="Basic 8">Basic 8</option>
+                            <option value="KG1">KG1</option>
                              <option value="KG2">KG2</option>
 
                         </select>
@@ -470,3 +475,4 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </script>
 </body>
 </html>
+
