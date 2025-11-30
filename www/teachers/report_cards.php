@@ -40,80 +40,12 @@ class mypdf extends FPDF {
     var $current_student_index = 0;
     var $total_students = 0;
 
-    // Add circle + ellipse support for FPDF
-    function Circle($x, $y, $r, $style='D')
-    {
-        $this->Ellipse($x, $y, $r, $r, $style);
-    }
-
-    function Ellipse($x, $y, $rx, $ry, $style='D')
-    {
-        if($style=='F')
-            $op='f';
-        elseif($style=='FD' || $style=='DF')
-            $op='B';
-        else
-            $op='S';
-
-        $k = $this->k;
-        $hp = $this->h;
-
-        $lx = 4/3 * (sqrt(2) - 1) * $rx;
-        $ly = 4/3 * (sqrt(2) - 1) * $ry;
-
-        $this->_out(sprintf('%.2F %.2F m', ($x+$rx)*$k, ($hp-$y)*$k ));
-        $this->_out(sprintf('%.2F %.2F %.2F %.2F %.2F %.2F c',
-            ($x+$rx)*$k, ($hp-($y-$ly))*$k,
-            ($x+$lx)*$k, ($hp-($y-$ry))*$k,
-            $x*$k, ($hp-($y-$ry))*$k ));
-        $this->_out(sprintf('%.2F %.2F %.2F %.2F %.2F %.2F c',
-            ($x-$lx)*$k, ($hp-($y-$ry))*$k,
-            ($x-$rx)*$k, ($hp-($y-$ly))*$k,
-            ($x-$rx)*$k, ($hp-$y)*$k ));
-        $this->_out(sprintf('%.2F %.2F %.2F %.2F %.2F %.2F c',
-            ($x-$rx)*$k, ($hp-($y+$ly))*$k,
-            ($x-$lx)*$k, ($hp-($y+$ry))*$k,
-            $x*$k, ($hp-($y+$ry))*$k ));
-        $this->_out(sprintf('%.2F %.2F %.2F %.2F %.2F %.2F c %s',
-            ($x+$lx)*$k, ($hp-($y+$ry))*$k,
-            ($x+$rx)*$k, ($hp-($y+$ly))*$k,
-            ($x+$rx)*$k, ($hp-$y)*$k,
-            $op ));
-    }
-
     function setConfig($config) {
         $this->config = $config;
     }
 
     function setTotalStudents($total) {
         $this->total_students = $total;
-    }
-
-    // Function to draw progress circle
-    function drawProgressCircle($x, $y, $radius, $percentage, $label, $color) {
-        // Circle background
-        $this->SetFillColor(240, 240, 240);
-        $this->SetDrawColor(200, 200, 200);
-        $this->SetLineWidth(0.8);
-        $this->Circle($x, $y, $radius, 'D');
-        $this->Circle($x, $y, $radius, 'F');
-        
-        // Progress - filled circle based on percentage
-        $this->SetFillColor($color[0], $color[1], $color[2]);
-        $fillRadius = $radius * 0.8;
-        $this->Circle($x, $y, $fillRadius, 'F');
-        
-        // Percentage text - larger and bolder
-        $this->SetFont('Helvetica', 'B', 13);
-        $this->SetTextColor(255, 255, 255);
-        $this->SetXY($x - 8, $y - 4);
-        $this->Cell(16, 8, $percentage . '%', 0, 0, 'C');
-        
-        // Label - larger font
-        $this->SetFont('Helvetica', 'B', 13);
-        $this->SetTextColor(60, 60, 60);
-        $this->SetXY($x - 20, $y + $radius + 5);
-        $this->Cell(40, 5, $label, 0, 0, 'C');
     }
 
     function header() {
@@ -354,14 +286,15 @@ class mypdf extends FPDF {
             // Academic performance table - LARGER FONTS
             $this->Ln(12);
             
-            // Table header with LARGER FONTS
+            // Table header with LARGER FONTS - FIXED COLUMN WIDTHS TO PREVENT OVERFLOW
             $this->SetFillColor(60, 100, 160);
             $this->SetTextColor(255, 255, 255);
             $this->SetFont('Helvetica', 'B', 12);
             $this->SetLineWidth(0.3);
             
-            $headers = ['SUBJECT', 'CLASS SCORE', 'EXAM SCORE', 'TOTAL', 'GRADE', 'REMARKS', 'POSITION'];
-            $widths = [38, 28, 28, 28, 22, 42, 28];
+            // Adjusted column widths to prevent overflow and make position more visible
+            $headers = ['SUBJECT', 'CLASS WORK', 'EXAM', 'TOTAL', 'GRADE', 'REMARKS', 'POSITION'];
+            $widths = [35, 25, 25, 25, 22, 40, 28]; // Adjusted widths
             
             for ($i = 0; $i < count($headers); $i++) {
                 $this->Cell($widths[$i], 10, $headers[$i], 1, 0, 'C', true);
@@ -419,12 +352,14 @@ class mypdf extends FPDF {
                 $this->SetFont('Helvetica', '', 12);
                 $this->Cell($widths[5], 8, $remarks, 1, 0, 'C', $fill);
                 
-                $this->SetTextColor(60, 80, 150);
-                $this->SetFont('Helvetica', 'B', 10);
+                // Position column - made more visible with better styling
+                $this->SetTextColor(255, 255, 255);
+                $this->SetFillColor(70, 100, 180);
+                $this->SetFont('Helvetica', 'B', 11);
                 if (is_numeric($originalPosition) && $originalPosition > 0) {
-                    $this->Cell($widths[6], 8, ordinal($originalPosition), 1, 0, 'C', $fill);
+                    $this->Cell($widths[6], 8, ordinal($originalPosition), 1, 0, 'C', true);
                 } else {
-                    $this->Cell($widths[6], 8, 'N/A', 1, 0, 'C', $fill);
+                    $this->Cell($widths[6], 8, 'N/A', 1, 0, 'C', true);
                 }
                 $this->Ln();
                 
@@ -522,33 +457,7 @@ class mypdf extends FPDF {
             
             // REMOVED Name & Date and Acknowledgment lines
 
-            // Progress Circles - LARGER SIZE
-            $this->Ln(4);
-            
-            // Generate random percentages for progress circles
-            $academicMastery = rand(70, 95);
-            $levelOfUnderstanding = rand(65, 90);
-            $behavior = rand(75, 98);
-            
-            // Circle colors
-            $academicColor = [0, 100, 200]; // Blue
-            $understandingColor = [40, 180, 40]; // Green
-            $behaviorColor = [255, 140, 0]; // Orange
-            
-            // Draw progress circles horizontally aligned - LARGER RADIUS
-            $circleY = $this->GetY();
-            $circleRadius = 12; // INCREASED FROM 8 TO 12
-            
-            // Academic Mastery Circle
-            $this->drawProgressCircle(40, $circleY, $circleRadius, $academicMastery, 'Academic Mastery', $academicColor);
-            
-            // Level of Understanding Circle
-            $this->drawProgressCircle(105, $circleY, $circleRadius, $levelOfUnderstanding, 'Understanding', $understandingColor);
-            
-            // Behavior Circle
-            $this->drawProgressCircle(170, $circleY, $circleRadius, $behavior, 'Behavior', $behaviorColor);
-            
-            $this->Ln(4); // Space after circles
+            // REMOVED PROGRESS CIRCLES SECTION COMPLETELY
 
             // Add official stamp/signature image if available
             $signatureImage = '';
@@ -565,7 +474,7 @@ class mypdf extends FPDF {
             }
 
             if (file_exists($signatureImage)) {
-                $this->Image($signatureImage, 140, $this->GetY() - 18, 25, 12);
+                $this->Image($signatureImage, 140, $this->GetY() - 5, 25, 12);
             }
             
             // Progress indicator - LARGER FONT
@@ -611,4 +520,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     die("Invalid request method. Please submit the form.");
 }
 ?>
-
