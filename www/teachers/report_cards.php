@@ -89,33 +89,6 @@ class mypdf extends FPDF {
         $this->total_students = $total;
     }
 
-    // Function to draw progress circle
-    function drawProgressCircle($x, $y, $radius, $percentage, $label, $color) {
-        // Circle background
-        $this->SetFillColor(240, 240, 240);
-        $this->SetDrawColor(200, 200, 200);
-        $this->SetLineWidth(0.8);
-        $this->Circle($x, $y, $radius, 'D');
-        $this->Circle($x, $y, $radius, 'F');
-        
-        // Progress - filled circle based on percentage
-        $this->SetFillColor($color[0], $color[1], $color[2]);
-        $fillRadius = $radius * 0.8;
-        $this->Circle($x, $y, $fillRadius, 'F');
-        
-        // Percentage text - larger and bolder
-        $this->SetFont('Helvetica', 'B', 13);
-        $this->SetTextColor(255, 255, 255);
-        $this->SetXY($x - 8, $y - 4);
-        $this->Cell(16, 8, $percentage . '%', 0, 0, 'C');
-        
-        // Label - larger font
-        $this->SetFont('Helvetica', 'B', 13);
-        $this->SetTextColor(60, 60, 60);
-        $this->SetXY($x - 20, $y + $radius + 5);
-        $this->Cell(40, 5, $label, 0, 0, 'C');
-    }
-
     function header() {
         // Professional header with clean design
         $this->SetFillColor(250, 250, 252);
@@ -364,14 +337,15 @@ class mypdf extends FPDF {
             // Academic performance table - LARGER FONTS
             $this->Ln(12);
             
-            // Table header with LARGER FONTS
+            // Table header with LARGER FONTS - ADJUSTED WIDTHS to fit properly
             $this->SetFillColor(60, 100, 160);
             $this->SetTextColor(255, 255, 255);
-            $this->SetFont('Helvetica', 'B', 12);
+            $this->SetFont('Helvetica', 'B', 11); // Slightly smaller font to fit
             $this->SetLineWidth(0.3);
             
+            // Adjusted column widths to fit better on the page
             $headers = ['SUBJECT', 'CLASS SCORE', 'EXAM SCORE', 'TOTAL', 'GRADE', 'REMARKS', 'POSITION'];
-            $widths = [38, 28, 28, 28, 22, 42, 28];
+            $widths = [35, 25, 25, 22, 20, 38, 25]; // Adjusted widths
             
             for ($i = 0; $i < count($headers); $i++) {
                 $this->Cell($widths[$i], 10, $headers[$i], 1, 0, 'C', true);
@@ -383,7 +357,7 @@ class mypdf extends FPDF {
             $fill = false;
             
             foreach ($data['marks'] as $row) {
-                $this->SetFont('Helvetica', '', 12);
+                $this->SetFont('Helvetica', '', 11); // Slightly smaller font to fit
                 
                 if ($fill) {
                     $this->SetFillColor(248, 250, 255);
@@ -422,11 +396,11 @@ class mypdf extends FPDF {
                 }
                 
                 $this->SetTextColor($gradeColor[0], $gradeColor[1], $gradeColor[2]);
-                $this->SetFont('Helvetica', 'B', 12);
+                $this->SetFont('Helvetica', 'B', 11);
                 $this->Cell($widths[4], 8, $grade, 1, 0, 'C', $fill);
                 
                 $this->SetTextColor(0, 0, 0);
-                $this->SetFont('Helvetica', '', 12);
+                $this->SetFont('Helvetica', '', 11);
                 $this->Cell($widths[5], 8, $remarks, 1, 0, 'C', $fill);
                 
                 $this->SetTextColor(60, 80, 150);
@@ -532,33 +506,7 @@ class mypdf extends FPDF {
             
             // REMOVED Name & Date and Acknowledgment lines
 
-            // Progress Circles - LARGER SIZE
-            $this->Ln(4);
-            
-            // Generate random percentages for progress circles
-            $academicMastery = rand(70, 95);
-            $levelOfUnderstanding = rand(65, 90);
-            $behavior = rand(75, 98);
-            
-            // Circle colors
-            $academicColor = [0, 100, 200]; // Blue
-            $understandingColor = [40, 180, 40]; // Green
-            $behaviorColor = [255, 140, 0]; // Orange
-            
-            // Draw progress circles horizontally aligned - LARGER RADIUS
-            $circleY = $this->GetY();
-            $circleRadius = 12; // INCREASED FROM 8 TO 12
-            
-            // Academic Mastery Circle
-            $this->drawProgressCircle(40, $circleY, $circleRadius, $academicMastery, 'Academic Mastery', $academicColor);
-            
-            // Level of Understanding Circle
-            $this->drawProgressCircle(105, $circleY, $circleRadius, $levelOfUnderstanding, 'Understanding', $understandingColor);
-            
-            // Behavior Circle
-            $this->drawProgressCircle(170, $circleY, $circleRadius, $behavior, 'Behavior', $behaviorColor);
-            
-            $this->Ln(4); // Space after circles
+            // REMOVED PROGRESS CIRCLES COMPLETELY
 
             // Add official stamp/signature image if available
             $signatureImage = '';
