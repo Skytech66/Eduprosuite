@@ -674,7 +674,7 @@ $totalClasses = $row['tclasses'] ?? 0;
 
         /* Premium Dashboard Content */
         .dashboard-container {
-            padding: 30px;
+            padding: 0;
             max-width: 1800px;
             margin: 0 auto;
             width: 100%;
@@ -682,75 +682,153 @@ $totalClasses = $row['tclasses'] ?? 0;
 
         @media (max-width: 768px) {
             .dashboard-container {
-                padding: 20px 15px;
+                padding: 0;
             }
         }
 
-        /* Premium Dashboard Header */
-        .dashboard-header {
-            padding: 30px;
-            margin-bottom: 32px;
+        /* Mobile App Style Header Slider */
+        .header-slider {
+            position: relative;
+            width: 100%;
+            height: 280px;
+            overflow: hidden;
+            border-radius: 0 0 var(--rounded-2xl) var(--rounded-2xl);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .slider-container {
+            display: flex;
+            width: 300%;
+            height: 100%;
+            transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .slider-slide {
+            width: 33.333%;
+            height: 100%;
             position: relative;
             overflow: hidden;
-            border-radius: var(--rounded-xl);
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: var(--shadow-lg);
-            transition: var(--transition-slow);
         }
 
-        [data-theme="dark"] .dashboard-header {
-            background: rgba(30, 41, 59, 0.95);
-            border-color: rgba(30, 41, 59, 0.3);
+        .slider-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
-        .dashboard-header:hover {
-            box-shadow: var(--shadow-xl);
-            transform: translateY(-1px);
-        }
-
-        .dashboard-header::before {
-            content: '';
+        .slide-overlay {
             position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, var(--primary-light) 0%, rgba(255,255,255,0) 70%);
-            opacity: 0.15;
-            z-index: 0;
-        }
-
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: relative;
-            z-index: 1;
-        }
-
-        .header-left {
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.7) 0%, rgba(15, 23, 42, 0.4) 100%);
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            justify-content: center;
+            padding: 0 30px;
         }
 
-        .dashboard-title {
+        .slide-content {
+            max-width: 500px;
+        }
+
+        .slide-title {
             font-family: 'Space Grotesk', sans-serif;
-            font-weight: 800;
-            margin: 0;
             font-size: 32px;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 12px;
+            line-height: 1.2;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .slide-subtitle {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 20px;
+            line-height: 1.4;
+            font-weight: 500;
+        }
+
+        .slide-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: var(--rounded-full);
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .slider-indicators {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .slider-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .slider-indicator.active {
+            background: white;
+            transform: scale(1.2);
+        }
+
+        .slider-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
-            letter-spacing: -0.75px;
-            line-height: 1.3;
-            color: var(--darker);
-            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
+            justify-content: center;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .slider-nav:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .slider-nav.prev {
+            left: 20px;
+        }
+
+        .slider-nav.next {
+            right: 20px;
+        }
+
+        /* Content after slider */
+        .dashboard-content {
+            padding: 30px;
+            margin-top: -40px;
+            position: relative;
+            z-index: 5;
         }
 
         /* Premium Metrics Section */
@@ -1653,7 +1731,7 @@ $totalClasses = $row['tclasses'] ?? 0;
 
         /* Responsive Design */
         @media (max-width: 1280px) {
-            .dashboard-container {
+            .dashboard-content {
                 padding: 28px;
             }
             
@@ -1667,7 +1745,7 @@ $totalClasses = $row['tclasses'] ?? 0;
         }
 
         @media (max-width: 1024px) {
-            .dashboard-container {
+            .dashboard-content {
                 padding: 24px;
             }
             
@@ -1686,7 +1764,7 @@ $totalClasses = $row['tclasses'] ?? 0;
                 grid-template-columns: repeat(2, 1fr);
             }
             
-            .dashboard-title {
+            .slide-title {
                 font-size: 28px;
             }
             
@@ -1713,6 +1791,18 @@ $totalClasses = $row['tclasses'] ?? 0;
             
             .top-navbar {
                 padding: 0 20px;
+            }
+            
+            .header-slider {
+                height: 220px;
+            }
+            
+            .slide-title {
+                font-size: 24px;
+            }
+            
+            .slide-subtitle {
+                font-size: 16px;
             }
         }
 
@@ -1743,6 +1833,18 @@ $totalClasses = $row['tclasses'] ?? 0;
             .sidebar-logo {
                 width: 80px;
                 height: 80px;
+            }
+            
+            .header-slider {
+                height: 200px;
+            }
+            
+            .slide-title {
+                font-size: 22px;
+            }
+            
+            .slider-nav {
+                display: none;
             }
         }
 
@@ -1941,258 +2043,306 @@ $totalClasses = $row['tclasses'] ?? 0;
 
     <!-- Premium Dashboard Content -->
     <div class="dashboard-container">
-        <!-- Dashboard Header with Glassmorphism Effect -->
-        <div class="dashboard-header glass-card">
-            <div class="header-content">
-                <div class="header-left">
-                    <h1 class="dashboard-title">
-                        <i class="fas fa-chalkboard-teacher mr-2"></i> Educator Dashboard
-                    </h1>
+        <!-- Mobile App Style Header Slider -->
+        <div class="header-slider">
+            <div class="slider-container" id="sliderContainer">
+                <!-- Slide 1 -->
+                <div class="slider-slide">
+                    <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1471&q=80" alt="Education collaboration">
+                    <div class="slide-overlay">
+                        <div class="slide-content">
+                            <h1 class="slide-title">Facilitator Dashboard</h1>
+                            <p class="slide-subtitle">Your central hub for managing classes, students, and educational resources</p>
+                            <span class="slide-badge">All-in-One Solution</span>
+                        </div>
+                    </div>
                 </div>
+                
+                <!-- Slide 2 -->
+                <div class="slider-slide">
+                    <img src="https://images.unsplash.com/photo-1501504905252-473c47e087f8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1374&q=80" alt="Work seamlessly">
+                    <div class="slide-overlay">
+                        <div class="slide-content">
+                            <h1 class="slide-title">Work Seamlessly</h1>
+                            <p class="slide-subtitle">Integrated tools for attendance, grading, communication, and lesson planning</p>
+                            <span class="slide-badge">Streamlined Workflow</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Slide 3 -->
+                <div class="slider-slide">
+                    <img src="https://images.unsplash.com/photo-1485827404703-89b55fcc595e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="AI technology">
+                    <div class="slide-overlay">
+                        <div class="slide-content">
+                            <h1 class="slide-title">Work Faster with AI</h1>
+                            <p class="slide-subtitle">Leverage AI-powered insights to enhance teaching effectiveness and student outcomes</p>
+                            <span class="slide-badge">Smart Analytics</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Slider Navigation -->
+            <button class="slider-nav prev" id="prevSlide">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="slider-nav next" id="nextSlide">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+            
+            <!-- Slider Indicators -->
+            <div class="slider-indicators" id="sliderIndicators">
+                <span class="slider-indicator active" data-slide="0"></span>
+                <span class="slider-indicator" data-slide="1"></span>
+                <span class="slider-indicator" data-slide="2"></span>
             </div>
         </div>
 
-        <!-- Key Metrics Section with Floating Cards -->
-        <div class="metrics-section">
-            <!-- Total Students Card with Hover Animation -->
-            <div class="metric-card student-card" tabindex="0">
-                <div class="metric-icon">
-                    <div class="icon-bg">
-                        <i class="fas fa-user-graduate" aria-hidden="true"></i>
+        <!-- Dashboard Content -->
+        <div class="dashboard-content">
+            <!-- Key Metrics Section with Floating Cards -->
+            <div class="metrics-section">
+                <!-- Total Students Card with Hover Animation -->
+                <div class="metric-card student-card" tabindex="0">
+                    <div class="metric-icon">
+                        <div class="icon-bg">
+                            <i class="fas fa-user-graduate" aria-hidden="true"></i>
+                        </div>
                     </div>
-                </div>
-                <div class="metric-content">
-                    <span class="metric-label">Total Students</span>
-                    <span class="metric-value"><?php echo $totalStudents; ?></span>
-                    <div class="metric-trend">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>5% from last term</span>
+                    <div class="metric-content">
+                        <span class="metric-label">Total Students</span>
+                        <span class="metric-value"><?php echo $totalStudents; ?></span>
+                        <div class="metric-trend">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>5% from last term</span>
+                        </div>
                     </div>
+                    <div class="metric-wave"></div>
                 </div>
-                <div class="metric-wave"></div>
+
+                <!-- Active Classes Card with Hover Animation -->
+                <div class="metric-card classes-card">
+                    <div class="metric-icon">
+                        <div class="icon-bg">
+                            <i class="fas fa-school"></i>
+                        </div>
+                    </div>
+                    <div class="metric-content">
+                        <span class="metric-label">Active Classes</span>
+                        <span class="metric-value"><?php echo $totalClasses; ?></span>
+                        <div class="metric-trend">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>2 new this term</span>
+                        </div>
+                    </div>
+                    <div class="metric-wave"></div>
+                </div>
+
+                <!-- Attendance Rate Card with Hover Animation -->
+                <div class="metric-card attendance-card">
+                    <div class="metric-icon">
+                        <div class="icon-bg">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                    </div>
+                    <div class="metric-content">
+                        <span class="metric-label">Attendance Rate</span>
+                        <span class="metric-value">94%</span>
+                        <div class="metric-trend">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>3% improvement</span>
+                        </div>
+                    </div>
+                    <div class="metric-wave"></div>
+                </div>
             </div>
 
-            <!-- Active Classes Card with Hover Animation -->
-            <div class="metric-card classes-card">
-                <div class="metric-icon">
-                    <div class="icon-bg">
-                        <i class="fas fa-school"></i>
-                    </div>
-                </div>
-                <div class="metric-content">
-                    <span class="metric-label">Active Classes</span>
-                    <span class="metric-value"><?php echo $totalClasses; ?></span>
-                    <div class="metric-trend">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>2 new this term</span>
-                    </div>
-                </div>
-                <div class="metric-wave"></div>
-            </div>
-
-            <!-- Attendance Rate Card with Hover Animation -->
-            <div class="metric-card attendance-card">
-                <div class="metric-icon">
-                    <div class="icon-bg">
-                        <i class="fas fa-calendar-check"></i>
-                    </div>
-                </div>
-                <div class="metric-content">
-                    <span class="metric-label">Attendance Rate</span>
-                    <span class="metric-value">94%</span>
-                    <div class="metric-trend">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>3% improvement</span>
-                    </div>
-                </div>
-                <div class="metric-wave"></div>
-            </div>
-        </div>
-
-        <!-- Quick Actions Section with Floating Cards -->
-        <div class="actions-section glass-card">
-            <div class="section-header">
-                <h2><i class="fas fa-bolt mr-2"></i>Quick Actions</h2>
-                <div class="section-actions">
-                    <button class="btn btn-outline">
-                        <i class="fas fa-ellipsis-h"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="action-grid">
-                <a href="logginn.php" class="action-card">
-                    <div class="action-icon notes">
-                        <i class="fas fa-book-open"></i>
-                    </div>
-                    <h3>Lesson Notes</h3>
-                    <p>Create and manage your teaching materials</p>
-                    <div class="action-hover">
-                        <i class="fas fa-arrow-right"></i>
-                    </div>
-                </a>
-                <a href="login.php" class="action-card">
-                    <div class="action-icon attendance">
-                        <i class="fas fa-calendar-check"></i>
-                    </div>
-                    <h3>Attendance</h3>
-                    <p>Mark and track student attendance</p>
-                    <div class="action-hover">
-                        <i class="fas fa-arrow-right"></i>
-                    </div>
-                </a>
-                <a href="logg.php" class="action-card">
-                    <div class="action-icon assignments">
-                        <i class="fas fa-tasks"></i>
-                    </div>
-                    <h3>Assignments/Video lessons</h3>
-                    <p>Create, test or send video lessons</p>
-                    <div class="action-hover">
-                        <i class="fas fa-arrow-right"></i>
-                    </div>
-                </a>
-                <a href="#" class="action-card" onclick="showUnderDevelopmentMessage()">
-                    <div class="action-icon reports">
-                        <i class="fas fa-chart-bar"></i>
-                    </div>
-                    <h3>Reports</h3>
-                    <p>Generate performance reports</p>
-                    <div class="action-hover">
-                        <i class="fas fa-arrow-right"></i>
-                    </div>
-                </a>
-                <a href="email_login.php" class="action-card">
-                    <div class="action-icon emails">
-                        <i class="fas fa-envelope"></i>
-                    </div>
-                    <h3>Emails</h3>
-                    <p>Communicate with students/parents</p>
-                    <div class="action-hover">
-                        <i class="fas fa-arrow-right"></i>
-                    </div>
-                </a>
-                <a href="subjects.php" class="action-card">
-                    <div class="action-icon subjects">
-                        <i class="fas fa-book-open"></i>
-                    </div>
-                    <h3>Subjects</h3>
-                    <p>Manage and assign subjects</p>
-                    <div class="action-hover">
-                        <i class="fas fa-arrow-right"></i>
-                    </div>
-                </a>
-                <a href="exam_scores.php" class="action-card">
-                    <div class="action-icon scores">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <h3>Exam Scores</h3>
-                    <p>View and input student scores</p>
-                    <div class="action-hover">
-                        <i class="fas fa-arrow-right"></i>
-                    </div>
-                </a>
-                <a href="lo.php" class="action-card">
-                    <div class="action-icon behavior">
-                        <i class="fas fa-clipboard-list"></i>
-                    </div>
-                    <h3>Skill Evaluation</h3>
-                    <p>Evaluate behaviour and soft skills</p>
-                    <div class="action-hover">
-                        <i class="fas fa-arrow-right"></i>
-                    </div>
-                </a>
-                <a href="#" class="action-card add-new">
-                    <div class="action-icon add">
-                        <i class="fas fa-plus"></i>
-                    </div>
-                    <h3>Add New</h3>
-                    <p>Create new content or activity</p>
-                </a>
-            </div>
-        </div>
-
-        <!-- Calendar and Activity Section -->
-        <div class="bottom-section">
-            <!-- Calendar Section with Glassmorphism -->
-            <div class="calendar-section glass-card">
+            <!-- Quick Actions Section with Floating Cards -->
+            <div class="actions-section glass-card">
                 <div class="section-header">
-                    <h2><i class="far fa-calendar-alt mr-2"></i>Academic Calendar</h2>
+                    <h2><i class="fas fa-bolt mr-2"></i>Quick Actions</h2>
                     <div class="section-actions">
-                        <button class="btn btn-primary btn-sm">
-                            <i class="fas fa-plus"></i> Add Event
-                        </button>
-                        <button class="btn btn-outline btn-sm">
+                        <button class="btn btn-outline">
                             <i class="fas fa-ellipsis-h"></i>
                         </button>
                     </div>
                 </div>
-                <div id="calendar"></div>
+                <div class="action-grid">
+                    <a href="logginn.php" class="action-card">
+                        <div class="action-icon notes">
+                            <i class="fas fa-book-open"></i>
+                        </div>
+                        <h3>Lesson Notes</h3>
+                        <p>Create and manage your teaching materials</p>
+                        <div class="action-hover">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </a>
+                    <a href="login.php" class="action-card">
+                        <div class="action-icon attendance">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <h3>Attendance</h3>
+                        <p>Mark and track student attendance</p>
+                        <div class="action-hover">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </a>
+                    <a href="logg.php" class="action-card">
+                        <div class="action-icon assignments">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                        <h3>Assignments/Video lessons</h3>
+                        <p>Create, test or send video lessons</p>
+                        <div class="action-hover">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </a>
+                    <a href="#" class="action-card" onclick="showUnderDevelopmentMessage()">
+                        <div class="action-icon reports">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <h3>Reports</h3>
+                        <p>Generate performance reports</p>
+                        <div class="action-hover">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </a>
+                    <a href="email_login.php" class="action-card">
+                        <div class="action-icon emails">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <h3>Emails</h3>
+                        <p>Communicate with students/parents</p>
+                        <div class="action-hover">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </a>
+                    <a href="subjects.php" class="action-card">
+                        <div class="action-icon subjects">
+                            <i class="fas fa-book-open"></i>
+                        </div>
+                        <h3>Subjects</h3>
+                        <p>Manage and assign subjects</p>
+                        <div class="action-hover">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </a>
+                    <a href="exam_scores.php" class="action-card">
+                        <div class="action-icon scores">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3>Exam Scores</h3>
+                        <p>View and input student scores</p>
+                        <div class="action-hover">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </a>
+                    <a href="lo.php" class="action-card">
+                        <div class="action-icon behavior">
+                            <i class="fas fa-clipboard-list"></i>
+                        </div>
+                        <h3>Skill Evaluation</h3>
+                        <p>Evaluate behaviour and soft skills</p>
+                        <div class="action-hover">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </a>
+                    <a href="#" class="action-card add-new">
+                        <div class="action-icon add">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                        <h3>Add New</h3>
+                        <p>Create new content or activity</p>
+                    </a>
+                </div>
             </div>
 
-            <!-- Recent Activity Section with Floating Cards -->
-            <div class="activity-section glass-card">
-                <div class="section-header">
-                    <h2><i class="fas fa-bell mr-2"></i>Recent Activity</h2>
-                    <a href="#" class="view-all" onclick="showLoadingSpinner()">View All <i class="fas fa-arrow-right"></i></a>
+            <!-- Calendar and Activity Section -->
+            <div class="bottom-section">
+                <!-- Calendar Section with Glassmorphism -->
+                <div class="calendar-section glass-card">
+                    <div class="section-header">
+                        <h2><i class="far fa-calendar-alt mr-2"></i>Academic Calendar</h2>
+                        <div class="section-actions">
+                            <button class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus"></i> Add Event
+                            </button>
+                            <button class="btn btn-outline btn-sm">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="calendar"></div>
                 </div>
-                <div class="activity-list">
-                    <div class="activity-item">
-                        <div class="activity-icon success pulse">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                        <div class="activity-content">
-                            <div class="activity-header">
-                                <h3>Attendance Marked</h3>
-                                <span class="activity-time">2h ago</span>
-                            </div>
-                            <p>Class 10A - Mathematics (32 students present)</p>
-                            <div class="activity-progress">
-                                <div class="progress-bar" style="width: 92%"></div>
-                            </div>
-                        </div>
+
+                <!-- Recent Activity Section with Floating Cards -->
+                <div class="activity-section glass-card">
+                    <div class="section-header">
+                        <h2><i class="fas fa-bell mr-2"></i>Recent Activity</h2>
+                        <a href="#" class="view-all" onclick="showLoadingSpinner()">View All <i class="fas fa-arrow-right"></i></a>
                     </div>
-                    <div class="activity-item">
-                        <div class="activity-icon primary pulse">
-                            <i class="fas fa-upload"></i>
-                        </div>
-                        <div class="activity-content">
-                            <div class="activity-header">
-                                <h3>Lesson Notes Uploaded</h3>
-                                <span class="activity-time">1d ago</span>
+                    <div class="activity-list">
+                        <div class="activity-item">
+                            <div class="activity-icon success pulse">
+                                <i class="fas fa-check-circle"></i>
                             </div>
-                            <p>Week 5 materials for all classes</p>
-                            <div class="activity-progress">
-                                <div class="progress-bar" style="width: 100%"></div>
+                            <div class="activity-content">
+                                <div class="activity-header">
+                                    <h3>Attendance Marked</h3>
+                                    <span class="activity-time">2h ago</span>
+                                </div>
+                                <p>Class 10A - Mathematics (32 students present)</p>
+                                <div class="activity-progress">
+                                    <div class="progress-bar" style="width: 92%"></div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="activity-item">
-                        <div class="activity-icon info pulse">
-                            <i class="fas fa-comment-alt"></i>
-                        </div>
-                        <div class="activity-content">
-                            <div class="activity-header">
-                                <h3>New Message</h3>
-                                <span class="activity-time">2d ago</span>
+                        <div class="activity-item">
+                            <div class="activity-icon primary pulse">
+                                <i class="fas fa-upload"></i>
                             </div>
-                            <p>From Parent: Jane Doe<p>
+                            <div class="activity-content">
+                                <div class="activity-header">
+                                    <h3>Lesson Notes Uploaded</h3>
+                                    <span class="activity-time">1d ago</span>
+                                </div>
+                                <p>Week 5 materials for all classes</p>
+                                <div class="activity-progress">
+                                    <div class="progress-bar" style="width: 100%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon info pulse">
+                                <i class="fas fa-comment-alt"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-header">
+                                    <h3>New Message</h3>
+                                    <span class="activity-time">2d ago</span>
+                                </div>
+                                <p>From Parent: Jane Doe<p>
                                                             <p>Regarding: Term Project</p>
-                            <div class="activity-progress">
-                                <div class="progress-bar" style="width: 75%"></div>
+                                <div class="activity-progress">
+                                    <div class="progress-bar" style="width: 75%"></div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="activity-item">
-                        <div class="activity-icon warning pulse">
-                            <i class="fas fa-exclamation-circle"></i>
-                        </div>
-                        <div class="activity-content">
-                            <div class="activity-header">
-                                <h3>Assignment Due</h3>
-                                <span class="activity-time">3d ago</span>
+                        <div class="activity-item">
+                            <div class="activity-icon warning pulse">
+                                <i class="fas fa-exclamation-circle"></i>
                             </div>
-                            <p>Algebra II assignment due tomorrow</p>
-                            <div class="activity-progress">
-                                <div class="progress-bar" style="width: 65%"></div>
+                            <div class="activity-content">
+                                <div class="activity-header">
+                                    <h3>Assignment Due</h3>
+                                    <span class="activity-time">3d ago</span>
+                                </div>
+                                <p>Algebra II assignment due tomorrow</p>
+                                <div class="activity-progress">
+                                    <div class="progress-bar" style="width: 65%"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -2271,6 +2421,56 @@ $totalClasses = $row['tclasses'] ?? 0;
     document.querySelector('.sidebar-toggle').addEventListener('click', function() {
         document.getElementById('sidebar').classList.toggle('collapsed');
     });
+
+    // Slider functionality
+    let currentSlide = 0;
+    const totalSlides = 3;
+    const sliderContainer = document.getElementById('sliderContainer');
+    const indicators = document.querySelectorAll('.slider-indicator');
+    let slideInterval;
+
+    function goToSlide(index) {
+        currentSlide = index;
+        sliderContainer.style.transform = `translateX(-${currentSlide * 33.333}%)`;
+        
+        // Update indicators
+        indicators.forEach((indicator, i) => {
+            indicator.classList.toggle('active', i === currentSlide);
+        });
+        
+        // Reset auto-slide timer
+        resetAutoSlide();
+    }
+
+    function nextSlide() {
+        currentSlide = (currentSlide + 1) % totalSlides;
+        goToSlide(currentSlide);
+    }
+
+    function prevSlide() {
+        currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+        goToSlide(currentSlide);
+    }
+
+    function startAutoSlide() {
+        slideInterval = setInterval(nextSlide, 5000);
+    }
+
+    function resetAutoSlide() {
+        clearInterval(slideInterval);
+        startAutoSlide();
+    }
+
+    // Initialize slider
+    document.getElementById('nextSlide').addEventListener('click', nextSlide);
+    document.getElementById('prevSlide').addEventListener('click', prevSlide);
+    
+    indicators.forEach((indicator, index) => {
+        indicator.addEventListener('click', () => goToSlide(index));
+    });
+    
+    // Start auto-sliding
+    startAutoSlide();
 
     // Loading Overlay
     $(document).ready(function() {
