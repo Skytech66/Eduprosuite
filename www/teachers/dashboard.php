@@ -419,142 +419,99 @@ $totalClasses = $row['tclasses'] ?? 0;
             background-color: var(--gray-50);
         }
 
-        /* Premium Top Navigation Bar */
+        /* Redesigned Top Safe Area */
+        .top-safe-area {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            padding-top: env(safe-area-inset-top);
+            position: relative;
+            z-index: 900;
+            box-shadow: var(--shadow-lg);
+        }
+
         .top-navbar {
-            height: 80px;
-            background: white;
-            box-shadow: var(--shadow-sm);
+            height: 70px;
+            background: transparent;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 30px;
-            position: sticky;
-            top: 0;
-            z-index: 900;
-            border-bottom: 1px solid var(--gray-200);
-        }
-
-        [data-theme="dark"] .top-navbar {
-            background: var(--dark-card);
-            border-bottom-color: var(--dark-border);
+            padding: 0 20px;
+            position: relative;
         }
 
         .navbar-left {
             display: flex;
             align-items: center;
+            gap: 16px;
         }
 
         .sidebar-toggle {
-            background: none;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             border: none;
-            font-size: 1.3rem;
-            color: var(--gray-600);
+            font-size: 1.2rem;
+            color: white;
             cursor: pointer;
-            margin-right: 20px;
             padding: 10px;
             border-radius: var(--rounded-full);
             transition: var(--transition);
-            width: 42px;
-            height: 42px;
+            width: 40px;
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        [data-theme="dark"] .sidebar-toggle {
-            color: var(--gray-400);
-        }
-
         .sidebar-toggle:hover {
-            background: var(--gray-100);
-            color: var(--primary);
+            background: rgba(255, 255, 255, 0.25);
             transform: rotate(90deg);
         }
 
-        [data-theme="dark"] .sidebar-toggle:hover {
-            background: var(--dark-border);
-        }
-
-        .breadcrumb {
-            display: flex;
-            align-items: center;
-            font-size: 15px;
-            color: var(--gray-600);
-        }
-
-        .breadcrumb-item {
-            color: var(--gray-600);
-            transition: var(--transition);
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .breadcrumb-item:hover {
-            color: var(--primary);
-        }
-
-        .breadcrumb-item.active {
-            color: var(--primary);
-            font-weight: 600;
-        }
-
-        .breadcrumb-divider {
-            margin: 0 10px;
-            color: var(--gray-400);
-            font-size: 12px;
-            opacity: 0.6;
+        .app-title {
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            font-family: 'Space Grotesk', sans-serif;
+            letter-spacing: -0.5px;
         }
 
         .navbar-right {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 12px;
         }
 
-        /* Premium User Profile Section */
+        /* Redesigned User Profile Section */
         .user-profile {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 12px;
         }
 
         .notifications {
-            position: relative;
-            font-size: 18px;
-            color: var(--gray-600);
-            cursor: pointer;
-            transition: var(--transition);
-            width: 48px;
-            height: 48px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: var(--rounded-full);
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: var(--shadow-sm);
-        }
+    position: relative;
+    font-size: 18px;
+    color: white;
+    cursor: pointer;
+    transition: var(--transition);
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--rounded-full);
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
 
-        [data-theme="dark"] .notifications {
-            background: rgba(30, 41, 59, 0.9);
-            border-color: rgba(30, 41, 59, 0.3);
-            color: var(--gray-400);
-        }
-
-        .notifications:hover, .notifications:focus {
-            color: var(--dark);
-            background: rgba(255, 255, 255, 0.95);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow);
-            outline: none;
-        }
-
-        [data-theme="dark"] .notifications:hover {
-            background: rgba(30, 41, 59, 0.95);
-            color: var(--gray-300);
-        }
+.notifications:hover,
+.notifications:focus {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+    outline: none;
+}
 
         .notification-badge {
             position: absolute;
@@ -563,18 +520,14 @@ $totalClasses = $row['tclasses'] ?? 0;
             background-color: var(--danger);
             color: white;
             border-radius: var(--rounded-full);
-            width: 22px;
-            height: 22px;
+            width: 20px;
+            height: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 700;
-            border: 2px solid white;
-        }
-
-        [data-theme="dark"] .notification-badge {
-            border-color: var(--dark-card);
+            border: 2px solid transparent;
         }
 
         .pulse {
@@ -586,7 +539,7 @@ $totalClasses = $row['tclasses'] ?? 0;
                 box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
             }
             70% {
-                box-shadow: 0 0 0 12px rgba(239, 68, 68, 0);
+                box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
             }
             100% {
                 box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
@@ -596,45 +549,29 @@ $totalClasses = $row['tclasses'] ?? 0;
         .profile-dropdown {
             display: flex;
             align-items: center;
-            gap: 14px;
-            padding: 10px 16px 10px 12px;
+            gap: 10px;
+            padding: 6px 12px 6px 8px;
             border-radius: var(--rounded-xl);
             cursor: pointer;
             transition: var(--transition);
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: var(--shadow-sm);
-        }
-
-        [data-theme="dark"] .profile-dropdown {
-            background: rgba(30, 41, 59, 0.9);
-            border-color: rgba(30, 41, 59, 0.3);
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .profile-dropdown:hover, .profile-dropdown:focus {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.25);
             transform: translateY(-2px);
-            box-shadow: var(--shadow);
             outline: none;
         }
 
-        [data-theme="dark"] .profile-dropdown:hover {
-            background: rgba(30, 41, 59, 0.95);
-        }
-
         .profile-avatar {
-            width: 44px;
-            height: 44px;
+            width: 36px;
+            height: 36px;
             border-radius: var(--rounded-full);
             overflow: hidden;
-            border: 2px solid rgba(255, 255, 255, 0.8);
-            box-shadow: var(--shadow-xs);
-        }
-
-        [data-theme="dark"] .profile-avatar {
-            border-color: rgba(30, 41, 59, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.4);
         }
 
         .profile-avatar img {
@@ -649,22 +586,22 @@ $totalClasses = $row['tclasses'] ?? 0;
         }
 
         .user-name {
-            font-weight: 700;
-            font-size: 16px;
-            color: var(--darker);
-            line-height: 1.3;
+            font-weight: 600;
+            font-size: 14px;
+            color: white;
+            line-height: 1.2;
         }
 
         .user-role {
-            font-size: 14px;
-            color: var(--secondary);
-            line-height: 1.3;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.2;
             font-weight: 500;
         }
 
         .dropdown-arrow {
-            font-size: 14px;
-            color: var(--secondary);
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
             transition: transform 0.2s;
         }
 
@@ -686,14 +623,13 @@ $totalClasses = $row['tclasses'] ?? 0;
             }
         }
 
-        /* Mobile App Style Header Slider */
+        /* Enhanced Mobile App Style Header Slider */
         .header-slider {
             position: relative;
             width: 100%;
-            height: 280px;
+            height: 220px;
             overflow: hidden;
-            border-radius: 0 0 var(--rounded-2xl) var(--rounded-2xl);
-            box-shadow: var(--shadow-lg);
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
         }
 
         .slider-container {
@@ -717,57 +653,60 @@ $totalClasses = $row['tclasses'] ?? 0;
         }
 
         .slide-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, rgba(15, 23, 42, 0.7) 0%, rgba(15, 23, 42, 0.4) 100%);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding: 0 30px;
-        }
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        135deg,
+        rgba(79, 70, 229, 0.85) 0%,
+        rgba(124, 58, 237, 0.75) 100%
+    );
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 30px;
+}
 
-        .slide-content {
-            max-width: 500px;
-        }
+.slide-content {
+    max-width: 500px;
+}
 
-        .slide-title {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 32px;
-            font-weight: 800;
-            color: white;
-            margin-bottom: 12px;
-            line-height: 1.2;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
+.slide-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 8px;
+    line-height: 1.2;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
 
         .slide-subtitle {
-            font-size: 18px;
+            font-size: 16px;
             color: rgba(255, 255, 255, 0.9);
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             line-height: 1.4;
             font-weight: 500;
         }
 
         .slide-badge {
             display: inline-block;
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.2);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             color: white;
-            padding: 8px 16px;
+            padding: 6px 14px;
             border-radius: var(--rounded-full);
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
-            margin-top: 10px;
         }
 
         .slider-indicators {
             position: absolute;
-            bottom: 20px;
+            bottom: 16px;
             left: 0;
             right: 0;
             display: flex;
@@ -777,8 +716,8 @@ $totalClasses = $row['tclasses'] ?? 0;
         }
 
         .slider-indicator {
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.5);
             cursor: pointer;
@@ -798,8 +737,8 @@ $totalClasses = $row['tclasses'] ?? 0;
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             border: none;
-            width: 44px;
-            height: 44px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -816,196 +755,18 @@ $totalClasses = $row['tclasses'] ?? 0;
         }
 
         .slider-nav.prev {
-            left: 20px;
+            left: 16px;
         }
 
         .slider-nav.next {
-            right: 20px;
+            right: 16px;
         }
 
         /* Content after slider */
         .dashboard-content {
-            padding: 30px;
-            margin-top: -40px;
+            padding: 24px 20px;
             position: relative;
             z-index: 5;
-        }
-
-        /* Premium Metrics Section */
-        .metrics-section {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 24px;
-            margin-bottom: 40px;
-        }
-
-        @media (max-width: 768px) {
-            .metrics-section {
-                grid-template-columns: 1fr;
-                gap: 16px;
-            }
-        }
-
-        .metric-card {
-            background: white;
-            border-radius: var(--rounded-xl);
-            padding: 28px;
-            transition: var(--transition-slow);
-            display: flex;
-            gap: 20px;
-            align-items: center;
-            position: relative;
-            overflow: hidden;
-            border: none;
-            box-shadow: var(--shadow);
-            cursor: pointer;
-            border-left: 4px solid transparent;
-        }
-
-        [data-theme="dark"] .metric-card {
-            background: var(--dark-card);
-        }
-
-        .metric-card:hover, .metric-card:focus-within {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-xl);
-        }
-
-        .student-card {
-            background: linear-gradient(135deg, rgba(79, 70, 229, 0.05) 0%, rgba(255,255,255,1) 100%);
-            border-left-color: var(--primary);
-        }
-
-        [data-theme="dark"] .student-card {
-            background: linear-gradient(135deg, rgba(129, 140, 248, 0.1) 0%, var(--dark-card) 100%);
-        }
-
-        .classes-card {
-            background: linear-gradient(135deg, rgba(14, 165, 233, 0.05) 0%, rgba(255,255,255,1) 100%);
-            border-left-color: var(--info);
-        }
-
-        [data-theme="dark"] .classes-card {
-            background: linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, var(--dark-card) 100%);
-        }
-
-        .attendance-card {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(255,255,255,1) 100%);
-            border-left-color: var(--success);
-        }
-
-        [data-theme="dark"] .attendance-card {
-            background: linear-gradient(135deg, rgba(52, 211, 153, 0.1) 0%, var(--dark-card) 100%);
-        }
-
-        .metric-wave {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent);
-            transform: translateX(-100%);
-            transition: transform 0.7s ease;
-        }
-
-        [data-theme="dark"] .metric-wave {
-            background: linear-gradient(90deg, transparent, rgba(30, 41, 59, 0.7), transparent);
-        }
-
-        .metric-card:hover .metric-wave, .metric-card:focus-within .metric-wave {
-            transform: translateX(100%);
-        }
-
-        .student-card .metric-wave {
-            background: linear-gradient(90deg, transparent, var(--primary-light), transparent);
-        }
-
-        .classes-card .metric-wave {
-            background: linear-gradient(90deg, transparent, var(--info-light), transparent);
-        }
-
-        .attendance-card .metric-wave {
-            background: linear-gradient(90deg, transparent, var(--success-light), transparent);
-        }
-
-        .metric-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .icon-bg {
-            width: 60px;
-            height: 60px;
-            border-radius: var(--rounded-lg);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: var(--shadow-sm);
-            transition: var(--transition);
-        }
-
-        .metric-card:hover .icon-bg {
-            transform: scale(1.05);
-        }
-
-        .student-card .icon-bg {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-        }
-
-        .classes-card .icon-bg {
-            background: linear-gradient(135deg, var(--info) 0%, #0284c7 100%);
-            color: white;
-        }
-
-        .attendance-card .icon-bg {
-            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
-            color: white;
-        }
-
-        .metric-icon i {
-            font-size: 24px;
-        }
-
-        .metric-content {
-            flex: 1;
-        }
-
-        .metric-label {
-            display: block;
-            font-size: 16px;
-            color: var(--gray-600);
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-
-        .metric-value {
-            font-size: 32px;
-            font-weight: 800;
-            color: var(--darker);
-            margin-bottom: 8px;
-            font-family: 'Space Grotesk', sans-serif;
-            letter-spacing: -0.75px;
-            line-height: 1.2;
-        }
-
-        .metric-trend {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 15px;
-            color: var(--success);
-            font-weight: 600;
-        }
-
-        .metric-trend.negative {
-            color: var(--danger);
-        }
-
-        .metric-trend i {
-            font-size: 15px;
         }
 
         /* Premium Section Headers */
@@ -1013,12 +774,12 @@ $totalClasses = $row['tclasses'] ?? 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 28px;
+            margin-bottom: 24px;
         }
 
         .section-header h2 {
             font-family: 'Space Grotesk', sans-serif;
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 700;
             color: var(--darker);
             margin: 0;
@@ -1029,22 +790,22 @@ $totalClasses = $row['tclasses'] ?? 0;
         }
 
         .section-header h2 i {
-            margin-right: 14px;
+            margin-right: 12px;
             font-size: 1.1em;
             color: var(--primary);
         }
 
         .section-actions {
             display: flex;
-            gap: 16px;
+            gap: 12px;
         }
 
         /* Premium Quick Actions Section */
         .actions-section {
             background: white;
             border-radius: var(--rounded-xl);
-            padding: 30px;
-            margin-bottom: 40px;
+            padding: 24px;
+            margin-bottom: 32px;
             box-shadow: var(--shadow);
             transition: var(--transition-slow);
             border: 1px solid var(--gray-200);
@@ -1062,13 +823,13 @@ $totalClasses = $row['tclasses'] ?? 0;
 
         .action-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
         }
 
         @media (max-width: 768px) {
             .action-grid {
-                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             }
         }
 
@@ -1081,7 +842,7 @@ $totalClasses = $row['tclasses'] ?? 0;
         .action-card {
             background: white;
             border-radius: var(--rounded-lg);
-            padding: 28px;
+            padding: 24px;
             text-decoration: none;
             transition: var(--transition-slow);
             border: 1px solid var(--gray-200);
@@ -1128,14 +889,14 @@ $totalClasses = $row['tclasses'] ?? 0;
         }
 
         .action-icon {
-            width: 60px;
-            height: 60px;
+            width: 54px;
+            height: 54px;
             border-radius: var(--rounded-lg);
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 24px;
-            font-size: 24px;
+            margin-bottom: 20px;
+            font-size: 22px;
             color: white;
             box-shadow: var(--shadow-sm);
             transition: var(--transition-bounce);
@@ -1187,16 +948,16 @@ $totalClasses = $row['tclasses'] ?? 0;
         }
 
         .action-card h3 {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 700;
             color: var(--darker);
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             font-family: 'Space Grotesk', sans-serif;
             line-height: 1.3;
         }
 
         .action-card p {
-            font-size: 16px;
+            font-size: 15px;
             color: var(--gray-600);
             margin: 0;
             line-height: 1.5;
@@ -1204,10 +965,10 @@ $totalClasses = $row['tclasses'] ?? 0;
 
         .action-hover {
             position: absolute;
-            top: 20px;
-            right: 20px;
-            width: 36px;
-            height: 36px;
+            top: 16px;
+            right: 16px;
+            width: 32px;
+            height: 32px;
             background: rgba(255, 255, 255, 0.9);
             border-radius: var(--rounded-full);
             display: flex;
@@ -1232,7 +993,7 @@ $totalClasses = $row['tclasses'] ?? 0;
         .bottom-section {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 24px;
+            gap: 20px;
         }
 
         @media (max-width: 1200px) {
@@ -1245,7 +1006,7 @@ $totalClasses = $row['tclasses'] ?? 0;
         .calendar-section {
             background: white;
             border-radius: var(--rounded-xl);
-            padding: 30px;
+            padding: 24px;
             margin-bottom: 0;
             box-shadow: var(--shadow);
             transition: var(--transition-slow);
@@ -1267,7 +1028,7 @@ $totalClasses = $row['tclasses'] ?? 0;
         }
 
         .fc .fc-toolbar-title {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 700;
             color: var(--darker);
             font-family: 'Space Grotesk', sans-serif;
@@ -1277,9 +1038,9 @@ $totalClasses = $row['tclasses'] ?? 0;
             background-color: white;
             border: 1px solid var(--gray-200);
             color: var(--dark);
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
-            padding: 8px 16px;
+            padding: 6px 12px;
             border-radius: var(--rounded-md);
             transition: var(--transition);
             box-shadow: var(--shadow-sm);
@@ -1312,7 +1073,7 @@ $totalClasses = $row['tclasses'] ?? 0;
             color: var(--dark);
             font-weight: 600;
             padding: 6px;
-            font-size: 15px;
+            font-size: 14px;
         }
 
         .fc .fc-daygrid-day.fc-day-today {
@@ -1326,7 +1087,7 @@ $totalClasses = $row['tclasses'] ?? 0;
         .fc .fc-daygrid-event {
             border-radius: var(--rounded-sm);
             padding: 4px 8px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 500;
             box-shadow: var(--shadow-xs);
         }
@@ -1339,7 +1100,7 @@ $totalClasses = $row['tclasses'] ?? 0;
         .activity-section {
             background: white;
             border-radius: var(--rounded-xl);
-            padding: 30px;
+            padding: 24px;
             box-shadow: var(--shadow);
             transition: var(--transition-slow);
             border: 1px solid var(--gray-200);
@@ -1356,14 +1117,14 @@ $totalClasses = $row['tclasses'] ?? 0;
         }
 
         .view-all {
-            font-size: 16px;
+            font-size: 15px;
             color: var(--primary);
             text-decoration: none;
             font-weight: 600;
             transition: var(--transition);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
         .view-all:hover, .view-all:focus {
@@ -1376,13 +1137,13 @@ $totalClasses = $row['tclasses'] ?? 0;
         .activity-list {
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 14px;
         }
 
         .activity-item {
             display: flex;
-            gap: 20px;
-            padding: 20px;
+            gap: 16px;
+            padding: 18px;
             border-radius: var(--rounded-lg);
             background: white;
             transition: var(--transition);
@@ -1401,15 +1162,15 @@ $totalClasses = $row['tclasses'] ?? 0;
         }
 
         .activity-icon {
-            width: 48px;
-            height: 48px;
-            min-width: 48px;
+            width: 44px;
+            height: 44px;
+            min-width: 44px;
             border-radius: var(--rounded-full);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 20px;
+            font-size: 18px;
             flex-shrink: 0;
         }
 
@@ -1442,11 +1203,11 @@ $totalClasses = $row['tclasses'] ?? 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .activity-header h3 {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 700;
             color: var(--darker);
             white-space: nowrap;
@@ -1456,15 +1217,15 @@ $totalClasses = $row['tclasses'] ?? 0;
         }
 
         .activity-time {
-            font-size: 15px;
+            font-size: 14px;
             color: var(--gray-500);
             white-space: nowrap;
-            margin-left: 12px;
+            margin-left: 10px;
             font-weight: 500;
         }
 
         .activity-content p {
-            font-size: 16px;
+            font-size: 15px;
             color: var(--gray-600);
             margin: 0;
             white-space: nowrap;
@@ -1473,10 +1234,10 @@ $totalClasses = $row['tclasses'] ?? 0;
         }
 
         .activity-progress {
-            height: 6px;
+            height: 5px;
             background: var(--gray-200);
             border-radius: var(--rounded-full);
-            margin-top: 12px;
+            margin-top: 10px;
             overflow: hidden;
         }
 
@@ -1492,23 +1253,23 @@ $totalClasses = $row['tclasses'] ?? 0;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 12px 24px;
+            padding: 10px 20px;
             border-radius: var(--rounded-md);
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
             line-height: 1.5;
             cursor: pointer;
             transition: var(--transition);
             border: 1px solid transparent;
-            gap: 10px;
-            min-height: 48px;
+            gap: 8px;
+            min-height: 44px;
             font-family: 'Inter', sans-serif;
         }
 
         .btn-sm {
-            padding: 10px 18px;
-            font-size: 15px;
-            min-height: 40px;
+            padding: 8px 16px;
+            font-size: 14px;
+            min-height: 38px;
         }
 
         .btn-primary {
@@ -1557,9 +1318,9 @@ $totalClasses = $row['tclasses'] ?? 0;
             transform: translate(-50%, -50%);
             background: white;
             border-radius: var(--rounded-xl);
-            padding: 32px;
+            padding: 28px;
             width: 90%;
-            max-width: 520px;
+            max-width: 500px;
             z-index: 1001;
             box-shadow: var(--shadow-2xl);
             animation: modalFadeIn 0.3s ease-out;
@@ -1603,11 +1364,11 @@ $totalClasses = $row['tclasses'] ?? 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
 
         .modal-header h3 {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 700;
             color: var(--darker);
             line-height: 1.3;
@@ -1617,12 +1378,12 @@ $totalClasses = $row['tclasses'] ?? 0;
         .close-modal {
             background: none;
             border: none;
-            font-size: 24px;
+            font-size: 22px;
             color: var(--gray-500);
             cursor: pointer;
             transition: var(--transition);
             line-height: 1;
-            padding: 8px;
+            padding: 6px;
             border-radius: var(--rounded-full);
         }
 
@@ -1635,25 +1396,25 @@ $totalClasses = $row['tclasses'] ?? 0;
         .modal-body p {
             display: flex;
             align-items: flex-start;
-            gap: 12px;
-            margin-bottom: 20px;
+            gap: 10px;
+            margin-bottom: 16px;
             color: var(--dark);
-            font-size: 16px;
+            font-size: 15px;
             line-height: 1.6;
         }
 
         .modal-body i {
-            width: 24px;
+            width: 22px;
             text-align: center;
             color: var(--primary);
-            font-size: 18px;
+            font-size: 16px;
             margin-top: 2px;
         }
 
         .modal-actions {
             display: flex;
-            gap: 16px;
-            margin-top: 28px;
+            gap: 14px;
+            margin-top: 24px;
             justify-content: flex-end;
         }
 
@@ -1680,8 +1441,8 @@ $totalClasses = $row['tclasses'] ?? 0;
         }
 
         .loading-spinner {
-            width: 80px;
-            height: 80px;
+            width: 70px;
+            height: 70px;
             background-image: url('logo.png');
             background-size: contain;
             background-repeat: no-repeat;
@@ -1713,8 +1474,8 @@ $totalClasses = $row['tclasses'] ?? 0;
         }
         .form-loading::before {
             content: "";
-            width: 30px;
-            height: 30px;
+            width: 28px;
+            height: 28px;
             border: 3px solid #f3f3f3;
             border-top: 3px solid #4f46e5;
             border-radius: 50%;
@@ -1732,11 +1493,7 @@ $totalClasses = $row['tclasses'] ?? 0;
         /* Responsive Design */
         @media (max-width: 1280px) {
             .dashboard-content {
-                padding: 28px;
-            }
-            
-            .metrics-section {
-                grid-template-columns: repeat(2, 1fr);
+                padding: 20px;
             }
             
             .action-grid {
@@ -1746,18 +1503,7 @@ $totalClasses = $row['tclasses'] ?? 0;
 
         @media (max-width: 1024px) {
             .dashboard-content {
-                padding: 24px;
-            }
-            
-            .header-content {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 24px;
-            }
-            
-            .user-profile {
-                width: 100%;
-                justify-content: space-between;
+                padding: 18px;
             }
             
             .action-grid {
@@ -1765,11 +1511,7 @@ $totalClasses = $row['tclasses'] ?? 0;
             }
             
             .slide-title {
-                font-size: 28px;
-            }
-            
-            .metric-value {
-                font-size: 28px;
+                font-size: 24px;
             }
         }
 
@@ -1790,19 +1532,23 @@ $totalClasses = $row['tclasses'] ?? 0;
             }
             
             .top-navbar {
-                padding: 0 20px;
+                padding: 0 16px;
             }
             
             .header-slider {
-                height: 220px;
+                height: 200px;
             }
             
             .slide-title {
-                font-size: 24px;
+                font-size: 22px;
             }
             
             .slide-subtitle {
-                font-size: 16px;
+                font-size: 15px;
+            }
+            
+            .app-title {
+                font-size: 18px;
             }
         }
 
@@ -1814,16 +1560,12 @@ $totalClasses = $row['tclasses'] ?? 0;
             .section-header {
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 16px;
+                gap: 14px;
             }
             
             .section-actions {
                 width: 100%;
                 justify-content: flex-end;
-            }
-            
-            .metric-value {
-                font-size: 24px;
             }
             
             .activity-item {
@@ -1836,15 +1578,23 @@ $totalClasses = $row['tclasses'] ?? 0;
             }
             
             .header-slider {
-                height: 200px;
+                height: 180px;
             }
             
             .slide-title {
-                font-size: 22px;
+                font-size: 20px;
             }
             
             .slider-nav {
                 display: none;
+            }
+            
+            .dashboard-content {
+                padding: 16px;
+            }
+            
+            .actions-section, .calendar-section, .activity-section {
+                padding: 20px;
             }
         }
 
@@ -1860,14 +1610,11 @@ $totalClasses = $row['tclasses'] ?? 0;
             }
         }
 
-        .metric-card, .action-card, .activity-item {
+        .action-card, .activity-item {
             animation: fadeInUp 0.6s ease forwards;
             opacity: 0;
         }
 
-        .metric-card:nth-child(1) { animation-delay: 0.1s; }
-        .metric-card:nth-child(2) { animation-delay: 0.2s; }
-        .metric-card:nth-child(3) { animation-delay: 0.3s; }
         .action-card:nth-child(1) { animation-delay: 0.1s; }
         .action-card:nth-child(2) { animation-delay: 0.2s; }
         .action-card:nth-child(3) { animation-delay: 0.3s; }
@@ -2009,41 +1756,37 @@ $totalClasses = $row['tclasses'] ?? 0;
 
 <!-- Main Content -->
 <div id="main-content">
-    <!-- Premium Top Navigation Bar -->
-    <div class="top-navbar">
-        <div class="navbar-left">
-            <button class="sidebar-toggle">
-                <i class="fas fa-bars"></i>
-            </button>
-            <nav class="breadcrumb" aria-label="Breadcrumb">
-                <span class="breadcrumb-item active">Dashboard</span>
-                <span class="breadcrumb-divider">/</span>
-                <span class="breadcrumb-item">Overview</span>
-            </nav>
-        </div>
-        <div class="navbar-right">
-            <div class="user-profile">
-                <div class="notifications" aria-label="Notifications" tabindex="0" aria-live="polite">
-                    <i class="fas fa-bell"></i>
-                    <span class="notification-badge pulse">3</span>
-                </div>
-                <div class="profile-dropdown" tabindex="0" aria-label="User profile">
-                    <div class="profile-avatar">
-                        <img src="https://ui-avatars.com/api/?name=<?php echo urlencode($_SESSION['username'] ?? 'User'); ?>&background=random" alt="Profile picture">
+    <!-- Redesigned Top Safe Area -->
+    <div class="top-safe-area">
+        <!-- Premium Top Navigation Bar -->
+        <div class="top-navbar">
+            <div class="navbar-left">
+                <button class="sidebar-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="app-title">EduPro Dashboard</div>
+            </div>
+            <div class="navbar-right">
+                <div class="user-profile">
+                    <div class="notifications" aria-label="Notifications" tabindex="0" aria-live="polite">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge pulse">3</span>
                     </div>
-                    <div class="profile-info">
-                        <span class="user-name"><?php echo $_SESSION['username'] ?? 'User'; ?></span>
-                        <span class="user-role">Facilitator</span>
+                    <div class="profile-dropdown" tabindex="0" aria-label="User profile">
+                        <div class="profile-avatar">
+                            <img src="https://ui-avatars.com/api/?name=<?php echo urlencode($_SESSION['username'] ?? 'User'); ?>&background=random" alt="Profile picture">
+                        </div>
+                        <div class="profile-info">
+                            <span class="user-name"><?php echo $_SESSION['username'] ?? 'User'; ?></span>
+                            <span class="user-role">Facilitator</span>
+                        </div>
+                        <i class="fas fa-chevron-down dropdown-arrow"></i>
                     </div>
-                    <i class="fas fa-chevron-down dropdown-arrow"></i>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Premium Dashboard Content -->
-    <div class="dashboard-container">
-        <!-- Mobile App Style Header Slider -->
+        <!-- Enhanced Mobile App Style Header Slider -->
         <div class="header-slider">
             <div class="slider-container" id="sliderContainer">
                 <!-- Slide 1 -->
@@ -2098,251 +1841,194 @@ $totalClasses = $row['tclasses'] ?? 0;
                 <span class="slider-indicator" data-slide="2"></span>
             </div>
         </div>
+    </div>
 
-        <!-- Dashboard Content -->
-        <div class="dashboard-content">
-            <!-- Key Metrics Section with Floating Cards -->
-            <div class="metrics-section">
-                <!-- Total Students Card with Hover Animation -->
-                <div class="metric-card student-card" tabindex="0">
-                    <div class="metric-icon">
-                        <div class="icon-bg">
-                            <i class="fas fa-user-graduate" aria-hidden="true"></i>
-                        </div>
-                    </div>
-                    <div class="metric-content">
-                        <span class="metric-label">Total Students</span>
-                        <span class="metric-value"><?php echo $totalStudents; ?></span>
-                        <div class="metric-trend">
-                            <i class="fas fa-arrow-up"></i>
-                            <span>5% from last term</span>
-                        </div>
-                    </div>
-                    <div class="metric-wave"></div>
-                </div>
-
-                <!-- Active Classes Card with Hover Animation -->
-                <div class="metric-card classes-card">
-                    <div class="metric-icon">
-                        <div class="icon-bg">
-                            <i class="fas fa-school"></i>
-                        </div>
-                    </div>
-                    <div class="metric-content">
-                        <span class="metric-label">Active Classes</span>
-                        <span class="metric-value"><?php echo $totalClasses; ?></span>
-                        <div class="metric-trend">
-                            <i class="fas fa-arrow-up"></i>
-                            <span>2 new this term</span>
-                        </div>
-                    </div>
-                    <div class="metric-wave"></div>
-                </div>
-
-                <!-- Attendance Rate Card with Hover Animation -->
-                <div class="metric-card attendance-card">
-                    <div class="metric-icon">
-                        <div class="icon-bg">
-                            <i class="fas fa-calendar-check"></i>
-                        </div>
-                    </div>
-                    <div class="metric-content">
-                        <span class="metric-label">Attendance Rate</span>
-                        <span class="metric-value">94%</span>
-                        <div class="metric-trend">
-                            <i class="fas fa-arrow-up"></i>
-                            <span>3% improvement</span>
-                        </div>
-                    </div>
-                    <div class="metric-wave"></div>
+    <!-- Dashboard Content -->
+    <div class="dashboard-content">
+        <!-- Quick Actions Section with Floating Cards -->
+        <div class="actions-section glass-card">
+            <div class="section-header">
+                <h2><i class="fas fa-bolt mr-2"></i>Quick Actions</h2>
+                <div class="section-actions">
+                    <button class="btn btn-outline">
+                        <i class="fas fa-ellipsis-h"></i>
+                    </button>
                 </div>
             </div>
+            <div class="action-grid">
+                <a href="logginn.php" class="action-card">
+                    <div class="action-icon notes">
+                        <i class="fas fa-book-open"></i>
+                    </div>
+                    <h3>Lesson Notes</h3>
+                    <p>Create and manage your teaching materials</p>
+                    <div class="action-hover">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                </a>
+                <a href="login.php" class="action-card">
+                    <div class="action-icon attendance">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <h3>Attendance</h3>
+                    <p>Mark and track student attendance</p>
+                    <div class="action-hover">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                </a>
+                <a href="logg.php" class="action-card">
+                    <div class="action-icon assignments">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <h3>Assignments/Video lessons</h3>
+                    <p>Create, test or send video lessons</p>
+                    <div class="action-hover">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                </a>
+                <a href="#" class="action-card" onclick="showUnderDevelopmentMessage()">
+                    <div class="action-icon reports">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <h3>Reports</h3>
+                    <p>Generate performance reports</p>
+                    <div class="action-hover">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                </a>
+                <a href="email_login.php" class="action-card">
+                    <div class="action-icon emails">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <h3>Emails</h3>
+                    <p>Communicate with students/parents</p>
+                    <div class="action-hover">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                </a>
+                <a href="subjects.php" class="action-card">
+                    <div class="action-icon subjects">
+                        <i class="fas fa-book-open"></i>
+                    </div>
+                    <h3>Subjects</h3>
+                    <p>Manage and assign subjects</p>
+                    <div class="action-hover">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                </a>
+                <a href="exam_scores.php" class="action-card">
+                    <div class="action-icon scores">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>Exam Scores</h3>
+                    <p>View and input student scores</p>
+                    <div class="action-hover">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                </a>
+                <a href="lo.php" class="action-card">
+                    <div class="action-icon behavior">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <h3>Skill Evaluation</h3>
+                    <p>Evaluate behaviour and soft skills</p>
+                    <div class="action-hover">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                </a>
+                <a href="#" class="action-card add-new">
+                    <div class="action-icon add">
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <h3>Add New</h3>
+                    <p>Create new content or activity</p>
+                </a>
+            </div>
+        </div>
 
-            <!-- Quick Actions Section with Floating Cards -->
-            <div class="actions-section glass-card">
+        <!-- Calendar and Activity Section -->
+        <div class="bottom-section">
+            <!-- Calendar Section with Glassmorphism -->
+            <div class="calendar-section glass-card">
                 <div class="section-header">
-                    <h2><i class="fas fa-bolt mr-2"></i>Quick Actions</h2>
+                    <h2><i class="far fa-calendar-alt mr-2"></i>Academic Calendar</h2>
                     <div class="section-actions">
-                        <button class="btn btn-outline">
+                        <button class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus"></i> Add Event
+                        </button>
+                        <button class="btn btn-outline btn-sm">
                             <i class="fas fa-ellipsis-h"></i>
                         </button>
                     </div>
                 </div>
-                <div class="action-grid">
-                    <a href="logginn.php" class="action-card">
-                        <div class="action-icon notes">
-                            <i class="fas fa-book-open"></i>
-                        </div>
-                        <h3>Lesson Notes</h3>
-                        <p>Create and manage your teaching materials</p>
-                        <div class="action-hover">
-                            <i class="fas fa-arrow-right"></i>
-                        </div>
-                    </a>
-                    <a href="login.php" class="action-card">
-                        <div class="action-icon attendance">
-                            <i class="fas fa-calendar-check"></i>
-                        </div>
-                        <h3>Attendance</h3>
-                        <p>Mark and track student attendance</p>
-                        <div class="action-hover">
-                            <i class="fas fa-arrow-right"></i>
-                        </div>
-                    </a>
-                    <a href="logg.php" class="action-card">
-                        <div class="action-icon assignments">
-                            <i class="fas fa-tasks"></i>
-                        </div>
-                        <h3>Assignments/Video lessons</h3>
-                        <p>Create, test or send video lessons</p>
-                        <div class="action-hover">
-                            <i class="fas fa-arrow-right"></i>
-                        </div>
-                    </a>
-                    <a href="#" class="action-card" onclick="showUnderDevelopmentMessage()">
-                        <div class="action-icon reports">
-                            <i class="fas fa-chart-bar"></i>
-                        </div>
-                        <h3>Reports</h3>
-                        <p>Generate performance reports</p>
-                        <div class="action-hover">
-                            <i class="fas fa-arrow-right"></i>
-                        </div>
-                    </a>
-                    <a href="email_login.php" class="action-card">
-                        <div class="action-icon emails">
-                            <i class="fas fa-envelope"></i>
-                        </div>
-                        <h3>Emails</h3>
-                        <p>Communicate with students/parents</p>
-                        <div class="action-hover">
-                            <i class="fas fa-arrow-right"></i>
-                        </div>
-                    </a>
-                    <a href="subjects.php" class="action-card">
-                        <div class="action-icon subjects">
-                            <i class="fas fa-book-open"></i>
-                        </div>
-                        <h3>Subjects</h3>
-                        <p>Manage and assign subjects</p>
-                        <div class="action-hover">
-                            <i class="fas fa-arrow-right"></i>
-                        </div>
-                    </a>
-                    <a href="exam_scores.php" class="action-card">
-                        <div class="action-icon scores">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <h3>Exam Scores</h3>
-                        <p>View and input student scores</p>
-                        <div class="action-hover">
-                            <i class="fas fa-arrow-right"></i>
-                        </div>
-                    </a>
-                    <a href="lo.php" class="action-card">
-                        <div class="action-icon behavior">
-                            <i class="fas fa-clipboard-list"></i>
-                        </div>
-                        <h3>Skill Evaluation</h3>
-                        <p>Evaluate behaviour and soft skills</p>
-                        <div class="action-hover">
-                            <i class="fas fa-arrow-right"></i>
-                        </div>
-                    </a>
-                    <a href="#" class="action-card add-new">
-                        <div class="action-icon add">
-                            <i class="fas fa-plus"></i>
-                        </div>
-                        <h3>Add New</h3>
-                        <p>Create new content or activity</p>
-                    </a>
-                </div>
+                <div id="calendar"></div>
             </div>
 
-            <!-- Calendar and Activity Section -->
-            <div class="bottom-section">
-                <!-- Calendar Section with Glassmorphism -->
-                <div class="calendar-section glass-card">
-                    <div class="section-header">
-                        <h2><i class="far fa-calendar-alt mr-2"></i>Academic Calendar</h2>
-                        <div class="section-actions">
-                            <button class="btn btn-primary btn-sm">
-                                <i class="fas fa-plus"></i> Add Event
-                            </button>
-                            <button class="btn btn-outline btn-sm">
-                                <i class="fas fa-ellipsis-h"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div id="calendar"></div>
+            <!-- Recent Activity Section with Floating Cards -->
+            <div class="activity-section glass-card">
+                <div class="section-header">
+                    <h2><i class="fas fa-bell mr-2"></i>Recent Activity</h2>
+                    <a href="#" class="view-all" onclick="showLoadingSpinner()">View All <i class="fas fa-arrow-right"></i></a>
                 </div>
-
-                <!-- Recent Activity Section with Floating Cards -->
-                <div class="activity-section glass-card">
-                    <div class="section-header">
-                        <h2><i class="fas fa-bell mr-2"></i>Recent Activity</h2>
-                        <a href="#" class="view-all" onclick="showLoadingSpinner()">View All <i class="fas fa-arrow-right"></i></a>
+                <div class="activity-list">
+                    <div class="activity-item">
+                        <div class="activity-icon success pulse">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-header">
+                                <h3>Attendance Marked</h3>
+                                <span class="activity-time">2h ago</span>
+                            </div>
+                            <p>Class 10A - Mathematics (32 students present)</p>
+                            <div class="activity-progress">
+                                <div class="progress-bar" style="width: 92%"></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="activity-list">
-                        <div class="activity-item">
-                            <div class="activity-icon success pulse">
-                                <i class="fas fa-check-circle"></i>
+                    <div class="activity-item">
+                        <div class="activity-icon primary pulse">
+                            <i class="fas fa-upload"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-header">
+                                <h3>Lesson Notes Uploaded</h3>
+                                <span class="activity-time">1d ago</span>
                             </div>
-                            <div class="activity-content">
-                                <div class="activity-header">
-                                    <h3>Attendance Marked</h3>
-                                    <span class="activity-time">2h ago</span>
-                                </div>
-                                <p>Class 10A - Mathematics (32 students present)</p>
-                                <div class="activity-progress">
-                                    <div class="progress-bar" style="width: 92%"></div>
-                                </div>
+                            <p>Week 5 materials for all classes</p>
+                            <div class="activity-progress">
+                                <div class="progress-bar" style="width: 100%"></div>
                             </div>
                         </div>
-                        <div class="activity-item">
-                            <div class="activity-icon primary pulse">
-                                <i class="fas fa-upload"></i>
-                            </div>
-                            <div class="activity-content">
-                                <div class="activity-header">
-                                    <h3>Lesson Notes Uploaded</h3>
-                                    <span class="activity-time">1d ago</span>
-                                </div>
-                                <p>Week 5 materials for all classes</p>
-                                <div class="activity-progress">
-                                    <div class="progress-bar" style="width: 100%"></div>
-                                </div>
-                            </div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon info pulse">
+                            <i class="fas fa-comment-alt"></i>
                         </div>
-                        <div class="activity-item">
-                            <div class="activity-icon info pulse">
-                                <i class="fas fa-comment-alt"></i>
+                        <div class="activity-content">
+                            <div class="activity-header">
+                                <h3>New Message</h3>
+                                <span class="activity-time">2d ago</span>
                             </div>
-                            <div class="activity-content">
-                                <div class="activity-header">
-                                    <h3>New Message</h3>
-                                    <span class="activity-time">2d ago</span>
-                                </div>
-                                <p>From Parent: Jane Doe<p>
+                            <p>From Parent: Jane Doe<p>
                                                             <p>Regarding: Term Project</p>
-                                <div class="activity-progress">
-                                    <div class="progress-bar" style="width: 75%"></div>
-                                </div>
+                            <div class="activity-progress">
+                                <div class="progress-bar" style="width: 75%"></div>
                             </div>
                         </div>
-                        <div class="activity-item">
-                            <div class="activity-icon warning pulse">
-                                <i class="fas fa-exclamation-circle"></i>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon warning pulse">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-header">
+                                <h3>Assignment Due</h3>
+                                <span class="activity-time">3d ago</span>
                             </div>
-                            <div class="activity-content">
-                                <div class="activity-header">
-                                    <h3>Assignment Due</h3>
-                                    <span class="activity-time">3d ago</span>
-                                </div>
-                                <p>Algebra II assignment due tomorrow</p>
-                                <div class="activity-progress">
-                                    <div class="progress-bar" style="width: 65%"></div>
-                                </div>
+                            <p>Algebra II assignment due tomorrow</p>
+                            <div class="activity-progress">
+                                <div class="progress-bar" style="width: 65%"></div>
                             </div>
                         </div>
                     </div>
@@ -2621,4 +2307,3 @@ $totalClasses = $row['tclasses'] ?? 0;
 </script>
 </body>
 </html>
-
