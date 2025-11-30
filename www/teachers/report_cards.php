@@ -104,13 +104,13 @@ class mypdf extends FPDF {
         $this->Circle($x, $y, $fillRadius, 'F');
         
         // Percentage text - larger and bolder
-        $this->SetFont('Helvetica', 'B', 12);
+        $this->SetFont('Helvetica', 'B', 13);
         $this->SetTextColor(255, 255, 255);
         $this->SetXY($x - 8, $y - 4);
         $this->Cell(16, 8, $percentage . '%', 0, 0, 'C');
         
         // Label - larger font
-        $this->SetFont('Helvetica', 'B', 10);
+        $this->SetFont('Helvetica', 'B', 13);
         $this->SetTextColor(60, 60, 60);
         $this->SetXY($x - 20, $y + $radius + 5);
         $this->Cell(40, 5, $label, 0, 0, 'C');
@@ -127,14 +127,14 @@ class mypdf extends FPDF {
         } else {
             $this->SetFillColor(240, 240, 240);
             $this->Rect(15, 8, 35, 30, 'F');
-            $this->SetFont('Arial', 'I', 9);
+            $this->SetFont('Arial', 'I', 12);
             $this->SetTextColor(180, 180, 180);
             $this->SetXY(15, 20);
             $this->Cell(35, 5, 'SCHOOL LOGO', 0, 0, 'C');
         }
 
         // School Information - LARGER FONT SIZES
-        $this->SetFont('Times', 'B', 18);
+        $this->SetFont('Times', 'B', 19);
         $this->SetTextColor(30, 70, 120);
         $this->SetXY(55, 10);
         $this->Cell(140, 8, 'STARS ON EARTH ACADEMY', 0, 1, 'C');
@@ -142,7 +142,7 @@ class mypdf extends FPDF {
         // REMOVED SLOGAN "Quality Education for Future Leaders"
 
         // Contact information - LARGER FONT
-        $this->SetFont('Times', 'B', 11);
+        $this->SetFont('Times', 'B', 12);
         $this->SetTextColor(70, 70, 80);
         $this->SetX(55);
         $this->Cell(140, 6, 'LOCATION: ABOKOBI-AKPORMAN, ACCRA', 0, 1, 'C');
@@ -164,7 +164,7 @@ class mypdf extends FPDF {
         
         $this->SetFont('Arial', 'I', 12);
         $this->SetTextColor(120, 120, 140);
-        $this->Cell(190, 6, 'Comprehensive Student Assessment', 0, 1, 'C');
+        $this->Cell(190, 6, '', 0, 1, 'C');
     }
 
     function footer() {
@@ -247,7 +247,7 @@ class mypdf extends FPDF {
             $this->SetDrawColor(220, 220, 220);
             $this->SetLineWidth(0.5);
             $this->Rect($x-2, $y-2, 38, 32, 'DF');
-            $this->SetFont('Arial', 'I', 8);
+            $this->SetFont('Arial', 'I', 12);
             $this->SetTextColor(160, 160, 160);
             $this->SetXY($x, $y+10);
             $this->Cell(34, 5, 'STUDENT', 0, 0, 'C');
@@ -335,7 +335,7 @@ class mypdf extends FPDF {
             $this->Cell(35, 7, $exam, 0, 1, 'L');
             
             // Term dates - LARGER FONTS
-            $this->SetFont('Helvetica', 'B', 11);
+            $this->SetFont('Helvetica', 'B', 12);
             $this->SetTextColor(80, 100, 120);
             $this->SetXY(70, 80);
             $this->Cell(30, 6, 'TERM ENDS:', 0, 0, 'L');
@@ -343,11 +343,11 @@ class mypdf extends FPDF {
             $this->SetTextColor(50, 70, 90);
             $this->Cell(40, 6, $termEnds, 0, 0, 'L');
             
-            $this->SetFont('Helvetica', 'B', 11);
+            $this->SetFont('Helvetica', 'B', 12);
             $this->SetTextColor(80, 100, 120);
             $this->SetX(130);
             $this->Cell(30, 6, 'NEXT TERM:', 0, 0, 'L');
-            $this->SetFont('Helvetica', '', 11);
+            $this->SetFont('Helvetica', '', 12);
             $this->SetTextColor(50, 70, 90);
             $this->Cell(35, 6, $termBegins, 0, 1, 'L');
 
@@ -357,7 +357,7 @@ class mypdf extends FPDF {
             // Table header with LARGER FONTS
             $this->SetFillColor(60, 100, 160);
             $this->SetTextColor(255, 255, 255);
-            $this->SetFont('Helvetica', 'B', 11);
+            $this->SetFont('Helvetica', 'B', 12);
             $this->SetLineWidth(0.3);
             
             $headers = ['SUBJECT', 'CLASS SCORE', 'EXAM SCORE', 'TOTAL', 'GRADE', 'REMARKS', 'POSITION'];
@@ -373,7 +373,7 @@ class mypdf extends FPDF {
             $fill = false;
             
             foreach ($data['marks'] as $row) {
-                $this->SetFont('Helvetica', '', 10);
+                $this->SetFont('Helvetica', '', 12);
                 
                 if ($fill) {
                     $this->SetFillColor(248, 250, 255);
@@ -412,11 +412,11 @@ class mypdf extends FPDF {
                 }
                 
                 $this->SetTextColor($gradeColor[0], $gradeColor[1], $gradeColor[2]);
-                $this->SetFont('Helvetica', 'B', 10);
+                $this->SetFont('Helvetica', 'B', 12);
                 $this->Cell($widths[4], 8, $grade, 1, 0, 'C', $fill);
                 
                 $this->SetTextColor(0, 0, 0);
-                $this->SetFont('Helvetica', '', 9);
+                $this->SetFont('Helvetica', '', 12);
                 $this->Cell($widths[5], 8, $remarks, 1, 0, 'C', $fill);
                 
                 $this->SetTextColor(60, 80, 150);
@@ -444,12 +444,12 @@ class mypdf extends FPDF {
             $this->SetXY(15, $this->GetY() + 4);
             $this->Cell(180, 6, 'GRADING SYSTEM', 0, 1, 'C');
             
-            $this->SetFont('Helvetica', 'B', 10);
+            $this->SetFont('Helvetica', 'B', 12);
             $this->SetTextColor(70, 90, 120);
             $this->SetXY(15, $this->GetY());
-            $this->Cell(180, 5, 'A (80-100) - Excellent | B (70-79) - Very Good | C (60-69) - Good', 0, 1, 'C');
+            $this->Cell(180, 5, 'A (80-100) -  Advanced| B (70-79) - Proficient | C (60-69) - Developing', 0, 1, 'C');
             $this->SetXY(15, $this->GetY());
-            $this->Cell(180, 5, 'D (50-59) - Average | E (40-49) - Credit | F (0-39) - Weak', 0, 1, 'C');
+            $this->Cell(180, 5, 'D (50-59) - Beginning ', 0, 1, 'C');
 
             // Attendance and promotion section - LARGER FONTS
             $this->Ln(8);
@@ -478,37 +478,37 @@ class mypdf extends FPDF {
             $this->SetTextColor(40, 120, 60);
             $this->SetXY(25, $this->GetY() + 8);
             $this->Cell(45, 7, 'Promotion Status:', 0, 0, 'L');
-            $this->SetFont('Helvetica', 'B', 14);
+            $this->SetFont('Helvetica', 'B', 12);
             $this->SetTextColor(30, 100, 180);
-            $this->Cell(60, 7, 'PROMOTED TO NEXT CLASS', 0, 1, 'L');
+            $this->Cell(60, 7, 'Repeated / Promoted', 0, 1, 'L');
 
             // Comments section - LARGER FONTS
-            $this->Ln(10);
+            $this->Ln(4);
             
             // Academic remarks
             $academicRemark = $this->getAcademicRemarks();
             $this->SetFont('Helvetica', 'B', 12);
             $this->SetTextColor(60, 90, 140);
             $this->Cell(180, 7, 'ACADEMIC REMARKS:', 0, 1, 'L');
-            $this->SetFont('Helvetica', '', 11);
+            $this->SetFont('Helvetica', '', 12);
             $this->SetTextColor(40, 50, 60);
             $this->MultiCell(180, 6, $academicRemark, 0, 'L');
             
             // Conduct remarks
-            $this->Ln(5);
+            $this->Ln(3);
             $conductRemark = $this->getConductRemarks();
             $this->SetFont('Helvetica', 'B', 12);
             $this->SetTextColor(60, 90, 140);
             $this->Cell(180, 7, 'CONDUCT REMARKS:', 0, 1, 'L');
-            $this->SetFont('Helvetica', '', 11);
+            $this->SetFont('Helvetica', '', 12);
             $this->SetTextColor(40, 50, 60);
             $this->MultiCell(180, 6, $conductRemark, 0, 'L');
 
             // Signatures section - SIMPLIFIED (removed Name&Date and Acknowledgment)
-            $this->Ln(10);
+            $this->Ln(4);
             
             // Signature labels - LARGER FONT
-            $this->SetFont('Helvetica', 'B', 11);
+            $this->SetFont('Helvetica', 'B', 12);
             $this->SetTextColor(70, 90, 110);
             $this->Cell(85, 6, 'Class Teacher\'s Signature:', 0, 0, 'L');
             $this->SetX(110);
@@ -523,7 +523,7 @@ class mypdf extends FPDF {
             // REMOVED Name & Date and Acknowledgment lines
 
             // Progress Circles - LARGER SIZE
-            $this->Ln(8);
+            $this->Ln(4);
             
             // Generate random percentages for progress circles
             $academicMastery = rand(70, 95);
@@ -548,7 +548,7 @@ class mypdf extends FPDF {
             // Behavior Circle
             $this->drawProgressCircle(170, $circleY, $circleRadius, $behavior, 'Behavior', $behaviorColor);
             
-            $this->Ln(20); // Space after circles
+            $this->Ln(4); // Space after circles
 
             // Add official stamp/signature image if available
             $signatureImage = '';
@@ -569,7 +569,7 @@ class mypdf extends FPDF {
             }
             
             // Progress indicator - LARGER FONT
-            $this->Ln(8);
+            $this->Ln(4);
             $this->SetFont('Helvetica', 'I', 10);
             $this->SetTextColor(100, 100, 120);
             $this->Cell(180, 5, "Student Report " . $this->current_student_index . " of " . $this->total_students, 0, 1, 'R');
@@ -611,3 +611,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     die("Invalid request method. Please submit the form.");
 }
 ?>
+
