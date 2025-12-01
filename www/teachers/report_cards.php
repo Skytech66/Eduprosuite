@@ -525,14 +525,6 @@ class mypdf extends FPDF {
             if (file_exists($signatureImage)) {
                 $this->Image($signatureImage, 140, $this->GetY() - 18, 25, 12);
             }
-            
-            // Progress indicator - LARGER FONT
-            $this->Ln(3);
-            $this->SetFont('Helvetica', 'I', 10);
-            $this->SetTextColor(100, 100, 120);
-            $this->Cell(180, 5, "Student Report " . $this->current_student_index . " of " . $this->total_students, 0, 1, 'R');
-
-            // REMOVED School motto "Quality Education for Future Leaders"
 
             // Add page break for next student (except for the last one)
             if ($this->current_student_index < $this->total_students) {
@@ -569,5 +561,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     die("Invalid request method. Please submit the form.");
 }
 ?>
+
 
 
