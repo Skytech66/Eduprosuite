@@ -50,7 +50,6 @@ ob_start();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Your CSS styles remain the same */
         :root {
             --primary: #4f46e5;
             --primary-dark: #4338ca;
@@ -582,23 +581,6 @@ ob_start();
                 <div class="card-body">
                     <form method="POST" action="">
                         <div class="form-group">
-                            <label for="year_roster" class="form-label">
-                                <i class="fas fa-calendar-alt mr-1"></i> Select Year
-                            </label>
-                            <select name="year" id="year_roster" class="form-select" required>
-                                <option value="">-- Select a year --</option>
-                                <!-- Hardcoded years 2025 and 2026 -->
-                                <?php
-                                $hardcodedYears = ['2025', '2026'];
-                                foreach ($hardcodedYears as $year) {
-                                    $selected = (isset($_POST['year']) && $_POST['year'] == $year) ? 'selected' : '';
-                                    echo '<option value="' . htmlspecialchars($year) . '" ' . $selected . '>' . htmlspecialchars($year) . '</option>';
-                                }
-                                ?>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
                             <label for="class_roster" class="form-label">
                                 <i class="fas fa-chalkboard mr-1"></i> Select Class
                             </label>
@@ -629,331 +611,356 @@ ob_start();
                         </button>
                     </form>
                     
-                    <!-- UPDATED BLOCK WITH YEAR FILTERING -->
-                    <?php if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['class']) && isset($_POST['year'])): ?>
+                    <?php if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['class']) && !isset($_POST['year'])): ?>
                         <?php
                         $selectedClass = $_POST['class'];
-                        $selectedYear = $_POST['year'];
                         try {
-                            $studentQuery = "SELECT DISTINCT student, photo FROM marks WHERE class = :class AND year = :year ORDER BY student";
+                            $studentQuery = "SELECT DISTINCT student, photo FROM marks WHERE class = :class ORDER BY student";
                             $stmt = $conn->prepare($studentQuery);
                             $stmt->bindParam(':class', $selectedClass);
-                            $stmt->bindParam(':year', $selectedYear);
                             $stmt->execute();
-                            $students = $stmt->fetchAll();
-                            
-                            if (count($students) > 0): ?>
-                                <div class="badge">
-                                    <i class="fas fa-users mr-1"></i> <?php echo count($students); ?> students found in <?php echo htmlspecialchars($selectedClass); ?> (Year: <?php echo htmlspecialchars($selectedYear); ?>)
-                                </div>
-                                
-                                <div class="student-grid">
-                                    <?php foreach ($students as $student): ?>
-                                        <div class="student-card">
-                                            <?php if (!empty($student['photo'])): ?>
-                                                <img src="<?php echo htmlspecialchars($student['photo']); ?>" alt="<?php echo htmlspecialchars($student['student']); ?>" class="student-avatar" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNFNUU3RUIiLz48cGF0aCBkPSJNNTAgMTAwQzc3LjYxNDIgMTAwIDEwMCA3Ny42MTQyIDEwMCA1MEMxMDAgMjIuODU3OCA3Ny42MTQyIDAgNTAgMEMyMi44NTc4IDAgMCAyMi44NTc4IDAgNTBDMCA3Ny42MTQyIDIyLjg1NzggMTAwIDUwIDEwMFpNNTAgMTIwQzIyLjM4NTggMTIwIDAgMTQyLjM4NiAwIDE3MFYxNjBDMCAxNzMuMjA1IDUuMzcyNTggMTgwIDEyIDE4MEg4OEM5NC42Mjc0IDE4MCAxMDAgMTczLjIwNSAxMDAgMTYwVjE3MEMxMDAgMTQyLjM4NiA3Ny42MTQyIDEyMCA1MCAxMjBaIiBmaWxsPSIjOTk5Q0FGIi8+PC9zdmc+'">
-                                            <?php else: ?>
-                                                <div class="student-avatar" style="display: flex; align-items: center; justify-content: center; background-color: #e0e7ff;">
-                                                    <i class="fas fa-user-graduate" style="font-size: 3rem; color: #4f46e5;"></i>
-                                                </div>
-                                            <?php endif; ?>
-                                            <div class="student-info">
-                                                <div class="student-name"><?php echo htmlspecialchars($student['student']); ?></div>
-                                            </div>
-                                        </div>
-                                    <?php endforeach; ?>
-                                </div>
-                            <?php else: ?>
-                                <div class="empty-state mt-6">
-                                    <i class="fas fa-user-slash"></i>
-                                    <h3>No students found</h3>
-                                    <p>No students found in class <?php echo htmlspecialchars($selectedClass); ?> for year <?php echo htmlspecialchars($selectedYear); ?>.</p>
-                                </div>
-                            <?php endif;
-                            
+                            $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                            $studentCount = count($students);
                         } catch (PDOException $e) {
-                            echo '<div class="empty-state mt-6">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                    <h3>Database Error</h3>
-                                    <p>Error loading students: ' . htmlspecialchars($e->getMessage()) . '</p>
-                                </div>';
+                            $error = "Error loading students: " . $e->getMessage();
+                            $studentCount = 0;
+                            $students = [];
                         }
                         ?>
+
+                        <div class="mt-6">
+                            <h2 class="section-title">
+                                <i class="fas fa-user-graduate"></i>
+                                <?= htmlspecialchars($selectedClass) ?> Roster
+                            </h2>
+                            <span class="badge"><?= $studentCount ?> student<?= $studentCount !== 1 ? 's' : '' ?></span>
+
+                            <?php if (isset($error)): ?>
+                                <div class="empty-state">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    <h3>Error Loading Data</h3>
+                                    <p><?= htmlspecialchars($error) ?></p>
+                                </div>
+                            <?php elseif ($studentCount > 0): ?>
+                                <form action="upload_image.php" method="POST" enctype="multipart/form-data" id="uploadForm">
+                                    <input type="hidden" name="class" value="<?= htmlspecialchars($selectedClass) ?>">
+
+                                    <div class="student-grid" id="studentGrid">
+                                        <?php foreach ($students as $student): ?>
+                                            <div class="student-card">
+                                                <?php
+                                                // Handle base64 image display: prepend data URI prefix if photo exists
+                                                $imageSrc = '';
+                                                if (!empty($student['photo'])) {
+                                                    $imageSrc = 'data:image/jpeg;base64,' . htmlspecialchars($student['photo']);
+                                                } else {
+                                                    $imageSrc = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%23e5e7eb\'%3E%3Cpath d=\'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z\'/%3E%3C/svg%3E';
+                                                }
+                                                ?>
+                                                <img src="<?= $imageSrc ?>"
+                                                     alt="<?= htmlspecialchars($student['student']) ?> Photo"
+                                                     class="student-avatar"
+                                                     id="preview-<?= htmlspecialchars($student['student']) ?>">
+                                                <div class="student-info">
+                                                    <h3 class="student-name"><?= htmlspecialchars($student['student']) ?></h3>
+
+                                                    <div class="file-input-wrapper">
+                                                        <label for="file-<?= htmlspecialchars($student['student']) ?>" class="file-input-label">
+                                                            <i class="fas fa-camera mr-1"></i> Update Photo
+                                                        </label>
+                                                        <input type="file"
+                                                               id="file-<?= htmlspecialchars($student['student']) ?>"
+                                                               name="images[]"
+                                                               accept="image/*"
+                                                               class="file-input"
+                                                               data-student-id="<?= htmlspecialchars($student['student']) ?>"
+                                                               onchange="previewImage(this)">
+                                                        <input type="hidden" name="iduser[]" value="<?= htmlspecialchars($student['student']) ?>">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+
+                                    <div class="text-center mt-6">
+                                        <button type="submit" class="btn btn-primary btn-lg">
+                                            <i class="fas fa-upload mr-1"></i> Upload Selected Photos
+                                        </button>
+                                    </div>
+                                </form>
+                            <?php else: ?>
+                                <div class="empty-state">
+                                    <i class="fas fa-user-slash"></i>
+                                    <h3>No Students Found</h3>
+                                    <p>There are currently no students registered in this class.</p>
+                                    <button class="btn btn-secondary" onclick="history.back()">
+                                        <i class="fas fa-arrow-left mr-1"></i> Back to Class Selection
+                                    </button>
+                                </div>
+                            <?php endif; ?>
+                        </div>
                     <?php endif; ?>
                 </div>
             </div>
 
             <!-- Student List Management Card -->
-            <div class="card" id="listCard">
+            <div class="card" id="listCard" style="display: none;">
                 <div class="card-header">
                     <h1 class="card-title">
                         <i class="fas fa-list-check"></i> Student List Management
                     </h1>
-                    <p class="card-subtitle">Manage all student entries in the database</p>
+                    <p class="card-subtitle">View and manage student entries by year and class</p>
                 </div>
-                
                 <div class="card-body">
-                    <div class="action-buttons">
-                        <a href="#" class="btn btn-primary" onclick="showAddForm()">
-                            <i class="fas fa-plus mr-1"></i> Add New Student
-                        </a>
-                        <a href="#" class="btn btn-secondary" onclick="refreshStudentList()">
-                            <i class="fas fa-sync-alt mr-1"></i> Refresh List
-                        </a>
-                    </div>
-                    
-                    <!-- Add Student Form (Hidden by default) -->
-                    <div id="addStudentForm" style="display: none; margin-bottom: 1.5rem; padding: 1.5rem; background-color: var(--lighter); border-radius: var(--border-radius-sm); border: 1px solid var(--light-gray);">
-                        <h3 class="section-title">
-                            <i class="fas fa-user-plus"></i> Add New Student
-                        </h3>
-                        <form method="POST" action="add_student.php" enctype="multipart/form-data">
-                            <div class="form-group">
-                                <label for="student_name" class="form-label">Student Name</label>
-                                <input type="text" id="student_name" name="student_name" class="form-input" required placeholder="Enter student name">
-                            </div>
-                            <div class="form-group">
-                                <label for="student_class" class="form-label">Class</label>
-                                <select id="student_class" name="student_class" class="form-select" required>
-                                    <option value="">-- Select class --</option>
-                                    <?php
-                                    try {
-                                        $classQuery = "SELECT DISTINCT class FROM marks WHERE class IS NOT NULL AND class != '' ORDER BY class";
-                                        $classResult = $conn->query($classQuery);
+                    <form method="POST" action="">
+                        <div class="form-group">
+                            <label for="year" class="form-label">
+                                <i class="fas fa-calendar-alt mr-1"></i> Select Year
+                            </label>
+                            <select name="year" id="year" class="form-select" required>
+                                <option value="">-- Select a year --</option>
+                                <?php
+                                try {
+                                    $yearQuery = "SELECT DISTINCT year FROM student_entries WHERE year IS NOT NULL AND year != '' ORDER BY year";
+                                    $yearResult = $conn->query($yearQuery);
 
-                                        if ($classResult) {
-                                            while ($row = $classResult->fetch(PDO::FETCH_ASSOC)) {
-                                                echo '<option value="' . htmlspecialchars($row['class']) . '">' . htmlspecialchars($row['class']) . '</option>';
-                                            }
+                                    if ($yearResult) {
+                                        while ($row = $yearResult->fetch(PDO::FETCH_ASSOC)) {
+                                            $selected = (isset($_POST['year']) && $_POST['year'] == $row['year']) ? 'selected' : '';
+                                            echo '<option value="' . htmlspecialchars($row['year']) . '" ' . $selected . '>' . htmlspecialchars($row['year']) . '</option>';
                                         }
-                                    } catch (PDOException $e) {
-                                        echo '<option value="">Error loading classes</option>';
+                                    } else {
+                                        echo '<option value="">No years available</option>';
                                     }
-                                    ?>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="student_photo" class="form-label">Student Photo</label>
-                                <div class="file-input-wrapper">
-                                    <label for="student_photo" class="file-input-label">
-                                        <i class="fas fa-camera mr-1"></i> Choose Photo
-                                    </label>
-                                    <input type="file" id="student_photo" name="student_photo" class="file-input" accept="image/*">
+                                } catch (PDOException $e) {
+                                    echo '<option value="">Error loading years</option>';
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="class_list" class="form-label">
+                                <i class="fas fa-chalkboard mr-1"></i> Select Class
+                            </label>
+                            <select name="class" id="class_list" class="form-select" required>
+                                <option value="">-- Select a class --</option>
+                                <?php
+                                try {
+                                    $classQuery = "SELECT DISTINCT class FROM student_entries WHERE class IS NOT NULL AND class != '' ORDER BY class";
+                                    $classResult = $conn->query($classQuery);
+
+                                    if ($classResult) {
+                                        while ($row = $classResult->fetch(PDO::FETCH_ASSOC)) {
+                                            $selected = (isset($_POST['class']) && $_POST['class'] == $row['class']) ? 'selected' : '';
+                                            echo '<option value="' . htmlspecialchars($row['class']) . '" ' . $selected . '>' . htmlspecialchars($row['class']) . '</option>';
+                                        }
+                                    } else {
+                                        echo '<option value="">No classes available</option>';
+                                    }
+                                } catch (PDOException $e) {
+                                    echo '<option value="">Error loading classes</option>';
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-eye mr-1"></i> View Student List
+                        </button>
+                    </form>
+
+                    <?php if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['year']) && isset($_POST['class'])): ?>
+                        <?php
+                        $selectedYear = $_POST['year'];
+                        $selectedClass = $_POST['class'];
+
+                        try {
+                            $studentListQuery = "SELECT id, name FROM student_entries WHERE year = :year AND class = :class ORDER BY name";
+                            $stmt = $conn->prepare($studentListQuery);
+                            $stmt->bindParam(':year', $selectedYear);
+                            $stmt->bindParam(':class', $selectedClass);
+                            $stmt->execute();
+                            $studentsList = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                            $studentsCount = count($studentsList);
+                        } catch (PDOException $e) {
+                            $error = "Error loading student list: " . $e->getMessage();
+                            $studentsCount = 0;
+                            $studentsList = [];
+                        }
+                        ?>
+
+                        <div class="mt-6">
+                            <h2 class="section-title">
+                                <i class="fas fa-users mr-1"></i>
+                                <?= htmlspecialchars($selectedClass) ?> - <?= htmlspecialchars($selectedYear) ?> Students
+                            </h2>
+                            <span class="badge"><?= $studentsCount ?> student<?= $studentsCount !== 1 ? 's' : '' ?></span>
+
+                            <?php if (isset($error)): ?>
+                                <div class="empty-state">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    <h3>Error Loading Data</h3>
+                                    <p><?= htmlspecialchars($error) ?></p>
                                 </div>
-                                <small style="display: block; margin-top: 0.5rem; color: var(--gray); font-size: 0.75rem;">Optional: Upload a photo for the student</small>
-                            </div>
-                            <div class="form-group">
-                                <label for="student_year" class="form-label">Year</label>
-                                <select id="student_year" name="student_year" class="form-select" required>
-                                    <option value="">-- Select year --</option>
-                                    <!-- Hardcoded years 2025 and 2026 -->
-                                    <?php
-                                    $hardcodedYears = ['2025', '2026'];
-                                    foreach ($hardcodedYears as $year) {
-                                        echo '<option value="' . htmlspecialchars($year) . '">' . htmlspecialchars($year) . '</option>';
-                                    }
-                                    ?>
-                                </select>
-                            </div>
-                            <div style="display: flex; gap: 1rem;">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-save mr-1"></i> Save Student
-                                </button>
-                                <button type="button" class="btn btn-secondary" onclick="hideAddForm()">
-                                    <i class="fas fa-times mr-1"></i> Cancel
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                    
-                    <!-- Student List -->
-                    <h3 class="section-title">
-                        <i class="fas fa-users"></i> All Students
-                    </h3>
-                    
-                    <?php
-                    try {
-                        $allStudentsQuery = "SELECT * FROM student_entries ORDER BY created_at DESC";
-                        $allStudentsResult = $conn->query($allStudentsQuery);
-                        $allStudents = $allStudentsResult->fetchAll();
-                        
-                        if (count($allStudents) > 0): ?>
-                            <div class="badge">
-                                <i class="fas fa-users mr-1"></i> <?php echo count($allStudents); ?> total students
-                            </div>
-                            
-                            <ul class="student-list">
-                                <?php foreach ($allStudents as $student): ?>
-                                    <li class="student-list-item">
-                                        <div style="flex: 1;">
-                                            <strong><?php echo htmlspecialchars($student['student_name']); ?></strong>
-                                            <br>
-                                            <small style="color: var(--gray);">
-                                                Class: <?php echo htmlspecialchars($student['class']); ?> | 
-                                                Year: <?php echo htmlspecialchars($student['year']); ?> | 
-                                                Added: <?php echo date('M d, Y', strtotime($student['created_at'])); ?>
-                                            </small>
-                                        </div>
-                                        <div style="display: flex; gap: 0.5rem;">
-                                            <a href="?delete_id=<?php echo $student['id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this student?')">
-                                                <i class="fas fa-trash"></i>
+                            <?php elseif ($studentsCount > 0): ?>
+                                <ul class="student-list">
+                                    <?php foreach ($studentsList as $student): ?>
+                                        <li class="student-list-item">
+                                            <span><?= htmlspecialchars($student['name']) ?></span>
+                                            <a href="?delete_id=<?= htmlspecialchars($student['id']) ?>" class="btn btn-danger btn-sm" onclick="return confirmDelete(event)">
+                                                <i class="fas fa-trash mr-1"></i> Delete
                                             </a>
-                                        </div>
-                                    </li>
-                                <?php endforeach; ?>
-                            </ul>
-                        <?php else: ?>
-                            <div class="empty-state">
-                                <i class="fas fa-user-slash"></i>
-                                <h3>No students found</h3>
-                                <p>No students have been added yet. Use the "Add New Student" button to get started.</p>
-                            </div>
-                        <?php endif;
-                        
-                    } catch (PDOException $e) {
-                        echo '<div class="empty-state">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                <h3>Database Error</h3>
-                                <p>Error loading students: ' . htmlspecialchars($e->getMessage()) . '</p>
-                            </div>';
-                    }
-                    ?>
+                                        </li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            <?php else: ?>
+                                <div class="empty-state">
+                                    <i class="fas fa-user-slash"></i>
+                                    <h3>No Students Found</h3>
+                                    <p>There are currently no students registered for this year and class.</p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
+
+        <!-- Add New Student Button -->
+        <div class="action-buttons">
+            <a href="form.php" class="btn btn-primary">
+                <i class="fas fa-plus mr-1"></i> Add New Student
+            </a>
+        </div>
     </div>
 
-    <!-- Toast notifications -->
-    <?php if (isset($_GET['delete_success']) && $_GET['delete_success'] == 1): ?>
-        <div class="toast success" id="successToast">
-            <i class="fas fa-check-circle"></i>
-            Student deleted successfully!
-        </div>
-    <?php endif; ?>
-    
-    <?php if (isset($deleteError)): ?>
-        <div class="toast error" id="errorToast">
-            <i class="fas fa-exclamation-circle"></i>
-            <?php echo htmlspecialchars($deleteError); ?>
-        </div>
-    <?php endif; ?>
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toast-message">Notification message</span>
+    </div>
 
     <script>
         // Tab switching functionality
-        document.querySelectorAll('.tab').forEach(tab => {
+        const tabs = document.querySelectorAll('.tab');
+        const rosterCard = document.getElementById('rosterCard');
+        const listCard = document.getElementById('listCard');
+
+        tabs.forEach(tab => {
             tab.addEventListener('click', function() {
-                const tabId = this.getAttribute('data-tab');
-                
                 // Update active tab
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tabs.forEach(t => t.classList.remove('active'));
                 this.classList.add('active');
                 
                 // Show corresponding card
-                if (tabId === 'roster') {
-                    document.getElementById('rosterCard').style.display = 'block';
-                    document.getElementById('listCard').style.display = 'none';
-                } else if (tabId === 'list') {
-                    document.getElementById('rosterCard').style.display = 'none';
-                    document.getElementById('listCard').style.display = 'block';
+                const tabName = this.getAttribute('data-tab');
+                if (tabName === 'roster') {
+                    rosterCard.style.display = 'block';
+                    listCard.style.display = 'none';
+                    showToast('Showing Class Roster', 'success');
+                } else {
+                    rosterCard.style.display = 'none';
+                    listCard.style.display = 'block';
+                    showToast('Showing Student List', 'success');
                 }
             });
         });
 
-        // Toast notification handling
-        function showToast(message, type = 'success') {
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.innerHTML = `
-                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
-                ${message}
-            `;
-            document.body.appendChild(toast);
+        // Image preview functionality
+        function previewImage(input) {
+            const studentId = input.getAttribute('data-student-id');
+            const file = input.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const previewElement = document.getElementById('preview-' + studentId);
+                if (previewElement) {
+                    previewElement.src = e.target.result;
+                    showToast('Image selected for ' + studentId, 'success');
+                }
+            };
+
+            if (file) {
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Toast notification function
+        function showToast(message, type = 'default') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
             
-            setTimeout(() => {
-                toast.classList.add('show');
-            }, 10);
+            // Set message and type
+            toastMessage.textContent = message;
             
+            // Reset classes and set new type
+            toast.className = 'toast';
+            toast.classList.add('show', type);
+            
+            // Set icon based on type
+            const icon = toast.querySelector('i');
+            if (type === 'success') {
+                icon.className = 'fas fa-check-circle';
+            } else if (type === 'error') {
+                icon.className = 'fas fa-exclamation-circle';
+            } else if (type === 'warning') {
+                icon.className = 'fas fa-exclamation-triangle';
+            } else {
+                icon.className = 'fas fa-info-circle';
+            }
+            
+            // Hide after 3 seconds
             setTimeout(() => {
                 toast.classList.remove('show');
-                setTimeout(() => {
-                    document.body.removeChild(toast);
-                }, 300);
             }, 3000);
         }
 
-        // Auto-hide existing toasts
+        // Confirm before deleting
+        function confirmDelete(event) {
+            if (!confirm('Are you sure you want to delete this student? This action cannot be undone.')) {
+                event.preventDefault();
+                return false;
+            }
+            return true;
+        }
+
+        // Show success toast if redirected from delete action
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('delete_success')) {
+            showToast('Student deleted successfully', 'success');
+        }
+
+        // Show error message if delete failed
+        <?php if (isset($deleteError)): ?>
+            showToast('<?= addslashes($deleteError) ?>', 'error');
+        <?php endif; ?>
+
+        // Handle form submission to maintain tab state
         document.addEventListener('DOMContentLoaded', function() {
-            const toasts = document.querySelectorAll('.toast');
-            toasts.forEach(toast => {
-                setTimeout(() => {
-                    toast.classList.add('show');
-                }, 10);
-                
-                setTimeout(() => {
-                    toast.classList.remove('show');
-                    setTimeout(() => {
-                        if (toast.parentNode) {
-                            toast.parentNode.removeChild(toast);
-                        }
-                    }, 300);
-                }, 3000);
-            });
-        });
-
-        // Add Student Form functions
-        function showAddForm() {
-            document.getElementById('addStudentForm').style.display = 'block';
-            document.getElementById('addStudentForm').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        function hideAddForm() {
-            document.getElementById('addStudentForm').style.display = 'none';
-        }
-
-        function refreshStudentList() {
-            location.reload();
-        }
-
-        // Form validation
-        document.querySelectorAll('form').forEach(form => {
-            form.addEventListener('submit', function(e) {
-                const requiredFields = this.querySelectorAll('[required]');
-                let isValid = true;
-                
-                requiredFields.forEach(field => {
-                    if (!field.value.trim()) {
-                        isValid = false;
-                        field.style.borderColor = 'var(--error)';
-                    } else {
-                        field.style.borderColor = '';
-                    }
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                form.addEventListener('submit', function() {
+                    // Store which tab was active before form submission
+                    const activeTab = document.querySelector('.tab.active').getAttribute('data-tab');
+                    localStorage.setItem('activeTab', activeTab);
                 });
-                
-                if (!isValid) {
-                    e.preventDefault();
-                    showToast('Please fill in all required fields.', 'error');
-                }
             });
-        });
 
-        // Image preview for file inputs
-        document.querySelectorAll('input[type="file"]').forEach(input => {
-            input.addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (file && file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        // You could add image preview functionality here
-                        console.log('Image selected:', file.name);
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
+            // Restore active tab on page load
+            const savedTab = localStorage.getItem('activeTab');
+            if (savedTab && savedTab === 'list') {
+                document.querySelector('.tab[data-tab="roster"]').classList.remove('active');
+                document.querySelector('.tab[data-tab="list"]').classList.add('active');
+                rosterCard.style.display = 'none';
+                listCard.style.display = 'block';
+            }
+            
+            // Clear the saved tab state
+            localStorage.removeItem('activeTab');
         });
     </script>
 </body>
 </html>
 <?php
-// End output buffering
+// End output buffering and flush
 ob_end_flush();
 ?>
