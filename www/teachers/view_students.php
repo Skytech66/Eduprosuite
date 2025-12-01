@@ -1,7 +1,4 @@
 <?php
-// Start output buffering immediately to prevent header issues
-ob_start();
-
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
@@ -26,30 +23,26 @@ try {
     die("Connection failed: " . $e->getMessage());
 }
 
-// ----------------------------
-// Handle student deletion safely
-// ----------------------------
-$deleteError = '';
+// Handle student deletion
 if (isset($_GET['delete_id'])) {
     try {
         $deleteStmt = $conn->prepare("DELETE FROM student_entries WHERE id = :id");
         $deleteStmt->bindParam(':id', $_GET['delete_id']);
         $deleteStmt->execute();
         
-        // Redirect safely to same page with GET parameters
+        // Redirect to avoid resubmission
         $params = $_GET;
-        unset($params['delete_id']); // remove delete_id
-        $params['delete_success'] = 1; // add success flag
-        $redirectUrl = $_SERVER['PHP_SELF'];
-        if (!empty($params)) {
-            $redirectUrl .= '?' . http_build_query($params);
-        }
-        header("Location: $redirectUrl");
+        unset($params['delete_id']);
+        $params['delete_success'] = 1;
+        header("Location: ?" . http_build_query($params));
         exit();
     } catch (PDOException $e) {
         $deleteError = "Error deleting student: " . $e->getMessage();
     }
 }
+
+// Start output buffering for smooth loading
+ob_start();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -58,7 +51,35 @@ if (isset($_GET['delete_id'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Management | Class Roster</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-light: #e0e7ff;
+            --secondary: #6366f1;
+            --accent: #7c3aed;
+            --dark: #111827;
+            --darker: #0f172a;
+            --light: #f8fafc;
+            --lighter: #f9fafb;
+            --gray: #6b7280;
+            --light-gray: #e5e7eb;
+            --lighter-gray: #f3f4f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --border-radius: 12px;
+            --border-radius-sm: 8px;
+            --border-radius-xs: 4px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -66,314 +87,417 @@ if (isset($_GET['delete_id'])) {
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--lighter);
+            color: var(--dark);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            opacity: 0;
+            animation: fadeIn 0.5s ease-in-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
+            padding: 0 1.5rem;
         }
 
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 1rem 0;
+            margin-bottom: 1rem;
         }
 
         .header-title {
-            color: white;
-            font-size: 24px;
+            font-size: 1.5rem;
             font-weight: 600;
+            color: var(--dark);
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            padding: 1rem 0 3rem;
+        }
+
+        @media (min-width: 1024px) {
+            .dashboard {
+                grid-template-columns: 1fr 1fr;
+            }
         }
 
         .tab-container {
             display: flex;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            padding: 8px;
-            margin-bottom: 30px;
+            border-bottom: 1px solid var(--light-gray);
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
         }
 
         .tab {
-            flex: 1;
-            padding: 15px 20px;
-            text-align: center;
-            color: white;
+            padding: 0.75rem 1.5rem;
             cursor: pointer;
-            border-radius: 8px;
             font-weight: 500;
-            transition: all 0.3s ease;
+            color: var(--gray);
+            border-bottom: 2px solid transparent;
+            transition: var(--transition);
+            white-space: nowrap;
         }
 
         .tab.active {
-            background: rgba(255, 255, 255, 0.2);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .tab:hover:not(.active) {
+            color: var(--dark);
+            background-color: var(--lighter-gray);
         }
 
         .card {
             background: white;
-            border-radius: 15px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-md);
             overflow: hidden;
-            margin-bottom: 30px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: var(--transition);
+            opacity: 0;
+            transform: translateY(20px);
+            animation: cardEntry 0.5s ease forwards;
+            animation-delay: 0.3s;
+        }
+
+        @keyframes cardEntry {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-lg);
         }
 
         .card-header {
-            padding: 30px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
             color: white;
+            padding: 1.25rem 1.5rem;
+            position: relative;
         }
 
         .card-title {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
         }
 
         .card-subtitle {
+            font-size: 0.8125rem;
             opacity: 0.9;
-            font-size: 16px;
+            margin-top: 0.25rem;
         }
 
         .card-body {
-            padding: 30px;
+            padding: 1.5rem;
         }
 
         .form-group {
-            margin-bottom: 25px;
+            margin-bottom: 1.25rem;
         }
 
         .form-label {
             display: block;
-            margin-bottom: 10px;
-            font-weight: 600;
-            color: #333;
-            font-size: 16px;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--dark);
+            font-size: 0.875rem;
         }
 
-        .form-select {
+        .form-select, .form-input {
             width: 100%;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 16px;
-            transition: border-color 0.3s ease;
-            background: white;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--light-gray);
+            border-radius: var(--border-radius-sm);
+            font-size: 0.9375rem;
+            transition: var(--transition);
+            background-color: white;
         }
 
-        .form-select:focus {
+        .form-select:focus, .form-input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
         }
 
         .btn {
-            padding: 15px 30px;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--border-radius-sm);
+            font-size: 0.9375rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-color: var(--primary);
             color: white;
+            box-shadow: var(--shadow);
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            background-color: var(--primary-dark);
+            transform: translateY(-1px);
         }
 
         .btn-secondary {
-            background: #6c757d;
-            color: white;
+            background-color: white;
+            color: var(--primary);
+            border: 1px solid var(--light-gray);
         }
 
         .btn-secondary:hover {
-            background: #5a6268;
-            transform: translateY(-2px);
+            background-color: var(--lighter-gray);
         }
 
         .btn-danger {
-            background: #dc3545;
+            background-color: var(--error);
             color: white;
         }
 
         .btn-danger:hover {
-            background: #c82333;
+            background-color: #dc2626;
         }
 
         .btn-sm {
-            padding: 8px 16px;
-            font-size: 14px;
+            padding: 0.5rem 1rem;
+            font-size: 0.8125rem;
         }
 
         .btn-lg {
-            padding: 18px 40px;
-            font-size: 18px;
-        }
-
-        .mt-6 {
-            margin-top: 60px;
-        }
-
-        .section-title {
-            font-size: 24px;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
+            padding: 0.875rem 1.75rem;
+            font-size: 1rem;
         }
 
         .badge {
             display: inline-block;
-            padding: 8px 16px;
-            background: #667eea;
-            color: white;
-            border-radius: 20px;
-            font-size: 14px;
+            padding: 0.35rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border-radius: var(--border-radius-xs);
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: 1.125rem;
             font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--darker);
         }
 
         .student-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 25px;
-            margin-top: 30px;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.25rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 640px) {
+            .student-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
         }
 
         .student-card {
             background: white;
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-            transition: transform 0.3s ease;
-            border: 1px solid #e0e0e0;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            transition: var(--transition);
+            border: 1px solid rgba(0, 0, 0, 0.05);
         }
 
         .student-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
         }
 
         .student-avatar {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
+            width: 100%;
+            height: 140px;
             object-fit: cover;
-            margin: 0 auto 20px;
-            display: block;
-            border: 5px solid #f0f0f0;
+            border-bottom: 1px solid var(--light-gray);
+            background-color: #f8fafc;
+        }
+
+        @media (max-width: 640px) {
+            .student-avatar {
+                height: 120px;
+            }
+        }
+
+        .student-info {
+            padding: 1rem;
         }
 
         .student-name {
-            text-align: center;
-            font-size: 18px;
             font-weight: 600;
-            margin-bottom: 20px;
-            color: #333;
+            font-size: 0.9375rem;
+            margin-bottom: 0.75rem;
+            color: var(--dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .file-input-wrapper {
             position: relative;
-            margin-top: 15px;
+            margin-top: 0.5rem;
         }
 
         .file-input-label {
-            display: block;
-            padding: 12px 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 8px;
-            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            background-color: var(--lighter);
+            border-radius: var(--border-radius-sm);
+            font-size: 0.75rem;
             cursor: pointer;
+            transition: var(--transition);
+            border: 1px dashed var(--light-gray);
             font-weight: 500;
-            transition: all 0.3s ease;
+            color: var(--gray);
         }
 
         .file-input-label:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            background-color: var(--lighter-gray);
+            border-color: var(--gray);
         }
 
         .file-input {
             position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
+            width: 0.1px;
+            height: 0.1px;
             opacity: 0;
-            cursor: pointer;
+            overflow: hidden;
+            z-index: -1;
         }
 
         .empty-state {
             text-align: center;
-            padding: 60px 20px;
-            background: #f8f9fa;
-            border-radius: 12px;
-            margin-top: 30px;
+            padding: 2rem 1rem;
+            color: var(--gray);
         }
 
         .empty-state i {
-            font-size: 64px;
-            color: #6c757d;
-            margin-bottom: 20px;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--light-gray);
+            opacity: 0.7;
         }
 
         .empty-state h3 {
-            font-size: 24px;
-            color: #333;
-            margin-bottom: 10px;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+            font-size: 1.1rem;
         }
 
         .empty-state p {
-            color: #666;
-            margin-bottom: 20px;
+            margin-bottom: 1.5rem;
+            font-size: 0.875rem;
         }
 
         .student-list {
             list-style: none;
-            margin-top: 30px;
+            margin-top: 1.5rem;
         }
 
         .student-list-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px;
-            background: white;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
-            border: 1px solid #e0e0e0;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--light-gray);
         }
 
-        .student-list-item span {
-            font-size: 16px;
-            font-weight: 500;
-            color: #333;
+        .student-list-item:last-child {
+            border-bottom: none;
+        }
+
+        .student-list-item:hover {
+            background-color: var(--lighter-gray);
         }
 
         .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .toast {
             position: fixed;
-            bottom: 40px;
-            right: 40px;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            padding: 0.875rem 1.25rem;
+            background-color: var(--dark);
+            color: white;
+            border-radius: var(--border-radius-sm);
+            box-shadow: var(--shadow-lg);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: var(--transition);
             z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            max-width: 90%;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast i {
+            font-size: 1.1rem;
+        }
+
+        .toast.success {
+            background-color: var(--success);
+        }
+
+        .toast.error {
+            background-color: var(--error);
+        }
+
+        .toast.warning {
+            background-color: var(--warning);
+        }
+
+        .mt-6 {
+            margin-top: 1.5rem;
         }
 
         .text-center {
@@ -381,82 +505,42 @@ if (isset($_GET['delete_id'])) {
         }
 
         .mr-1 {
-            margin-right: 8px;
-        }
-
-        /* Toast Notification */
-        .toast {
-            position: fixed;
-            top: 30px;
-            right: 30px;
-            padding: 20px 25px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-            display: flex;
-            align-items: center;
-            transform: translateX(150%);
-            transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            z-index: 9999;
-        }
-
-        .toast.show {
-            transform: translateX(0);
-        }
-
-        .toast.success {
-            border-left: 5px solid #28a745;
-        }
-
-        .toast.error {
-            border-left: 5px solid #dc3545;
-        }
-
-        .toast.warning {
-            border-left: 5px solid #ffc107;
-        }
-
-        .toast i {
-            font-size: 24px;
-            margin-right: 15px;
-        }
-
-        .toast.success i {
-            color: #28a745;
-        }
-
-        .toast.error i {
-            color: #dc3545;
-        }
-
-        .toast.warning i {
-            color: #ffc107;
-        }
-
-        #toast-message {
-            font-size: 16px;
-            font-weight: 500;
-            color: #333;
+            margin-right: 0.25rem;
         }
 
         @media (max-width: 768px) {
+            .container {
+                padding: 0 1rem;
+            }
+            
             .header {
                 flex-direction: column;
-                text-align: center;
-                gap: 20px;
+                align-items: flex-start;
+                gap: 1rem;
             }
-
-            .student-grid {
-                grid-template-columns: 1fr;
+            
+            .card-header {
+                padding: 1rem;
             }
-
+            
+            .card-body {
+                padding: 1.25rem;
+            }
+            
             .action-buttons {
-                bottom: 20px;
-                right: 20px;
+                flex-direction: column;
+                gap: 0.75rem;
             }
-
-            .btn-lg {
+            
+            .btn {
                 width: 100%;
+            }
+            
+            .toast {
+                bottom: 1rem;
+                right: 1rem;
+                left: 1rem;
+                max-width: calc(100% - 2rem);
             }
         }
     </style>
@@ -725,9 +809,7 @@ if (isset($_GET['delete_id'])) {
                                     <?php foreach ($studentsList as $student): ?>
                                         <li class="student-list-item">
                                             <span><?= htmlspecialchars($student['name']) ?></span>
-                                            <a href="?delete_id=<?= htmlspecialchars($student['id']) ?>&year=<?= urlencode($selectedYear) ?>&class=<?= urlencode($selectedClass) ?>" 
-                                               class="btn btn-danger btn-sm" 
-                                               onclick="return confirmDelete(event)">
+                                            <a href="?delete_id=<?= htmlspecialchars($student['id']) ?>" class="btn btn-danger btn-sm" onclick="return confirmDelete(event)">
                                                 <i class="fas fa-trash mr-1"></i> Delete
                                             </a>
                                         </li>
@@ -851,7 +933,7 @@ if (isset($_GET['delete_id'])) {
         }
 
         // Show error message if delete failed
-        <?php if (!empty($deleteError)): ?>
+        <?php if (isset($deleteError)): ?>
             showToast('<?= addslashes($deleteError) ?>', 'error');
         <?php endif; ?>
 
