@@ -273,7 +273,7 @@ class mypdf extends FPDF {
         }
 
         $this->setTotalStudents(count($students));
-        $termEnds = isset($this->config['term_ends']) ? $this->config['term_ends'] : 'December 15, 2024';
+        $termEnds = isset($this->config['term_ends']) ? $this->config['term_ends'] :'December,15,2024';
         $termBegins = isset($this->config['term_begins']) ? $this->config['term_begins'] : 'January 8, 2025';
 
         foreach ($students as $admno => $data) {
@@ -569,3 +569,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     die("Invalid request method. Please submit the form.");
 }
 ?>
+
