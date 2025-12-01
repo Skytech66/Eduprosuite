@@ -36,7 +36,7 @@ if (isset($_GET['delete_id'])) {
         $deleteStmt->bindParam(':id', $_GET['delete_id']);
         $deleteStmt->execute();
         
-        // Redirect safely to same page without delete_id param
+        // Redirect safely to same page with GET parameters
         $params = $_GET;
         unset($params['delete_id']); // remove delete_id
         $params['delete_success'] = 1; // add success flag
@@ -498,7 +498,7 @@ if (isset($_GET['delete_id'])) {
                 </div>
                 
                 <div class="card-body">
-                    <form method="POST" action="">
+                    <form method="GET" action="">
                         <div class="form-group">
                             <label for="class_roster" class="form-label">
                                 <i class="fas fa-chalkboard mr-1"></i> Select Class
@@ -512,7 +512,7 @@ if (isset($_GET['delete_id'])) {
 
                                     if ($classResult) {
                                         while ($row = $classResult->fetch(PDO::FETCH_ASSOC)) {
-                                            $selected = (isset($_POST['class']) && $_POST['class'] == $row['class']) ? 'selected' : '';
+                                            $selected = (isset($_GET['class']) && $_GET['class'] == $row['class']) ? 'selected' : '';
                                             echo '<option value="' . htmlspecialchars($row['class']) . '" ' . $selected . '>' . htmlspecialchars($row['class']) . '</option>';
                                         }
                                     } else {
@@ -530,9 +530,9 @@ if (isset($_GET['delete_id'])) {
                         </button>
                     </form>
                     
-                    <?php if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['class']) && !isset($_POST['year'])): ?>
+                    <?php if (isset($_GET['class'])): ?>
                         <?php
-                        $selectedClass = $_POST['class'];
+                        $selectedClass = $_GET['class'];
                         try {
                             $studentQuery = "SELECT DISTINCT student, photo FROM marks WHERE class = :class ORDER BY student";
                             $stmt = $conn->prepare($studentQuery);
