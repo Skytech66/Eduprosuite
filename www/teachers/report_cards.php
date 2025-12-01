@@ -417,7 +417,7 @@ class mypdf extends FPDF {
             }
 
             // Grading System - LARGER FONTS
-            $this->Ln(10);
+            $this->Ln(8);
             $this->SetFillColor(245, 248, 255);
             $this->SetDrawColor(200, 210, 230);
             $this->SetLineWidth(0.3);
@@ -436,7 +436,7 @@ class mypdf extends FPDF {
             $this->Cell(180, 5, 'D (0-39) - Beginning ', 0, 1, 'C');
 
             // Attendance and promotion section - LARGER FONTS
-            $this->Ln(8);
+            $this->Ln(3);
             $this->SetFillColor(255, 255, 255);
             $this->SetDrawColor(220, 220, 230);
             $this->SetLineWidth(0.3);
@@ -467,7 +467,7 @@ class mypdf extends FPDF {
             $this->Cell(60, 7, 'Repeated / Promoted', 0, 1, 'L');
 
             // Comments section - LARGER FONTS
-            $this->Ln(4);
+            $this->Ln(3);
             
             // Academic remarks
             $academicRemark = $this->getAcademicRemarks();
@@ -489,7 +489,7 @@ class mypdf extends FPDF {
             $this->MultiCell(180, 6, $conductRemark, 0, 'L');
 
             // Signatures section - SIMPLIFIED (removed Name&Date and Acknowledgment)
-            $this->Ln(4);
+            $this->Ln(3);
             
             // Signature labels - LARGER FONT
             $this->SetFont('Helvetica', 'B', 12);
@@ -527,7 +527,7 @@ class mypdf extends FPDF {
             }
             
             // Progress indicator - LARGER FONT
-            $this->Ln(4);
+            $this->Ln(3);
             $this->SetFont('Helvetica', 'I', 10);
             $this->SetTextColor(100, 100, 120);
             $this->Cell(180, 5, "Student Report " . $this->current_student_index . " of " . $this->total_students, 0, 1, 'R');
@@ -569,4 +569,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     die("Invalid request method. Please submit the form.");
 }
 ?>
+
 
