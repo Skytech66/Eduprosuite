@@ -499,9 +499,6 @@ if (isset($_GET['delete_id'])) {
                 
                 <div class="card-body">
                     <form method="GET" action="">
-                        <!-- Add hidden field to track which form is being submitted -->
-                        <input type="hidden" name="form_type" value="roster">
-                        
                         <div class="form-group">
                             <label for="class_roster" class="form-label">
                                 <i class="fas fa-chalkboard mr-1"></i> Select Class
@@ -515,7 +512,7 @@ if (isset($_GET['delete_id'])) {
 
                                     if ($classResult) {
                                         while ($row = $classResult->fetch(PDO::FETCH_ASSOC)) {
-                                            $selected = (isset($_GET['form_type']) && $_GET['form_type'] == 'roster' && isset($_GET['class']) && $_GET['class'] == $row['class']) ? 'selected' : '';
+                                            $selected = (isset($_GET['class']) && $_GET['class'] == $row['class']) ? 'selected' : '';
                                             echo '<option value="' . htmlspecialchars($row['class']) . '" ' . $selected . '>' . htmlspecialchars($row['class']) . '</option>';
                                         }
                                     } else {
@@ -533,7 +530,7 @@ if (isset($_GET['delete_id'])) {
                         </button>
                     </form>
                     
-                    <?php if (isset($_GET['form_type']) && $_GET['form_type'] == 'roster' && isset($_GET['class'])): ?>
+                    <?php if (isset($_GET['class'])): ?>
                         <?php
                         $selectedClass = $_GET['class'];
                         try {
@@ -635,9 +632,6 @@ if (isset($_GET['delete_id'])) {
                 </div>
                 <div class="card-body">
                     <form method="GET" action="">
-                        <!-- Add hidden field to track which form is being submitted -->
-                        <input type="hidden" name="form_type" value="list">
-                        
                         <div class="form-group">
                             <label for="year" class="form-label">
                                 <i class="fas fa-calendar-alt mr-1"></i> Select Year
@@ -651,7 +645,7 @@ if (isset($_GET['delete_id'])) {
 
                                     if ($yearResult) {
                                         while ($row = $yearResult->fetch(PDO::FETCH_ASSOC)) {
-                                            $selected = (isset($_GET['form_type']) && $_GET['form_type'] == 'list' && isset($_GET['year']) && $_GET['year'] == $row['year']) ? 'selected' : '';
+                                            $selected = (isset($_GET['year']) && $_GET['year'] == $row['year']) ? 'selected' : '';
                                             echo '<option value="' . htmlspecialchars($row['year']) . '" ' . $selected . '>' . htmlspecialchars($row['year']) . '</option>';
                                         }
                                     } else {
@@ -676,7 +670,7 @@ if (isset($_GET['delete_id'])) {
 
                                     if ($classResult) {
                                         while ($row = $classResult->fetch(PDO::FETCH_ASSOC)) {
-                                            $selected = (isset($_GET['form_type']) && $_GET['form_type'] == 'list' && isset($_GET['class']) && $_GET['class'] == $row['class']) ? 'selected' : '';
+                                            $selected = (isset($_GET['class']) && $_GET['class'] == $row['class']) ? 'selected' : '';
                                             echo '<option value="' . htmlspecialchars($row['class']) . '" ' . $selected . '>' . htmlspecialchars($row['class']) . '</option>';
                                         }
                                     } else {
@@ -693,7 +687,7 @@ if (isset($_GET['delete_id'])) {
                         </button>
                     </form>
 
-                    <?php if (isset($_GET['form_type']) && $_GET['form_type'] == 'list' && isset($_GET['year']) && isset($_GET['class'])): ?>
+                    <?php if (isset($_GET['year']) && isset($_GET['class'])): ?>
                         <?php
                         $selectedYear = $_GET['year'];
                         $selectedClass = $_GET['class'];
@@ -731,7 +725,7 @@ if (isset($_GET['delete_id'])) {
                                     <?php foreach ($studentsList as $student): ?>
                                         <li class="student-list-item">
                                             <span><?= htmlspecialchars($student['name']) ?></span>
-                                            <a href="?form_type=list&delete_id=<?= htmlspecialchars($student['id']) ?>&year=<?= urlencode($selectedYear) ?>&class=<?= urlencode($selectedClass) ?>" 
+                                            <a href="?delete_id=<?= htmlspecialchars($student['id']) ?>&year=<?= urlencode($selectedYear) ?>&class=<?= urlencode($selectedClass) ?>" 
                                                class="btn btn-danger btn-sm" 
                                                onclick="return confirmDelete(event)">
                                                 <i class="fas fa-trash mr-1"></i> Delete
@@ -771,23 +765,6 @@ if (isset($_GET['delete_id'])) {
         const tabs = document.querySelectorAll('.tab');
         const rosterCard = document.getElementById('rosterCard');
         const listCard = document.getElementById('listCard');
-
-        // Check URL parameters to determine which tab should be active on page load
-        const urlParams = new URLSearchParams(window.location.search);
-        const formType = urlParams.get('form_type');
-        
-        // Set initial tab based on form_type parameter
-        if (formType === 'list') {
-            tabs[0].classList.remove('active');
-            tabs[1].classList.add('active');
-            rosterCard.style.display = 'none';
-            listCard.style.display = 'block';
-        } else {
-            tabs[0].classList.add('active');
-            tabs[1].classList.remove('active');
-            rosterCard.style.display = 'block';
-            listCard.style.display = 'none';
-        }
 
         tabs.forEach(tab => {
             tab.addEventListener('click', function() {
@@ -868,6 +845,7 @@ if (isset($_GET['delete_id'])) {
         }
 
         // Show success toast if redirected from delete action
+        const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('delete_success')) {
             showToast('Student deleted successfully', 'success');
         }
@@ -888,15 +866,13 @@ if (isset($_GET['delete_id'])) {
                 });
             });
 
-            // Restore active tab on page load if no form_type parameter
-            if (!formType) {
-                const savedTab = localStorage.getItem('activeTab');
-                if (savedTab && savedTab === 'list') {
-                    tabs[0].classList.remove('active');
-                    tabs[1].classList.add('active');
-                    rosterCard.style.display = 'none';
-                    listCard.style.display = 'block';
-                }
+            // Restore active tab on page load
+            const savedTab = localStorage.getItem('activeTab');
+            if (savedTab && savedTab === 'list') {
+                document.querySelector('.tab[data-tab="roster"]').classList.remove('active');
+                document.querySelector('.tab[data-tab="list"]').classList.add('active');
+                rosterCard.style.display = 'none';
+                listCard.style.display = 'block';
             }
             
             // Clear the saved tab state
