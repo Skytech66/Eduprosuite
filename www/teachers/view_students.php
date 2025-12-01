@@ -1,6 +1,4 @@
-                                                    <div class="file-input-wrapper">
-                                                        <label for="file-<?= $student['id'] ?>" class="file-input-label">
-            <?php
+ <?php
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
@@ -1115,6 +1113,7 @@ ob_end_flush();                                           : 'data:image/svg+xml,
 // End output buffering and flush
 ob_end_flush();
 ?>
+
 
 
 
