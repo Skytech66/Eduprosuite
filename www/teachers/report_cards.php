@@ -140,23 +140,6 @@ class mypdf extends FPDF {
         $this->Cell(190, 6, '', 0, 1, 'C');
     }
 
-    function footer() {
-        $this->SetY(-15);
-        $this->SetFont('Arial', 'I', 10);
-        $this->SetTextColor(100, 100, 100);
-        
-        // Footer line
-        $this->SetLineWidth(0.2);
-        $this->SetDrawColor(200, 200, 200);
-        $this->Line(15, $this->GetY(), 195, $this->GetY());
-        
-        $this->Ln(2);
-        $this->Cell(95, 5, 'Generated: ' . date('M j, Y g:i A'), 0, 0, 'L');
-        $this->Cell(95, 5, 'Page ' . $this->PageNo() . ' of {nb}', 0, 1, 'R');
-        
-        // REMOVED "CONFIDENTIAL ACADEMIC DOCUMENT" and SLOGAN
-    }
-
     function getAcademicRemarks() {
         $remarks = [
             "Exceptional academic performance with consistent excellence across all subjects.",
@@ -561,6 +544,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     die("Invalid request method. Please submit the form.");
 }
 ?>
+
 
 
 
