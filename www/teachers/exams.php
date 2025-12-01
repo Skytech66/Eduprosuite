@@ -23,10 +23,10 @@ try {
     die("Connection failed: " . $e->getMessage());
 }
 
-$classSelected = '';
-$subjectSelected = '';
-$yearSelected = '';
-$examName = '';
+$classSelected = $_GET['class'] ?? '';
+$subjectSelected = $_GET['subject'] ?? '';
+$yearSelected = $_GET['year'] ?? '';
+$examName = $_GET['examname'] ?? '';
 $students = [];
 
 $showConfirm = false;
@@ -37,128 +37,140 @@ $notifMessage = '';
 $emptyScoresExist = false;
 $emptyScoreRows = [];
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+// Handle delete redirect if present
+if (isset($_GET['delete_success'])) {
+    $messageType = 'success';
+    $notifMessage = 'Record deleted successfully!';
+}
+
+// Handle marks submission via POST (only for file uploads, which we don't have here, but keep for consistency)
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_marks'])) {
     $classSelected = $_POST['class'] ?? '';
     $subjectSelected = $_POST['subject'] ?? '';
     $yearSelected = $_POST['year'] ?? '';
     $examName = $_POST['examname'] ?? '';
+    
+    $replace = isset($_POST['replace']) && $_POST['replace'] == '1';
 
-    if (isset($_POST['submit_marks'])) {
-        $replace = isset($_POST['replace']) && $_POST['replace'] == '1';
+    // Pre-check for existing records per current students
+    $existingStudentsCount = 0;
+    if ($classSelected && $subjectSelected && $examName && !empty($_POST['students'])) {
+        $checkStmt = $conn->prepare("SELECT admission_number FROM marks WHERE examname = :examname AND class = :class AND subject = :subject");
+        $checkStmt->execute([
+            'examname' => $examName,
+            'class' => $classSelected,
+            'subject' => $subjectSelected
+        ]);
+        $allExisting = $checkStmt->fetchAll(PDO::FETCH_COLUMN, 0);
 
-        // Pre-check for existing records per current students
-        $existingStudentsCount = 0;
-        if ($classSelected && $subjectSelected && $examName && !empty($_POST['students'])) {
-            $checkStmt = $conn->prepare("SELECT admission_number FROM marks WHERE examname = :examname AND class = :class AND subject = :subject");
+        foreach ($_POST['students'] as $data) {
+            $admissionNumber = $data['admission_number'] ?? '';
+            if ($admissionNumber && in_array($admissionNumber, $allExisting)) {
+                $existingStudentsCount++;
+            }
+        }
+    }
+
+    if ($existingStudentsCount > 0 && !$replace) {
+        $showConfirm = true;
+        $populateScores = true;
+        $confirmMessage = "Marks already exist for {$existingStudentsCount} students. Do you want to replace them?";
+    } else {
+        // Process inserts/updates
+        $emptyScoresExist = false;
+        $emptyScoreRows = [];
+
+        foreach ($_POST['students'] as $studentId => $data) {
+            $classScore = isset($data['class_score']) && $data['class_score'] !== '' ? (float)$data['class_score'] : 0;
+            $examScore = isset($data['exam_score']) && $data['exam_score'] !== '' ? (float)$data['exam_score'] : 0;
+            $totalScore = $classScore + $examScore;
+            $admissionNumber = $data['admission_number'] ?? '';
+            $position = $data['position'] ?? null;
+            
+            // Check for empty scores
+            if ((!isset($data['class_score']) || $data['class_score'] === '') || 
+                (!isset($data['exam_score']) || $data['exam_score'] === '')) {
+                $emptyScoresExist = true;
+                $emptyScoreRows[] = $studentId;
+                continue;
+            }
+
+            if ($totalScore >= 80) {
+                $remarks = 'A';
+            } elseif ($totalScore >= 70) {
+                $remarks = 'B';
+            } elseif ($totalScore >= 60) {
+                $remarks = 'C';
+            } elseif ($totalScore >= 50) {
+                $remarks = 'D';
+            } elseif ($totalScore >= 40) {
+                $remarks = 'E';
+            } else {
+                $remarks = 'F';
+            }
+
+            // Check if record exists
+            $checkStmt = $conn->prepare("SELECT id FROM marks WHERE examname = :examname AND class = :class AND subject = :subject AND admission_number = :admission_number");
             $checkStmt->execute([
                 'examname' => $examName,
                 'class' => $classSelected,
-                'subject' => $subjectSelected
+                'subject' => $subjectSelected,
+                'admission_number' => $admissionNumber
             ]);
-            $allExisting = $checkStmt->fetchAll(PDO::FETCH_COLUMN, 0); // Fetch as array of admission_numbers
+            $existingRow = $checkStmt->fetch();
 
-            foreach ($_POST['students'] as $data) {
-                $admissionNumber = $data['admission_number'] ?? '';
-                if ($admissionNumber && in_array($admissionNumber, $allExisting)) {
-                    $existingStudentsCount++;
-                }
-            }
-        }
-
-        if ($existingStudentsCount > 0 && !$replace) {
-            $showConfirm = true;
-            $populateScores = true;
-            $confirmMessage = "Marks already exist for {$existingStudentsCount} students. Do you want to replace them?";
-        } else {
-            // Process inserts/updates
-            $emptyScoresExist = false;
-            $emptyScoreRows = [];
-
-            foreach ($_POST['students'] as $studentId => $data) {
-                $classScore = isset($data['class_score']) && $data['class_score'] !== '' ? (float)$data['class_score'] : 0;
-                $examScore = isset($data['exam_score']) && $data['exam_score'] !== '' ? (float)$data['exam_score'] : 0;
-                $totalScore = $classScore + $examScore;
-                $admissionNumber = $data['admission_number'] ?? '';
-                $position = $data['position'] ?? null;
-                
-                // Check for empty scores
-                if ((!isset($data['class_score']) || $data['class_score'] === '') || 
-                    (!isset($data['exam_score']) || $data['exam_score'] === '')) {
-                    $emptyScoresExist = true;
-                    $emptyScoreRows[] = $studentId;
-                    continue; // Skip this iteration but continue processing
-                }
-
-                if ($totalScore >= 80) {
-                    $remarks = 'A';
-                } elseif ($totalScore >= 70) {
-                    $remarks = 'B';
-                } elseif ($totalScore >= 60) {
-                    $remarks = 'C';
-                } elseif ($totalScore >= 50) {
-                    $remarks = 'D';
-                } elseif ($totalScore >= 40) {
-                    $remarks = 'E';
-                } else {
-                    $remarks = 'F';
-                }
-
-                // Check if record exists
-                $checkStmt = $conn->prepare("SELECT id FROM marks WHERE examname = :examname AND class = :class AND subject = :subject AND admission_number = :admission_number");
-                $checkStmt->execute([
+            if ($existingRow) {
+                // Update existing record
+                $updateStmt = $conn->prepare("UPDATE marks SET class_score = :class_score, exam_score = :exam_score, average = :average, remarks = :remarks, position = :position, updated_at = CURRENT_TIMESTAMP WHERE id = :id");
+                $updateStmt->execute([
+                    'class_score' => $classScore,
+                    'exam_score' => $examScore,
+                    'average' => $totalScore / 2,
+                    'remarks' => $remarks,
+                    'position' => $position,
+                    'id' => $existingRow['id']
+                ]);
+            } else {
+                // Insert new record
+                $insertStmt = $conn->prepare("INSERT INTO marks (examname, class, class_score, exam_score, subject, student, admission_number, average, remarks, position, created_at) 
+                                           VALUES (:examname, :class, :class_score, :exam_score, :subject, :student, :admission_number, :average, :remarks, :position, CURRENT_TIMESTAMP)");
+                $insertStmt->execute([
                     'examname' => $examName,
                     'class' => $classSelected,
+                    'class_score' => $classScore,
+                    'exam_score' => $examScore,
                     'subject' => $subjectSelected,
-                    'admission_number' => $admissionNumber
+                    'student' => $data['student_name'],
+                    'admission_number' => $admissionNumber,
+                    'average' => $totalScore / 2,
+                    'remarks' => $remarks,
+                    'position' => $position
                 ]);
-                $existingRow = $checkStmt->fetch();
-
-                if ($existingRow) {
-                    // Update existing record
-                    $updateStmt = $conn->prepare("UPDATE marks SET class_score = :class_score, exam_score = :exam_score, average = :average, remarks = :remarks, position = :position, updated_at = CURRENT_TIMESTAMP WHERE id = :id");
-                    $updateStmt->execute([
-                        'class_score' => $classScore,
-                        'exam_score' => $examScore,
-                        'average' => $totalScore / 2,
-                        'remarks' => $remarks,
-                        'position' => $position,
-                        'id' => $existingRow['id']
-                    ]);
-                } else {
-                    // Insert new record
-                    $insertStmt = $conn->prepare("INSERT INTO marks (examname, class, class_score, exam_score, subject, student, admission_number, average, remarks, position, created_at) 
-                                               VALUES (:examname, :class, :class_score, :exam_score, :subject, :student, :admission_number, :average, :remarks, :position, CURRENT_TIMESTAMP)");
-                    $insertStmt->execute([
-                        'examname' => $examName,
-                        'class' => $classSelected,
-                        'class_score' => $classScore,
-                        'exam_score' => $examScore,
-                        'subject' => $subjectSelected,
-                        'student' => $data['student_name'],
-                        'admission_number' => $admissionNumber,
-                        'average' => $totalScore / 2,
-                        'remarks' => $remarks,
-                        'position' => $position
-                    ]);
-                }
-            }
-            
-            if ($emptyScoresExist) {
-                $messageType = 'warning';
-                $notifMessage = 'Some scores were empty and set to zero. Please review.';
-            } else {
-                $messageType = 'success';
-                $notifMessage = 'Marks submitted successfully!';
             }
         }
+        
+        if ($emptyScoresExist) {
+            $messageType = 'warning';
+            $notifMessage = 'Some scores were empty and set to zero. Please review.';
+        } else {
+            $messageType = 'success';
+            $notifMessage = 'Marks submitted successfully!';
+        }
+        
+        // After successful submission, redirect with GET parameters to fix back navigation
+        $params = $_GET;
+        unset($params['delete_id']);
+        $params['delete_success'] = 1;
+        header('Location: ' . $_SERVER['PHP_SELF'] . '?' . http_build_query($params));
+        exit();
     }
+}
 
-    // Load students if criteria selected (moved outside for repopulation)
-    if ($classSelected && $yearSelected) {
-        $stmt = $conn->prepare("SELECT * FROM student_entries WHERE class = :class AND year = :year ORDER BY name ASC");
-        $stmt->execute(['class' => $classSelected, 'year' => $yearSelected]);
-        $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
+// Load students if criteria selected (using GET)
+if ($classSelected && $yearSelected) {
+    $stmt = $conn->prepare("SELECT * FROM student_entries WHERE class = :class AND year = :year ORDER BY name ASC");
+    $stmt->execute(['class' => $classSelected, 'year' => $yearSelected]);
+    $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 ?>
 
@@ -527,7 +539,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
         
         .student-avatar {
-                        width: 40px;
+            width: 40px;
             height: 40px;
             border-radius: 50%;
             background-color: var(--primary-color);
@@ -975,7 +987,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="marksheetForm" method="POST" action="">
+                    <form id="marksheetForm" method="GET" action="">
                         <div class="mb-4">
                             <label class="form-label fw-bold">Class</label>
                             <select class="form-select" name="class" required>
@@ -983,7 +995,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                 <?php
                                 $classes = $conn->query("SELECT DISTINCT class FROM student_entries");
                                 while ($class = $classes->fetch(PDO::FETCH_ASSOC)) {
-                                    echo "<option value='{$class['class']}'".($class['class'] == $classSelected ? ' selected' : '').">{$class['class']}</option>";
+                                    $selected = (isset($_GET['class']) && $_GET['class'] == $class['class']) ? 'selected' : '';
+                                    echo "<option value='{$class['class']}' $selected>{$class['class']}</option>";
                                 }
                                 ?>
                             </select>
@@ -995,7 +1008,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                 <?php
                                 $subjects = $conn->query("SELECT name FROM subject");
                                 while ($subject = $subjects->fetch(PDO::FETCH_ASSOC)) {
-                                    echo "<option value='{$subject['name']}'".($subject['name'] == $subjectSelected ? ' selected' : '').">{$subject['name']}</option>";
+                                    $selected = (isset($_GET['subject']) && $_GET['subject'] == $subject['name']) ? 'selected' : '';
+                                    echo "<option value='{$subject['name']}' $selected>{$subject['name']}</option>";
                                 }
                                 ?>
                             </select>
@@ -1004,21 +1018,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <label class="form-label fw-bold">Exam Name</label>
                             <select class="form-select" name="examname" required>
                                 <option value="">Select Exam</option>
-                                <option value="Term One" <?= $examName == 'Term One' ? 'selected' : '' ?>>Term One</option>
-                                <option value="Term Two" <?= $examName == 'Term Two' ? 'selected' : '' ?>>Term Two</option>
-                                <option value="Term Three" <?= $examName == 'Term Three' ? 'selected' : '' ?>>Term Three</option>
-                                <option value="Mid-Term" <?= $examName == 'Mid-Term' ? 'selected' : '' ?>>Mid-Term</option>
-                                <option value="Final Exam" <?= $examName == 'Final Exam' ? 'selected' : '' ?>>Final Exam</option>
+                                <?php
+                                $exams = ['Term One', 'Term Two', 'Term Three', 'Mid-Term', 'Final Exam'];
+                                foreach ($exams as $exam) {
+                                    $selected = (isset($_GET['examname']) && $_GET['examname'] == $exam) ? 'selected' : '';
+                                    echo "<option value='$exam' $selected>$exam</option>";
+                                }
+                                ?>
                             </select>
                         </div>
                         <div class="mb-4">
-                            <label class="form-label fw-bold">Academic Year</>
-                                                         <select class="form-select" name="year" required>
+                            <label class="form-label fw-bold">Academic Year</label>
+                            <select class="form-select" name="year" required>
                                 <option value="">Select Year</option>
                                 <?php
                                 $years = $conn->query("SELECT DISTINCT year FROM student_entries");
                                 while ($year = $years->fetch(PDO::FETCH_ASSOC)) {
-                                    echo "<option value='{$year['year']}'".($year['year'] == $yearSelected ? ' selected' : '').">{$year['year']}</option>";
+                                    $selected = (isset($_GET['year']) && $_GET['year'] == $year['year']) ? 'selected' : '';
+                                    echo "<option value='{$year['year']}' $selected>{$year['year']}</option>";
                                 }
                                 ?>
                             </select>
