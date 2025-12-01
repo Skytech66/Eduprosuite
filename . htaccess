@@ -1,7 +1,0 @@
-RewriteEngine On
-
-ErrorDocument 404 /www/smart-404.php
-
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^.*$ /www/smart-404.php [L]
