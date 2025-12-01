@@ -1,2 +1,0 @@
-# Redirect all 404 errors to our smart handler
-ErrorDocument 404 /smart-404.php
