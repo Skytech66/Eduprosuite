@@ -958,8 +958,23 @@ ob_start();
             }
             
             // Clear the saved tab state
-            localStorage.removeItem('activeTab');
+        localStorage.removeItem('activeTab');
+
+        // Handle double back to dashboard
+        let backPressCount = 0;
+        window.addEventListener('popstate', function(event) {
+            backPressCount++;
+            if (backPressCount >= 2) {
+                window.location.href = 'dashboard.php';
+            } else {
+                showToast('Press back again to go to Dashboard', 'warning');
+                // Push a dummy state to catch the next back
+                history.pushState(null, '', location.href);
+            }
         });
+
+        // Push initial state to enable popstate detection
+        history.pushState(null, '', location.href);
     </script>
 </body>
 </html>
