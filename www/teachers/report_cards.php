@@ -100,20 +100,20 @@ class mypdf extends FPDF {
         } else {
             $this->SetFillColor(240, 240, 240);
             $this->Rect(15, 8, 35, 30, 'F');
-            $this->SetFont('Calibri', 'I', 12);
+            $this->SetFont('Times', 'I', 12);
             $this->SetTextColor(100, 100, 100);
             $this->SetXY(15, 20);
             $this->Cell(35, 5, 'SCHOOL LOGO', 0, 0, 'C');
         }
 
         // School Information - LARGER FONT SIZES
-        $this->SetFont('Calibri', 'B', 19);
+        $this->SetFont('Times', 'B', 19);
         $this->SetTextColor(0, 0, 0);
         $this->SetXY(55, 10);
         $this->Cell(140, 8, 'STARS ON EARTH ACADEMY', 0, 1, 'C');
 
         // Contact information - LARGER FONT
-        $this->SetFont('Calibri', 'B', 12);
+        $this->SetFont('Times', 'B', 12);
         $this->SetTextColor(50, 50, 50);
         $this->SetX(55);
         $this->Cell(140, 6, 'LOCATION: ABOKOBI-AKPORMAN, ACCRA', 0, 1, 'C');
@@ -127,87 +127,15 @@ class mypdf extends FPDF {
         $this->SetDrawColor(0, 0, 0);
         $this->Line(15, 40, 195, 40);
         
-        // Report title with LARGER FONT
+        // Changed "ACADEMIC PERFORMANCE REPORT" to "TERMINAL REPORT (UPPER PRIMARY)"
         $this->SetY(45);
-        $this->SetFont('Calibri', 'B', 20);
+        $this->SetFont('Times', 'B', 20);
         $this->SetTextColor(0, 0, 0);
-        $this->Cell(190, 12, 'ACADEMIC PERFORMANCE REPORT', 0, 1, 'C');
+        $this->Cell(190, 12, 'TERMINAL REPORT (UPPER PRIMARY)', 0, 1, 'C');
         
-        $this->SetFont('Calibri', 'I', 12);
+        $this->SetFont('Times', 'I', 12);
         $this->SetTextColor(100, 100, 100);
         $this->Cell(190, 6, '', 0, 1, 'C');
-    }
-
-    function getAcademicRemarks() {
-        $remarks = [
-            "Exceptional academic performance with consistent excellence across all subjects.",
-            "Demonstrates outstanding understanding and application of concepts.",
-            "Shows remarkable progress and dedication to academic excellence.",
-            "Consistently produces high-quality work with great attention to detail.",
-            "Strong analytical skills and excellent problem-solving abilities.",
-            "Shows great potential and consistently exceeds expectations.",
-            "Very good understanding of concepts with consistent performance.",
-            "Makes valuable contributions to class discussions and activities.",
-            "Shows steady improvement and strong commitment to learning.",
-            "Good grasp of subject matter with reliable performance.",
-            "Developing well and shows positive attitude towards learning.",
-            "Making satisfactory progress with room for continued growth.",
-            "Shows interest in learning and participates actively in class.",
-            "Working towards achieving full potential with guidance.",
-            "Needs to develop more consistent study habits for better results.",
-            "Would benefit from additional practice and reinforcement.",
-            "Requires more focus and dedication to improve performance.",
-            "Needs to work on completing assignments more consistently."
-        ];
-        return $remarks[array_rand($remarks)];
-    }
-
-    function getConductRemarks() {
-        $conductRemarks = [
-            "Exemplary behavior and outstanding character. A role model for peers.",
-            "Consistently demonstrates respect, responsibility, and integrity.",
-            "Excellent classroom citizen with positive attitude and strong work ethic.",
-            "Shows exceptional leadership qualities and helps others willingly.",
-            "Very respectful and cooperative with teachers and classmates.",
-            "Displays excellent self-discipline and organizational skills.",
-            "Positive contributor to class environment with good behavior.",
-            "Reliable and trustworthy with strong sense of responsibility.",
-            "Works well independently and collaborates effectively in groups.",
-            "Shows good manners and treats others with kindness and respect.",
-            "Generally well-behaved with positive approach to learning.",
-            "Responds well to guidance and shows willingness to improve.",
-            "Developing good social skills and classroom etiquette.",
-            "Needs occasional reminders to maintain focus and attention.",
-            "Would benefit from improved self-control in classroom settings.",
-            "Requires consistent monitoring to ensure task completion.",
-            "Needs to work on following classroom rules more consistently.",
-            "Would benefit from developing better conflict resolution skills."
-        ];
-        return $conductRemarks[array_rand($conductRemarks)];
-    }
-
-    function drawStudentPhoto($photo, $x, $y) {
-        if (!empty($photo) && file_exists($photo)) {
-            // Professional photo with border - INCREASED SIZE
-            $this->SetDrawColor(150, 150, 150);
-            $this->SetLineWidth(0.5);
-            $this->Rect($x-2, $y-2, 38, 32);
-            $this->SetFillColor(255, 255, 255);
-            $this->Rect($x-1, $y-1, 36, 30, 'F');
-            $this->Image($photo, $x, $y, 34, 28);
-        } else {
-            // Clean photo placeholder - INCREASED SIZE
-            $this->SetFillColor(245, 245, 245);
-            $this->SetDrawColor(180, 180, 180);
-            $this->SetLineWidth(0.5);
-            $this->Rect($x-2, $y-2, 38, 32, 'DF');
-            $this->SetFont('Calibri', 'I', 12);
-            $this->SetTextColor(120, 120, 120);
-            $this->SetXY($x, $y+10);
-            $this->Cell(34, 5, 'STUDENT', 0, 0, 'C');
-            $this->SetXY($x, $y+18);
-            $this->Cell(34, 5, 'PHOTO', 0, 0, 'C');
-        }
     }
 
     function headertable($conn) {
@@ -230,7 +158,6 @@ class mypdf extends FPDF {
             $admno = $row["admission_number"];
             if (!isset($students[$admno])) {
                 $students[$admno]['name'] = $row["student"];
-                $students[$admno]['photo'] = $row["photo"];
                 $students[$admno]['marks'] = [];
             }
             
@@ -260,85 +187,81 @@ class mypdf extends FPDF {
         foreach ($students as $admno => $data) {
             $this->current_student_index++;
             
-            // Student information section - LARGER FONTS
+            // Student information section
             $this->SetY(58);
             
-            // Student photo - moved to the left for better separation
-            $this->drawStudentPhoto($data['photo'], 20, 58);
-            
-            // Student details - LARGER FONTS
+            // Student details - REMOVED PHOTO SECTION
             $this->SetFillColor(255, 255, 255);
             $this->SetDrawColor(200, 200, 200);
             $this->SetLineWidth(0.3);
             
-            // Main student info box
-            $this->Rect(65, 56, 125, 36, 'D');
+            // Main student info box - extended to full width since no photo
+            $this->Rect(15, 56, 180, 36, 'D');
             
-            $this->SetFont('Calibri', 'B', 14);
+            $this->SetFont('Times', 'B', 14);
             $this->SetTextColor(0, 0, 0);
-            $this->SetXY(70, 60);
+            $this->SetXY(20, 60);
             $this->Cell(40, 8, 'STUDENT:', 0, 0, 'L');
-            $this->SetFont('Calibri', 'B', 16);
-            $this->SetTextColor(0, 0, 0);
-            $this->Cell(80, 8, strtoupper($data['name']), 0, 1, 'L');
+            $this->SetFont('Times', 'B', 16);
+            $this->Cell(130, 8, strtoupper($data['name']), 0, 1, 'L');
             
-            $this->SetFont('Calibri', 'B', 12);
+            $this->SetFont('Times', 'B', 12);
             $this->SetTextColor(50, 50, 50);
-            $this->SetXY(70, 70);
+            $this->SetXY(20, 70);
             $this->Cell(22, 7, 'CLASS:', 0, 0, 'L');
-            $this->SetFont('Calibri', 'B', 13);
+            $this->SetFont('Times', 'B', 13);
             $this->SetTextColor(0, 0, 0);
             $this->Cell(25, 7, $class, 0, 0, 'L');
             
-            $this->SetFont('Calibri', 'B', 12);
+            $this->SetFont('Times', 'B', 12);
             $this->SetTextColor(50, 50, 50);
-            $this->SetX(115);
+            $this->SetX(70);
             $this->Cell(22, 7, 'EXAM:', 0, 0, 'L');
-            $this->SetFont('Calibri', 'B', 13);
+            $this->SetFont('Times', 'B', 13);
             $this->SetTextColor(0, 0, 0);
             $this->Cell(35, 7, $exam, 0, 1, 'L');
             
-            // Term dates - LARGER FONTS
-            $this->SetFont('Calibri', 'B', 12);
+            // Term dates
+            $this->SetFont('Times', 'B', 12);
             $this->SetTextColor(50, 50, 50);
-            $this->SetXY(70, 80);
+            $this->SetXY(20, 80);
             $this->Cell(30, 6, 'TERM ENDS:', 0, 0, 'L');
-            $this->SetFont('Calibri', '', 11);
+            $this->SetFont('Times', '', 11);
             $this->SetTextColor(0, 0, 0);
             $this->Cell(40, 6, $termEnds, 0, 0, 'L');
             
-            $this->SetFont('Calibri', 'B', 12);
+            $this->SetFont('Times', 'B', 12);
             $this->SetTextColor(50, 50, 50);
-            $this->SetX(130);
+            $this->SetX(100);
             $this->Cell(30, 6, 'NEXT TERM:', 0, 0, 'L');
-            $this->SetFont('Calibri', '', 12);
+            $this->SetFont('Times', '', 12);
             $this->SetTextColor(0, 0, 0);
             $this->Cell(35, 6, $termBegins, 0, 1, 'L');
 
-            // Academic performance table - LARGER FONTS
+            // Academic performance table
             $this->Ln(12);
             
-            // Table header with LARGER FONTS - ADJUSTED WIDTHS to fit properly
+            // Table header - SIMPLE TABLE
             $this->SetFillColor(240, 240, 240);
             $this->SetTextColor(0, 0, 0);
-            $this->SetFont('Calibri', 'B', 11); // Slightly smaller font to fit
+            $this->SetFont('Times', 'B', 11);
             $this->SetLineWidth(0.3);
             
-            // Adjusted column widths to fit better on the page
-            $headers = ['SUBJECT', 'CLASS SCORE', 'EXAM SCORE', 'TOTAL', 'GRADE', 'REMARKS', 'POSITION'];
-            $widths = [35, 25, 25, 22, 20, 38, 25]; // Adjusted widths
+            // Simple table with standard columns
+            $headers = ['SUBJECT', 'CLASS SCORE', 'EXAM SCORE', 'TOTAL', 'GRADE', 'POSITION'];
+            $widths = [45, 30, 30, 25, 25, 25];
             
             for ($i = 0; $i < count($headers); $i++) {
                 $this->Cell($widths[$i], 10, $headers[$i], 1, 0, 'C', true);
             }
             $this->Ln();
             
-            // Table content with LARGER FONTS
+            // Table content
             $this->SetTextColor(0, 0, 0);
             $fill = false;
             
             foreach ($data['marks'] as $row) {
-                $this->SetFont('Calibri', '', 11); // Slightly smaller font to fit
+                $this->SetFont('Times', '', 11);
                 
                 if ($fill) {
                     $this->SetFillColor(248, 248, 248);
@@ -357,91 +280,81 @@ class mypdf extends FPDF {
                 $this->Cell($widths[2], 8, $examScore, 1, 0, 'C', $fill);
                 $this->Cell($widths[3], 8, $total, 1, 0, 'C', $fill);
 
-                // Grade with black and white color coding - using total instead of average
+                // Grade
                 if ($total >= 70 && $total <= 100) {
                     $grade = 'A'; 
-                    $remarks = 'Advanced';
                 } elseif ($total >= 55 && $total < 70) {
                     $grade = 'B'; 
-                    $remarks = 'Proficient';
                 } elseif ($total >= 40 && $total < 55) {
                     $grade = 'C'; 
-                    $remarks = 'Developing';
                 } else {
                     $grade = 'D'; 
-                    $remarks = 'Beginning';
                 }
                 
-                $this->SetFont('Calibri', 'B', 11);
+                $this->SetFont('Times', 'B', 11);
                 $this->Cell($widths[4], 8, $grade, 1, 0, 'C', $fill);
                 
-                $this->SetFont('Calibri', '', 11);
-                $this->Cell($widths[5], 8, $remarks, 1, 0, 'C', $fill);
-                
-                $this->SetFont('Calibri', 'B', 10);
+                $this->SetFont('Times', 'B', 10);
                 if (is_numeric($originalPosition) && $originalPosition > 0) {
-                    $this->Cell($widths[6], 8, ordinal($originalPosition), 1, 0, 'C', $fill);
+                    $this->Cell($widths[5], 8, ordinal($originalPosition), 1, 0, 'C', $fill);
                 } else {
-                    $this->Cell($widths[6], 8, 'N/A', 1, 0, 'C', $fill);
+                    $this->Cell($widths[5], 8, 'N/A', 1, 0, 'C', $fill);
                 }
                 $this->Ln();
                 
                 $fill = !$fill;
             }
 
-            // Grading System - LARGER FONTS
+            // Grading System
             $this->Ln(8);
             $this->SetFillColor(250, 250, 250);
             $this->SetDrawColor(200, 200, 200);
             $this->SetLineWidth(0.3);
             $this->Rect(15, $this->GetY(), 180, 22, 'DF');
             
-            $this->SetFont('Calibri', 'B', 12);
+            $this->SetFont('Times', 'B', 12);
             $this->SetTextColor(0, 0, 0);
             $this->SetXY(15, $this->GetY() + 4);
             $this->Cell(180, 6, 'GRADING SYSTEM', 0, 1, 'C');
             
-            $this->SetFont('Calibri', 'B', 12);
+            $this->SetFont('Times', 'B', 12);
             $this->SetXY(15, $this->GetY());
             $this->Cell(180, 5, 'A (70-100) -  Advanced| B (55-69) - Proficient | C (40-54) - Developing', 0, 1, 'C');
             $this->SetXY(15, $this->GetY());
             $this->Cell(180, 5, 'D (0-39) - Beginning ', 0, 1, 'C');
 
-            // Attendance and promotion section - LARGER FONTS
+            // Attendance and promotion section
             $this->Ln(3);
             $this->SetFillColor(255, 255, 255);
             $this->SetDrawColor(200, 200, 200);
             $this->SetLineWidth(0.3);
             $this->Rect(15, $this->GetY(), 180, 22, 'D');
             
-            $this->SetFont('Calibri', 'B', 11);
+            $this->SetFont('Times', 'B', 11);
             $this->SetTextColor(0, 0, 0);
             $this->SetXY(25, $this->GetY() + 5);
             $this->Cell(38, 6, 'Days Present:', 0, 0, 'L');
-            $this->SetFont('Calibri', '', 11);
+            $this->SetFont('Times', '', 11);
             $this->Cell(25, 6, '_______', 'B', 0, 'C');
             
-            $this->SetFont('Calibri', 'B', 11);
-            $this->SetTextColor(0, 0, 0);
+            $this->SetFont('Times', 'B', 11);
             $this->SetX(100);
             $this->Cell(35, 6, 'Total Days:', 0, 0, 'L');
-            $this->SetFont('Calibri', '', 11);
+            $this->SetFont('Times', '', 11);
             $this->Cell(25, 6, '_______', 'B', 0, 'C');
             
-            $this->SetFont('Calibri', 'B', 12);
+            // CHANGED "Promotion Status:" to "Promoted To:"
+            $this->SetFont('Times', 'B', 12);
             $this->SetXY(25, $this->GetY() + 8);
-            $this->Cell(45, 7, 'Promotion Status:', 0, 0, 'L');
-            $this->SetFont('Calibri', 'B', 12);
-            $this->Cell(60, 7, 'Repeated / Promoted', 0, 1, 'L');
+            $this->Cell(45, 7, 'Promoted To:', 0, 0, 'L');
+            $this->SetFont('Times', 'B', 12);
+            $this->Cell(60, 7, '___________', 0, 1, 'L');
 
-            // REMOVED ACADEMIC AND CONDUCT REMARKS SECTIONS
-            // (These will now be replaced by teacher remarks lines)
-
-            // Teacher Remarks section - REPLACED signatures with remarks
+            // Teacher Remarks section
             $this->Ln(6);
             
             // Class Teacher's Remarks
-            $this->SetFont('Calibri', 'B', 12);
+            $this->SetFont('Times', 'B', 12);
             $this->SetTextColor(0, 0, 0);
             $this->Cell(90, 6, 'Class Teacher\'s Remarks:', 0, 0, 'L');
             
