@@ -90,8 +90,8 @@ class mypdf extends FPDF {
     }
 
     function header() {
-        // Professional header with clean design
-        $this->SetFillColor(250, 250, 252);
+        // Black and white header with clean design
+        $this->SetFillColor(255, 255, 255);
         $this->Rect(0, 0, 210, 45, 'F');
 
         // School logo - INCREASED SIZE
@@ -100,23 +100,21 @@ class mypdf extends FPDF {
         } else {
             $this->SetFillColor(240, 240, 240);
             $this->Rect(15, 8, 35, 30, 'F');
-            $this->SetFont('Arial', 'I', 12);
-            $this->SetTextColor(180, 180, 180);
+            $this->SetFont('Calibri', 'I', 12);
+            $this->SetTextColor(100, 100, 100);
             $this->SetXY(15, 20);
             $this->Cell(35, 5, 'SCHOOL LOGO', 0, 0, 'C');
         }
 
         // School Information - LARGER FONT SIZES
-        $this->SetFont('Times', 'B', 19);
-        $this->SetTextColor(30, 70, 120);
+        $this->SetFont('Calibri', 'B', 19);
+        $this->SetTextColor(0, 0, 0);
         $this->SetXY(55, 10);
         $this->Cell(140, 8, 'STARS ON EARTH ACADEMY', 0, 1, 'C');
 
-        // REMOVED SLOGAN "Quality Education for Future Leaders"
-
         // Contact information - LARGER FONT
-        $this->SetFont('Times', 'B', 12);
-        $this->SetTextColor(70, 70, 80);
+        $this->SetFont('Calibri', 'B', 12);
+        $this->SetTextColor(50, 50, 50);
         $this->SetX(55);
         $this->Cell(140, 6, 'LOCATION: ABOKOBI-AKPORMAN, ACCRA', 0, 1, 'C');
         $this->SetX(55);
@@ -126,17 +124,17 @@ class mypdf extends FPDF {
         
         // Clean separator line
         $this->SetLineWidth(0.8);
-        $this->SetDrawColor(70, 130, 180);
+        $this->SetDrawColor(0, 0, 0);
         $this->Line(15, 40, 195, 40);
         
         // Report title with LARGER FONT
         $this->SetY(45);
-        $this->SetFont('Arial', 'B', 20);
-        $this->SetTextColor(40, 80, 140);
+        $this->SetFont('Calibri', 'B', 20);
+        $this->SetTextColor(0, 0, 0);
         $this->Cell(190, 12, 'ACADEMIC PERFORMANCE REPORT', 0, 1, 'C');
         
-        $this->SetFont('Arial', 'I', 12);
-        $this->SetTextColor(120, 120, 140);
+        $this->SetFont('Calibri', 'I', 12);
+        $this->SetTextColor(100, 100, 100);
         $this->Cell(190, 6, '', 0, 1, 'C');
     }
 
@@ -191,20 +189,20 @@ class mypdf extends FPDF {
     function drawStudentPhoto($photo, $x, $y) {
         if (!empty($photo) && file_exists($photo)) {
             // Professional photo with border - INCREASED SIZE
-            $this->SetDrawColor(200, 200, 200);
+            $this->SetDrawColor(150, 150, 150);
             $this->SetLineWidth(0.5);
             $this->Rect($x-2, $y-2, 38, 32);
-            $this->SetFillColor(250, 250, 250);
+            $this->SetFillColor(255, 255, 255);
             $this->Rect($x-1, $y-1, 36, 30, 'F');
             $this->Image($photo, $x, $y, 34, 28);
         } else {
             // Clean photo placeholder - INCREASED SIZE
             $this->SetFillColor(245, 245, 245);
-            $this->SetDrawColor(220, 220, 220);
+            $this->SetDrawColor(180, 180, 180);
             $this->SetLineWidth(0.5);
             $this->Rect($x-2, $y-2, 38, 32, 'DF');
-            $this->SetFont('Arial', 'I', 12);
-            $this->SetTextColor(160, 160, 160);
+            $this->SetFont('Calibri', 'I', 12);
+            $this->SetTextColor(120, 120, 120);
             $this->SetXY($x, $y+10);
             $this->Cell(34, 5, 'STUDENT', 0, 0, 'C');
             $this->SetXY($x, $y+18);
@@ -270,60 +268,60 @@ class mypdf extends FPDF {
             
             // Student details - LARGER FONTS
             $this->SetFillColor(255, 255, 255);
-            $this->SetDrawColor(230, 230, 240);
+            $this->SetDrawColor(200, 200, 200);
             $this->SetLineWidth(0.3);
             
             // Main student info box
             $this->Rect(65, 56, 125, 36, 'D');
             
-            $this->SetFont('Helvetica', 'B', 14);
-            $this->SetTextColor(50, 70, 100);
+            $this->SetFont('Calibri', 'B', 14);
+            $this->SetTextColor(0, 0, 0);
             $this->SetXY(70, 60);
             $this->Cell(40, 8, 'STUDENT:', 0, 0, 'L');
-            $this->SetFont('Helvetica', 'B', 16);
-            $this->SetTextColor(30, 60, 110);
+            $this->SetFont('Calibri', 'B', 16);
+            $this->SetTextColor(0, 0, 0);
             $this->Cell(80, 8, strtoupper($data['name']), 0, 1, 'L');
             
-            $this->SetFont('Helvetica', 'B', 12);
-            $this->SetTextColor(70, 90, 110);
+            $this->SetFont('Calibri', 'B', 12);
+            $this->SetTextColor(50, 50, 50);
             $this->SetXY(70, 70);
             $this->Cell(22, 7, 'CLASS:', 0, 0, 'L');
-            $this->SetFont('Helvetica', 'B', 13);
-            $this->SetTextColor(40, 100, 160);
+            $this->SetFont('Calibri', 'B', 13);
+            $this->SetTextColor(0, 0, 0);
             $this->Cell(25, 7, $class, 0, 0, 'L');
             
-            $this->SetFont('Helvetica', 'B', 12);
-            $this->SetTextColor(70, 90, 110);
+            $this->SetFont('Calibri', 'B', 12);
+            $this->SetTextColor(50, 50, 50);
             $this->SetX(115);
             $this->Cell(22, 7, 'EXAM:', 0, 0, 'L');
-            $this->SetFont('Helvetica', 'B', 13);
-            $this->SetTextColor(160, 80, 40);
+            $this->SetFont('Calibri', 'B', 13);
+            $this->SetTextColor(0, 0, 0);
             $this->Cell(35, 7, $exam, 0, 1, 'L');
             
             // Term dates - LARGER FONTS
-            $this->SetFont('Helvetica', 'B', 12);
-            $this->SetTextColor(80, 100, 120);
+            $this->SetFont('Calibri', 'B', 12);
+            $this->SetTextColor(50, 50, 50);
             $this->SetXY(70, 80);
             $this->Cell(30, 6, 'TERM ENDS:', 0, 0, 'L');
-            $this->SetFont('Helvetica', '', 11);
-            $this->SetTextColor(50, 70, 90);
+            $this->SetFont('Calibri', '', 11);
+            $this->SetTextColor(0, 0, 0);
             $this->Cell(40, 6, $termEnds, 0, 0, 'L');
             
-            $this->SetFont('Helvetica', 'B', 12);
-            $this->SetTextColor(80, 100, 120);
+            $this->SetFont('Calibri', 'B', 12);
+            $this->SetTextColor(50, 50, 50);
             $this->SetX(130);
             $this->Cell(30, 6, 'NEXT TERM:', 0, 0, 'L');
-            $this->SetFont('Helvetica', '', 12);
-            $this->SetTextColor(50, 70, 90);
+            $this->SetFont('Calibri', '', 12);
+            $this->SetTextColor(0, 0, 0);
             $this->Cell(35, 6, $termBegins, 0, 1, 'L');
 
             // Academic performance table - LARGER FONTS
             $this->Ln(12);
             
             // Table header with LARGER FONTS - ADJUSTED WIDTHS to fit properly
-            $this->SetFillColor(60, 100, 160);
-            $this->SetTextColor(255, 255, 255);
-            $this->SetFont('Helvetica', 'B', 11); // Slightly smaller font to fit
+            $this->SetFillColor(240, 240, 240);
+            $this->SetTextColor(0, 0, 0);
+            $this->SetFont('Calibri', 'B', 11); // Slightly smaller font to fit
             $this->SetLineWidth(0.3);
             
             // Adjusted column widths to fit better on the page
@@ -340,10 +338,10 @@ class mypdf extends FPDF {
             $fill = false;
             
             foreach ($data['marks'] as $row) {
-                $this->SetFont('Helvetica', '', 11); // Slightly smaller font to fit
+                $this->SetFont('Calibri', '', 11); // Slightly smaller font to fit
                 
                 if ($fill) {
-                    $this->SetFillColor(248, 250, 255);
+                    $this->SetFillColor(248, 248, 248);
                 } else {
                     $this->SetFillColor(255, 255, 255);
                 }
@@ -359,35 +357,28 @@ class mypdf extends FPDF {
                 $this->Cell($widths[2], 8, $examScore, 1, 0, 'C', $fill);
                 $this->Cell($widths[3], 8, $total, 1, 0, 'C', $fill);
 
-                // Grade with professional color coding - using total instead of average
+                // Grade with black and white color coding - using total instead of average
                 if ($total >= 70 && $total <= 100) {
                     $grade = 'A'; 
-                    $gradeColor = array(0, 128, 0); // Green
                     $remarks = 'Advanced';
                 } elseif ($total >= 55 && $total < 70) {
                     $grade = 'B'; 
-                    $gradeColor = array(0, 100, 200); // Blue
                     $remarks = 'Proficient';
                 } elseif ($total >= 40 && $total < 55) {
                     $grade = 'C'; 
-                    $gradeColor = array(255, 140, 0); // Orange
                     $remarks = 'Developing';
                 } else {
                     $grade = 'D'; 
-                    $gradeColor = array(220, 0, 0); // Red
                     $remarks = 'Beginning';
                 }
                 
-                $this->SetTextColor($gradeColor[0], $gradeColor[1], $gradeColor[2]);
-                $this->SetFont('Helvetica', 'B', 11);
+                $this->SetFont('Calibri', 'B', 11);
                 $this->Cell($widths[4], 8, $grade, 1, 0, 'C', $fill);
                 
-                $this->SetTextColor(0, 0, 0);
-                $this->SetFont('Helvetica', '', 11);
+                $this->SetFont('Calibri', '', 11);
                 $this->Cell($widths[5], 8, $remarks, 1, 0, 'C', $fill);
                 
-                $this->SetTextColor(60, 80, 150);
-                $this->SetFont('Helvetica', 'B', 10);
+                $this->SetFont('Calibri', 'B', 10);
                 if (is_numeric($originalPosition) && $originalPosition > 0) {
                     $this->Cell($widths[6], 8, ordinal($originalPosition), 1, 0, 'C', $fill);
                 } else {
@@ -396,23 +387,21 @@ class mypdf extends FPDF {
                 $this->Ln();
                 
                 $fill = !$fill;
-                $this->SetTextColor(0, 0, 0);
             }
 
             // Grading System - LARGER FONTS
             $this->Ln(8);
-            $this->SetFillColor(245, 248, 255);
-            $this->SetDrawColor(200, 210, 230);
+            $this->SetFillColor(250, 250, 250);
+            $this->SetDrawColor(200, 200, 200);
             $this->SetLineWidth(0.3);
             $this->Rect(15, $this->GetY(), 180, 22, 'DF');
             
-            $this->SetFont('Helvetica', 'B', 12);
-            $this->SetTextColor(50, 80, 130);
+            $this->SetFont('Calibri', 'B', 12);
+            $this->SetTextColor(0, 0, 0);
             $this->SetXY(15, $this->GetY() + 4);
             $this->Cell(180, 6, 'GRADING SYSTEM', 0, 1, 'C');
             
-            $this->SetFont('Helvetica', 'B', 12);
-            $this->SetTextColor(70, 90, 120);
+            $this->SetFont('Calibri', 'B', 12);
             $this->SetXY(15, $this->GetY());
             $this->Cell(180, 5, 'A (70-100) -  Advanced| B (55-69) - Proficient | C (40-54) - Developing', 0, 1, 'C');
             $this->SetXY(15, $this->GetY());
@@ -421,93 +410,55 @@ class mypdf extends FPDF {
             // Attendance and promotion section - LARGER FONTS
             $this->Ln(3);
             $this->SetFillColor(255, 255, 255);
-            $this->SetDrawColor(220, 220, 230);
+            $this->SetDrawColor(200, 200, 200);
             $this->SetLineWidth(0.3);
             $this->Rect(15, $this->GetY(), 180, 22, 'D');
             
-            $this->SetFont('Helvetica', 'B', 11);
-            $this->SetTextColor(60, 80, 100);
+            $this->SetFont('Calibri', 'B', 11);
+            $this->SetTextColor(0, 0, 0);
             $this->SetXY(25, $this->GetY() + 5);
             $this->Cell(38, 6, 'Days Present:', 0, 0, 'L');
-            $this->SetFont('Helvetica', '', 11);
-            $this->SetTextColor(30, 30, 30);
+            $this->SetFont('Calibri', '', 11);
             $this->Cell(25, 6, '_______', 'B', 0, 'C');
             
-            $this->SetFont('Helvetica', 'B', 11);
-            $this->SetTextColor(60, 80, 100);
+            $this->SetFont('Calibri', 'B', 11);
+            $this->SetTextColor(0, 0, 0);
             $this->SetX(100);
             $this->Cell(35, 6, 'Total Days:', 0, 0, 'L');
-            $this->SetFont('Helvetica', '', 11);
-            $this->SetTextColor(30, 30, 30);
+            $this->SetFont('Calibri', '', 11);
             $this->Cell(25, 6, '_______', 'B', 0, 'C');
             
-            $this->SetFont('Helvetica', 'B', 12);
-            $this->SetTextColor(40, 120, 60);
+            $this->SetFont('Calibri', 'B', 12);
             $this->SetXY(25, $this->GetY() + 8);
             $this->Cell(45, 7, 'Promotion Status:', 0, 0, 'L');
-            $this->SetFont('Helvetica', 'B', 12);
-            $this->SetTextColor(30, 100, 180);
+            $this->SetFont('Calibri', 'B', 12);
             $this->Cell(60, 7, 'Repeated / Promoted', 0, 1, 'L');
 
-            // Comments section - LARGER FONTS
-            $this->Ln(3);
-            
-            // Academic remarks
-            $academicRemark = $this->getAcademicRemarks();
-            $this->SetFont('Helvetica', 'B', 12);
-            $this->SetTextColor(60, 90, 140);
-            $this->Cell(180, 7, 'ACADEMIC REMARKS:', 0, 1, 'L');
-            $this->SetFont('Helvetica', '', 12);
-            $this->SetTextColor(40, 50, 60);
-            $this->MultiCell(180, 6, $academicRemark, 0, 'L');
-            
-            // Conduct remarks
-            $this->Ln(3);
-            $conductRemark = $this->getConductRemarks();
-            $this->SetFont('Helvetica', 'B', 12);
-            $this->SetTextColor(60, 90, 140);
-            $this->Cell(180, 7, 'CONDUCT REMARKS:', 0, 1, 'L');
-            $this->SetFont('Helvetica', '', 12);
-            $this->SetTextColor(40, 50, 60);
-            $this->MultiCell(180, 6, $conductRemark, 0, 'L');
+            // REMOVED ACADEMIC AND CONDUCT REMARKS SECTIONS
+            // (These will now be replaced by teacher remarks lines)
 
-            // Signatures section - SIMPLIFIED (removed Name&Date and Acknowledgment)
-            $this->Ln(3);
+            // Teacher Remarks section - REPLACED signatures with remarks
+            $this->Ln(6);
             
-            // Signature labels - LARGER FONT
-            $this->SetFont('Helvetica', 'B', 12);
-            $this->SetTextColor(70, 90, 110);
-            $this->Cell(85, 6, 'Class Teacher\'s Signature:', 0, 0, 'L');
+            // Class Teacher's Remarks
+            $this->SetFont('Calibri', 'B', 12);
+            $this->SetTextColor(0, 0, 0);
+            $this->Cell(90, 6, 'Class Teacher\'s Remarks:', 0, 0, 'L');
+            
+            // Headmaster/Mistress's Remarks
             $this->SetX(110);
-            $this->Cell(85, 6, 'Headteacher\'s Signature:', 0, 1, 'L');
+            $this->Cell(90, 6, 'Headmaster/Mistress Remarks:', 0, 1, 'L');
             
-            // Signature lines - THICKER LINES
+            // Underline for Class Teacher's Remarks
             $this->SetDrawColor(150, 150, 150);
             $this->SetLineWidth(0.5);
             $this->Line(20, $this->GetY(), 85, $this->GetY());
-            $this->Line(110, $this->GetY(), 175, $this->GetY());
             
-            // REMOVED Name & Date and Acknowledgment lines
-
-            // REMOVED PROGRESS CIRCLES COMPLETELY
-
-            // Add official stamp/signature image if available
-            $signatureImage = '';
-            switch(strtolower(trim($class))) {
-                case 'basic 3b':
-                case 'basic 3a':
-                    $signatureImage = 'new.jpg';
-                    break;
-                case 'basic 6':
-                    $signatureImage = 'ern.png';
-                    break;
-                default:
-                    $signatureImage = 'new.jpg';
-            }
-
-            if (file_exists($signatureImage)) {
-                $this->Image($signatureImage, 140, $this->GetY() - 18, 25, 12);
-            }
+            // Space between the two remarks lines
+            $this->Ln(8);
+            
+            // Underline for Headmaster/Mistress's Remarks
+            $this->Line(110, $this->GetY(), 175, $this->GetY());
 
             // Add page break for next student (except for the last one)
             if ($this->current_student_index < $this->total_students) {
@@ -544,7 +495,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     die("Invalid request method. Please submit the form.");
 }
 ?>
-
-
-
-
