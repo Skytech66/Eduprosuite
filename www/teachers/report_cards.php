@@ -94,44 +94,44 @@ class mypdf extends FPDF {
         $this->SetFillColor(255, 255, 255);
         $this->Rect(0, 0, 210, 45, 'F');
 
-        // School logo - INCREASED SIZE
+        // School logo - MOVED VERY CLOSE TO SCHOOL NAME
         if (file_exists('gat.png')) {
-            $this->Image('gat.png', 15, 8, 35, 30); 
+            $this->Image('gat.png', 10, 8, 35, 35);
         } else {
             $this->SetFillColor(240, 240, 240);
-            $this->Rect(15, 8, 35, 30, 'F');
+            $this->Rect(10, 8, 35, 35, 'F');
             $this->SetFont('Times', 'I', 12);
             $this->SetTextColor(100, 100, 100);
-            $this->SetXY(15, 20);
+            $this->SetXY(10, 20);
             $this->Cell(35, 5, 'SCHOOL LOGO', 0, 0, 'C');
         }
 
-        // School Information - LARGER FONT SIZES
-        $this->SetFont('Times', 'B', 19);
+        // School Information - ADJUSTED TO BE CLOSE TO LOGO
+        $this->SetFont('Times', 'B', 28);
         $this->SetTextColor(0, 0, 0);
-        $this->SetXY(55, 10);
-        $this->Cell(140, 8, 'STARS ON EARTH ACADEMY', 0, 1, 'C');
+        $this->SetXY(50, 8);
+        $this->Cell(145, 8, 'STARS ON EARTH ACADEMY', 0, 1, 'C');
 
-        // Contact information - LARGER FONT
-        $this->SetFont('Times', 'B', 12);
+        // Contact information - FONT SIZE 14
+        $this->SetFont('Times', 'B', 14);
         $this->SetTextColor(50, 50, 50);
-        $this->SetX(55);
-        $this->Cell(140, 6, 'LOCATION: ABOKOBI-AKPORMAN, ACCRA', 0, 1, 'C');
-        $this->SetX(55);
-        $this->Cell(140, 6, 'TEL: +233246484366 / +233244457834', 0, 1, 'C');
-        $this->SetX(55);
-        $this->Cell(140, 6, 'EMAIL: starsonearth@gmail.com', 0, 1, 'C');
+        $this->SetX(50);
+        $this->Cell(145, 6, 'LOCATION: ABOKOBI-AKPORMAN, ACCRA', 0, 1, 'C');
+        $this->SetX(50);
+        $this->Cell(145, 6, 'TEL: +233246484366 / +233244457834', 0, 1, 'C');
+        $this->SetX(50);
+        $this->Cell(145, 6, 'EMAIL: starsonearth@gmail.com', 0, 1, 'C');
         
         // Clean separator line
         $this->SetLineWidth(0.8);
         $this->SetDrawColor(0, 0, 0);
         $this->Line(15, 40, 195, 40);
         
-        // Changed "ACADEMIC PERFORMANCE REPORT" to "TERMINAL REPORT (UPPER PRIMARY)"
+        // Changed "TERMINAL REPORT (UPPER PRIMARY)" to font size 11 and italic
         $this->SetY(45);
-        $this->SetFont('Times', 'B', 20);
+        $this->SetFont('Times', 'I', 11);
         $this->SetTextColor(0, 0, 0);
-        $this->Cell(190, 12, 'TERMINAL REPORT (UPPER PRIMARY)', 0, 1, 'C');
+        $this->Cell(190, 12, 'Terminal Report (Upper Primary)', 0, 1, 'C');
         
         $this->SetFont('Times', 'I', 12);
         $this->SetTextColor(100, 100, 100);
@@ -181,7 +181,7 @@ class mypdf extends FPDF {
         }
 
         $this->setTotalStudents(count($students));
-        $termEnds = isset($this->config['term_ends']) ? $this->config['term_ends'] :'December,15,2024';
+        $termEnds = isset($this->config['term_ends']) ? $this->config['term_ends'] : 'December 15, 2024';
         $termBegins = isset($this->config['term_begins']) ? $this->config['term_begins'] : 'January 8, 2025';
 
         foreach ($students as $admno => $data) {
@@ -195,16 +195,26 @@ class mypdf extends FPDF {
             $this->SetDrawColor(200, 200, 200);
             $this->SetLineWidth(0.3);
             
-            // Main student info box - extended to full width since no photo
+            // Main student info box
             $this->Rect(15, 56, 180, 36, 'D');
             
+            // Student name and exam (to the right of name)
             $this->SetFont('Times', 'B', 14);
             $this->SetTextColor(0, 0, 0);
             $this->SetXY(20, 60);
             $this->Cell(40, 8, 'STUDENT:', 0, 0, 'L');
             $this->SetFont('Times', 'B', 16);
-            $this->Cell(130, 8, strtoupper($data['name']), 0, 1, 'L');
+            $this->Cell(80, 8, strtoupper($data['name']), 0, 0, 'L');
             
+            // Exam to the right of student name
+            $this->SetFont('Times', 'B', 12);
+            $this->SetTextColor(50, 50, 50);
+            $this->Cell(18, 8, 'EXAM:', 0, 0, 'L');
+            $this->SetFont('Times', 'B', 13);
+            $this->SetTextColor(0, 0, 0);
+            $this->Cell(30, 8, $exam, 0, 1, 'L');
+            
+            // Class and Number on Roll
             $this->SetFont('Times', 'B', 12);
             $this->SetTextColor(50, 50, 50);
             $this->SetXY(20, 70);
@@ -213,44 +223,53 @@ class mypdf extends FPDF {
             $this->SetTextColor(0, 0, 0);
             $this->Cell(25, 7, $class, 0, 0, 'L');
             
+            // Number on Roll beside class
             $this->SetFont('Times', 'B', 12);
             $this->SetTextColor(50, 50, 50);
             $this->SetX(70);
-            $this->Cell(22, 7, 'EXAM:', 0, 0, 'L');
+            $this->Cell(30, 7, 'NO. ON ROLL:', 0, 0, 'L');
             $this->SetFont('Times', 'B', 13);
             $this->SetTextColor(0, 0, 0);
-            $this->Cell(35, 7, $exam, 0, 1, 'L');
+            $this->Cell(15, 7, $this->total_students, 0, 1, 'L');
             
-            // Term dates
+            // Next term begins and Position
             $this->SetFont('Times', 'B', 12);
             $this->SetTextColor(50, 50, 50);
             $this->SetXY(20, 80);
-            $this->Cell(30, 6, 'TERM ENDS:', 0, 0, 'L');
+            $this->Cell(35, 6, 'NEXT TERM BEGINS:', 0, 0, 'L');
             $this->SetFont('Times', '', 11);
             $this->SetTextColor(0, 0, 0);
-            $this->Cell(40, 6, $termEnds, 0, 0, 'L');
+            $this->Cell(40, 6, $termBegins, 0, 0, 'L');
             
+            // Position to the right
             $this->SetFont('Times', 'B', 12);
             $this->SetTextColor(50, 50, 50);
             $this->SetX(100);
-            $this->Cell(30, 6, 'NEXT TERM:', 0, 0, 'L');
-            $this->SetFont('Times', '', 12);
+            $this->Cell(22, 6, 'POSITION:', 0, 0, 'L');
+            $this->SetFont('Times', 'B', 13);
             $this->SetTextColor(0, 0, 0);
-            $this->Cell(35, 6, $termBegins, 0, 1, 'L');
+            
+            // Calculate and display overall position
+            $overallPosition = 'N/A';
+            if (isset($data['marks'][0]['position']) && is_numeric($data['marks'][0]['position'])) {
+                $overallPosition = ordinal($data['marks'][0]['position']);
+            }
+            $this->Cell(25, 6, $overallPosition, 0, 1, 'L');
 
             // Academic performance table
             $this->Ln(12);
             
-            // Table header - SIMPLE TABLE
+            // Table header - NORMAL TABLE
             $this->SetFillColor(240, 240, 240);
             $this->SetTextColor(0, 0, 0);
             $this->SetFont('Times', 'B', 11);
             $this->SetLineWidth(0.3);
             
-            // Simple table with standard columns
-            $headers = ['SUBJECT', 'CLASS SCORE', 'EXAM SCORE', 'TOTAL', 'GRADE', 'POSITION'];
-            $widths = [45, 30, 30, 25, 25, 25];
+            // Updated columns as requested - SUBJECT and REMARKS wider, others thinner
+            $headers = ['SUBJECT', 'CLASS SCORE 50%', 'EXAM SCORE 50%', 'TOTAL 100%', 'REMARKS', 'INITIALS'];
+            $widths = [60, 20, 20, 20, 50, 20]; // SUBJECT and REMARKS wider
             
+            // Draw table header with borders
             for ($i = 0; $i < count($headers); $i++) {
                 $this->Cell($widths[$i], 10, $headers[$i], 1, 0, 'C', true);
             }
@@ -278,22 +297,17 @@ class mypdf extends FPDF {
                 $this->Cell($widths[0], 8, $subject, 1, 0, 'C', $fill);
                 $this->Cell($widths[1], 8, $classScore, 1, 0, 'C', $fill);
                 $this->Cell($widths[2], 8, $examScore, 1, 0, 'C', $fill);
-                $this->Cell($widths[3], 8, $total, 1, 0, 'C', $fill);
-
-                // Grade
-                if ($total >= 70 && $total <= 100) {
-                    $grade = 'A'; 
-                } elseif ($total >= 55 && $total < 70) {
-                    $grade = 'B'; 
-                } elseif ($total >= 40 && $total < 55) {
-                    $grade = 'C'; 
-                } else {
-                    $grade = 'D'; 
-                }
                 
+                // BOLD THE TOTAL 100% TEXT
                 $this->SetFont('Times', 'B', 11);
-                $this->Cell($widths[4], 8, $grade, 1, 0, 'C', $fill);
+                $this->Cell($widths[3], 8, $total, 1, 0, 'C', $fill);
                 
+                // REMARKS (changed from Grade)
+                $this->SetFont('Times', '', 11);
+                $remarks = isset($row["remarks"]) ? $row["remarks"] : '';
+                $this->Cell($widths[4], 8, $remarks, 1, 0, 'C', $fill);
+                
+                // INITIALS (changed from Position)
                 $this->SetFont('Times', 'B', 10);
                 if (is_numeric($originalPosition) && $originalPosition > 0) {
                     $this->Cell($widths[5], 8, ordinal($originalPosition), 1, 0, 'C', $fill);
@@ -305,62 +319,70 @@ class mypdf extends FPDF {
                 $fill = !$fill;
             }
 
-            // Grading System
+            // Attendance and promotion section - ALL ON SAME LINE
             $this->Ln(8);
-            $this->SetFillColor(250, 250, 250);
-            $this->SetDrawColor(200, 200, 200);
-            $this->SetLineWidth(0.3);
-            $this->Rect(15, $this->GetY(), 180, 22, 'DF');
-            
-            $this->SetFont('Times', 'B', 12);
-            $this->SetTextColor(0, 0, 0);
-            $this->SetXY(15, $this->GetY() + 4);
-            $this->Cell(180, 6, 'GRADING SYSTEM', 0, 1, 'C');
-            
-            $this->SetFont('Times', 'B', 12);
-            $this->SetXY(15, $this->GetY());
-            $this->Cell(180, 5, 'A (70-100) -  Advanced| B (55-69) - Proficient | C (40-54) - Developing', 0, 1, 'C');
-            $this->SetXY(15, $this->GetY());
-            $this->Cell(180, 5, 'D (0-39) - Beginning ', 0, 1, 'C');
-
-            // Attendance and promotion section
-            $this->Ln(3);
             $this->SetFillColor(255, 255, 255);
             $this->SetDrawColor(200, 200, 200);
             $this->SetLineWidth(0.3);
-            $this->Rect(15, $this->GetY(), 180, 22, 'D');
+            
+            // Attendance and promotion on one line
+            $this->SetFont('Times', 'B', 11);
+            $this->SetTextColor(0, 0, 0);
+            $this->Cell(30, 6, 'ATTENDANCE:', 0, 0, 'L');
+            $this->SetFont('Times', '', 11);
+            $this->Cell(50, 6, '..........................', 0, 0, 'L');
             
             $this->SetFont('Times', 'B', 11);
             $this->SetTextColor(0, 0, 0);
-            $this->SetXY(25, $this->GetY() + 5);
-            $this->Cell(38, 6, 'Days Present:', 0, 0, 'L');
+            $this->Cell(30, 6, 'OUT OF:', 0, 0, 'L');
             $this->SetFont('Times', '', 11);
-            $this->Cell(25, 6, '_______', 'B', 0, 'C');
+            $this->Cell(30, 6, '..........................', 0, 0, 'L');
             
             $this->SetFont('Times', 'B', 11);
-            $this->SetX(100);
-            $this->Cell(35, 6, 'Total Days:', 0, 0, 'L');
+            $this->SetTextColor(0, 0, 0);
+            $this->Cell(30, 6, 'PROMOTED TO:', 0, 0, 'L');
             $this->SetFont('Times', '', 11);
-            $this->Cell(25, 6, '_______', 'B', 0, 'C');
+            $this->Cell(40, 6, '..........................', 0, 1, 'L');
             
-            // CHANGED "Promotion Status:" to "Promoted To:"
-            $this->SetFont('Times', 'B', 12);
-            $this->SetXY(25, $this->GetY() + 8);
-            $this->Cell(45, 7, 'Promoted To:', 0, 0, 'L');
-            $this->SetFont('Times', 'B', 12);
-            $this->Cell(60, 7, '___________', 0, 1, 'L');
-
-            // Teacher Remarks section
-            $this->Ln(6);
+            $this->Ln(4);
+            
+            // Conduct/Temperament
+            $this->SetFont('Times', 'B', 11);
+            $this->SetTextColor(0, 0, 0);
+            $this->Cell(50, 6, 'CONDUCT/TEMPERAMENT:', 0, 0, 'L');
+            $this->SetFont('Times', '', 11);
+            $this->Cell(130, 6, '_________________________________________________', 0, 1, 'L');
+            
+            $this->Ln(4);
+            
+            // Attitude towards work
+            $this->SetFont('Times', 'B', 11);
+            $this->SetTextColor(0, 0, 0);
+            $this->Cell(50, 6, 'ATTITUDE TOWARDS WORK:', 0, 0, 'L');
+            $this->SetFont('Times', '', 11);
+            $this->Cell(130, 6, '_________________________________________________', 0, 1, 'L');
+            
+            $this->Ln(4);
+            
+            // Interest
+            $this->SetFont('Times', 'B', 11);
+            $this->SetTextColor(0, 0, 0);
+            $this->Cell(30, 6, 'INTEREST:', 0, 0, 'L');
+            $this->SetFont('Times', '', 11);
+            $this->Cell(150, 6, '_________________________________________________________', 0, 1, 'L');
+            
+            $this->Ln(8);
             
             // Class Teacher's Remarks
-            $this->SetFont('Times', 'B', 12);
+            $this->SetFont('Times', 'B', 11);
             $this->SetTextColor(0, 0, 0);
-            $this->Cell(90, 6, 'Class Teacher\'s Remarks:', 0, 0, 'L');
+            $this->Cell(90, 6, 'CLASS TEACHER\'S REMARKS:', 0, 0, 'L');
             
             // Headmaster/Mistress's Remarks
             $this->SetX(110);
-            $this->Cell(90, 6, 'Headmaster/Mistress Remarks:', 0, 1, 'L');
+            $this->Cell(90, 6, 'HEADMASTER/MISTRESS REMARKS:', 0, 1, 'L');
+            
+            $this->Ln(2);
             
             // Underline for Class Teacher's Remarks
             $this->SetDrawColor(150, 150, 150);
@@ -372,6 +394,8 @@ class mypdf extends FPDF {
             
             // Underline for Headmaster/Mistress's Remarks
             $this->Line(110, $this->GetY(), 175, $this->GetY());
+            
+            $this->Ln(10);
 
             // Add page break for next student (except for the last one)
             if ($this->current_student_index < $this->total_students) {
