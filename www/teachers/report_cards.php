@@ -1,13 +1,13 @@
 <?php
-require_once 'vendor/autoload.php'; // Make sure you installed phpoffice/phpword via Composer
-use PhpOffice\PhpWord\PhpWord;
-use PhpOffice\PhpWord\IOFactory;
-
 // Enable error reporting
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+// Start output buffering
+ob_start();
+
+// Database connection
 $host = "aws-1-eu-north-1.pooler.supabase.com";
 $port = "6543";
 $dbname = "postgres";
@@ -36,150 +36,153 @@ function ordinal($number) {
     return $number . 'th';
 }
 
-// Check if form is submitted
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// Include PHPWord manually
+require_once __DIR__ . '/phpword/src/PhpWord/Autoloader.php';
+\PhpOffice\PhpWord\Autoloader::register();
 
-    $class = $_POST['askclass'];
-    $exam = $_POST['exam'];
+use PhpOffice\PhpWord\PhpWord;
+use PhpOffice\PhpWord\IOFactory;
+use PhpOffice\PhpWord\Shared\Converter;
 
-    // Fetch config data
-    $configSql = "SELECT school_name, po_box, address, term_ends, term_begins FROM config_report LIMIT 1";
-    $configStmt = $conn->query($configSql);
-    $config = $configStmt->fetch(PDO::FETCH_ASSOC);
-    if (!$config) $config = [];
-
-    $termBegins = $config['term_begins'] ?? 'January 8, 2025';
-
-    // Fetch students and their marks
-    $sql = "SELECT admission_number, student, subject, class_score, exam_score, remarks, position 
-            FROM marks 
-            WHERE class = :class AND examname = :exam
-            ORDER BY admission_number ASC";
-    $stmt = $conn->prepare($sql);
-    $stmt->bindValue(':class', $class, PDO::PARAM_STR);
-    $stmt->bindValue(':exam', $exam, PDO::PARAM_STR);
-    $stmt->execute();
-
-    $students = [];
-    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        $admno = $row["admission_number"];
-        if (!isset($students[$admno])) {
-            $students[$admno]['name'] = $row["student"];
-            $students[$admno]['marks'] = [];
-        }
-
-        $classScore = (int)$row["class_score"];
-        $examScore = (int)$row["exam_score"];
-        $totalScore = $classScore + $examScore;
-
-        $students[$admno]['marks'][] = [
-            'subject' => $row["subject"],
-            'class_score' => $classScore,
-            'exam_score' => $examScore,
-            'total' => $totalScore,
-            'remarks' => $row["remarks"],
-            'position' => $row["position"]
-        ];
-    }
-
-    $total_students = count($students);
-
-    $phpWord = new PhpWord();
-    $sectionStyle = ['marginTop' => 600, 'marginBottom' => 600];
-    $section = $phpWord->addSection($sectionStyle);
-
-    // Loop through each student
-    foreach ($students as $admno => $data) {
-
-        // Header - School info
-        $phpWord->addFontStyle('headerTitle', ['bold' => true, 'size' => 28]);
-        $phpWord->addFontStyle('headerSub', ['bold' => true, 'size' => 14]);
-        $phpWord->addFontStyle('normal', ['size' => 12]);
-        $phpWord->addFontStyle('bold', ['bold' => true, 'size' => 12]);
-
-        $section->addText('STARS ON EARTH ACADEMY', 'headerTitle', ['alignment' => 'center']);
-        $section->addText('LOCATION: ABOKOBI-AKPORMAN, ACCRA', 'headerSub', ['alignment' => 'center']);
-        $section->addText('TEL: +233246484366 / +233244457834', 'headerSub', ['alignment' => 'center']);
-        $section->addText('EMAIL: starsonearth@gmail.com', 'headerSub', ['alignment' => 'center']);
-        $section->addTextBreak(1);
-        $section->addText('Terminal Report (Upper Primary)', ['italic' => true, 'size' => 11], ['alignment' => 'center']);
-        $section->addTextBreak(1);
-
-        // Student info
-        $tableStyle = ['borderSize' => 6, 'borderColor' => '999999', 'cellMargin' => 50];
-        $phpWord->addTableStyle('studentInfoTable', $tableStyle);
-        $table = $section->addTable('studentInfoTable');
-
-        $table->addRow();
-        $table->addCell(3000)->addText('STUDENT:', 'bold');
-        $table->addCell(6000)->addText(strtoupper($data['name']));
-        $table->addCell(2000)->addText('EXAM:', 'bold');
-        $table->addCell(2000)->addText($exam);
-
-        $table->addRow();
-        $table->addCell(2000)->addText('CLASS:', 'bold');
-        $table->addCell(2000)->addText($class);
-        $table->addCell(2000)->addText('NO. ON ROLL:', 'bold');
-        $table->addCell(2000)->addText($total_students);
-
-        $table->addRow();
-        $table->addCell(3000)->addText('NEXT TERM BEGINS:', 'bold');
-        $table->addCell(3000)->addText($termBegins);
-        $table->addCell(2000)->addText('POSITION:', 'bold');
-        $overallPosition = is_numeric($data['marks'][0]['position']) ? ordinal($data['marks'][0]['position']) : 'N/A';
-        $table->addCell(2000)->addText($overallPosition);
-
-        $section->addTextBreak(1);
-
-        // Academic performance table
-        $tableStyle = ['borderSize' => 6, 'borderColor' => '000000', 'cellMargin' => 50];
-        $phpWord->addTableStyle('marksTable', $tableStyle);
-        $table = $section->addTable('marksTable');
-
-        $table->addRow();
-        $headers = ['SUBJECT', 'CLASS SCORE 50%', 'EXAM SCORE 50%', 'TOTAL 100%', 'REMARKS', 'INITIALS'];
-        foreach ($headers as $header) {
-            $table->addCell(3000)->addText($header, ['bold' => true], ['alignment' => 'center']);
-        }
-
-        foreach ($data['marks'] as $mark) {
-            $table->addRow();
-            $table->addCell(3000)->addText($mark['subject'], [], ['alignment' => 'center']);
-            $table->addCell(3000)->addText($mark['class_score'], [], ['alignment' => 'center']);
-            $table->addCell(3000)->addText($mark['exam_score'], [], ['alignment' => 'center']);
-            $table->addCell(3000)->addText($mark['total'], ['bold' => true], ['alignment' => 'center']);
-            $table->addCell(3000)->addText($mark['remarks'], [], ['alignment' => 'center']);
-            $initials = is_numeric($mark['position']) ? ordinal($mark['position']) : 'N/A';
-            $table->addCell(3000)->addText($initials, ['bold' => true], ['alignment' => 'center']);
-        }
-
-        $section->addTextBreak(1);
-
-        // Attendance and promotion
-        $section->addText('ATTENDANCE: ..................    OUT OF: ..................    PROMOTED TO: ..................', 'bold');
-        $section->addTextBreak(1);
-
-        // Conduct and Attitude
-        $section->addText('CONDUCT/TEMPERAMENT: ____________________________________________');
-        $section->addText('ATTITUDE TOWARDS WORK: _________________________________________');
-        $section->addText('INTEREST: _______________________________________________________');
-        $section->addTextBreak(1);
-
-        // Remarks
-        $section->addText('CLASS TEACHER\'S REMARKS: ______________________________________    HEADMASTER/MISTRESS REMARKS: __________________________');
-        $section->addPageBreak(); // Page break for next student
-    }
-
-    // Save Word file
-    $fileName = "Student_Academic_Report.docx";
-    header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-    header('Content-Disposition: attachment;filename="'.$fileName.'"');
-    header('Cache-Control: max-age=0');
-
-    $writer = IOFactory::createWriter($phpWord, 'Word2007');
-    $writer->save('php://output');
-    exit;
-
-} else {
+// Check form submission
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     die("Invalid request method. Please submit the form.");
 }
+
+// Fetch config data
+$configSql = "SELECT school_name, po_box, address, term_ends, term_begins FROM config_report LIMIT 1";
+$configStmt = $conn->query($configSql);
+$config = $configStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+// Fetch all student data
+$class = $_POST['askclass'];
+$exam = $_POST['exam'];
+
+$sql = "SELECT admission_number, photo, student, subject, class_score, exam_score, average, remarks, position 
+        FROM marks 
+        WHERE class = :class AND examname = :exam 
+        ORDER BY admission_number ASC";
+$stmt = $conn->prepare($sql);
+$stmt->bindValue(':class', $class, PDO::PARAM_STR);
+$stmt->bindValue(':exam', $exam, PDO::PARAM_STR);
+$stmt->execute();
+
+$students = [];
+while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    $admno = $row["admission_number"];
+    if (!isset($students[$admno])) {
+        $students[$admno]['name'] = $row["student"];
+        $students[$admno]['marks'] = [];
+    }
+
+    $classScoreInt = (int)$row["class_score"];
+    $examScoreInt = (int)$row["exam_score"];
+    $totalScore = $classScoreInt + $examScoreInt;
+
+    $students[$admno]['marks'][] = [
+        'subject' => $row["subject"],
+        'class_score' => $classScoreInt,
+        'exam_score' => $examScoreInt,
+        'total' => $totalScore,
+        'remarks' => $row["remarks"],
+        'position' => $row["position"]
+    ];
+}
+
+$termBegins = $config['term_begins'] ?? 'January 8, 2025';
+$termEnds = $config['term_ends'] ?? 'December 15, 2024';
+
+// Create PHPWord instance
+$phpWord = new PhpWord();
+
+// Styles
+$phpWord->setDefaultFontName('Times New Roman');
+$phpWord->setDefaultFontSize(12);
+
+// Loop through each student
+foreach ($students as $admno => $data) {
+    $section = $phpWord->addSection();
+
+    // Header
+    $headerTable = $section->addTable(['alignment' => 'center', 'cellMargin' => 80]);
+    $headerTable->addRow();
+    $cell1 = $headerTable->addCell(Converter::cmToTwip(3.5));
+    if (file_exists('gat.png')) {
+        $cell1->addImage('gat.png', ['width' => 100, 'height' => 100]);
+    } else {
+        $cell1->addText('SCHOOL LOGO', ['bold' => true, 'italic' => true, 'size' => 12], ['align' => 'center']);
+    }
+
+    $cell2 = $headerTable->addCell(Converter::cmToTwip(12));
+    $cell2->addText('STARS ON EARTH ACADEMY', ['bold' => true, 'size' => 28], ['align' => 'center']);
+    $cell2->addText('LOCATION: ABOKOBI-AKPORMAN, ACCRA', ['bold' => true, 'size' => 14], ['align' => 'center']);
+    $cell2->addText('TEL: +233246484366 / +233244457834', ['bold' => true, 'size' => 14], ['align' => 'center']);
+    $cell2->addText('EMAIL: starsonearth@gmail.com', ['bold' => true, 'size' => 14], ['align' => 'center']);
+    $cell2->addText('Terminal Report (Upper Primary)', ['italic' => true, 'size' => 11], ['align' => 'center']);
+
+    // Student Info Table
+    $section->addTextBreak(1);
+    $infoTable = $section->addTable(['cellMargin' => 80, 'borderSize' => 1]);
+    $infoTable->addRow();
+    $infoTable->addCell(Converter::cmToTwip(3))->addText("STUDENT: " . strtoupper($data['name']), ['bold' => true, 'size' => 16]);
+    $infoTable->addCell(Converter::cmToTwip(3))->addText("EXAM: $exam", ['bold' => true, 'size' => 13]);
+
+    $infoTable->addRow();
+    $infoTable->addCell(Converter::cmToTwip(3))->addText("CLASS: $class");
+    $infoTable->addCell(Converter::cmToTwip(3))->addText("NO. ON ROLL: " . count($students));
+
+    $infoTable->addRow();
+    $infoTable->addCell(Converter::cmToTwip(3))->addText("NEXT TERM BEGINS: $termBegins");
+    $overallPosition = isset($data['marks'][0]['position']) ? ordinal($data['marks'][0]['position']) : 'N/A';
+    $infoTable->addCell(Converter::cmToTwip(3))->addText("POSITION: $overallPosition");
+
+    // Academic Table
+    $section->addTextBreak(1);
+    $tableStyle = ['borderSize' => 6, 'borderColor' => '000000', 'cellMargin' => 80];
+    $phpWord->addTableStyle('AcademicTable', $tableStyle);
+    $acadTable = $section->addTable('AcademicTable');
+
+    // Table header
+    $acadTable->addRow();
+    $headers = ['SUBJECT', 'CLASS SCORE 50%', 'EXAM SCORE 50%', 'TOTAL 100%', 'REMARKS', 'INITIALS'];
+    foreach ($headers as $header) {
+        $acadTable->addCell(Converter::cmToTwip(3))->addText($header, ['bold' => true, 'size' => 11], ['align' => 'center']);
+    }
+
+    // Table data
+    foreach ($data['marks'] as $row) {
+        $acadTable->addRow();
+        $acadTable->addCell(Converter::cmToTwip(3))->addText($row['subject'], [], ['align' => 'center']);
+        $acadTable->addCell(Converter::cmToTwip(3))->addText($row['class_score'], [], ['align' => 'center']);
+        $acadTable->addCell(Converter::cmToTwip(3))->addText($row['exam_score'], [], ['align' => 'center']);
+        $acadTable->addCell(Converter::cmToTwip(3))->addText($row['total'], ['bold' => true], ['align' => 'center']);
+        $acadTable->addCell(Converter::cmToTwip(3))->addText($row['remarks'], [], ['align' => 'center']);
+        $initials = is_numeric($row['position']) ? ordinal($row['position']) : 'N/A';
+        $acadTable->addCell(Converter::cmToTwip(3))->addText($initials, ['bold' => true], ['align' => 'center']);
+    }
+
+    // Attendance & Remarks
+    $section->addTextBreak(1);
+    $section->addText("ATTENDANCE: ..................  OUT OF: ..................  PROMOTED TO: ..................", ['bold' => true]);
+    $section->addText("CONDUCT/TEMPERAMENT: ____________________________________________", ['bold' => true]);
+    $section->addText("ATTITUDE TOWARDS WORK: _________________________________________", ['bold' => true]);
+    $section->addText("INTEREST: _______________________________________________________", ['bold' => true]);
+    $section->addText("CLASS TEACHER'S REMARKS: ______________________________________  HEADMASTER/MISTRESS REMARKS: ____________________________", ['bold' => true]);
+
+    // Add page break for next student
+    if ($admno !== array_key_last($students)) {
+        $section->addPageBreak();
+    }
+}
+
+// Save Word file
+$filename = "Student_Academic_Report.docx";
+header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+header('Content-Disposition: attachment; filename="' . $filename . '"');
+header('Cache-Control: max-age=0');
+
+$writer = IOFactory::createWriter($phpWord, 'Word2007');
+$writer->save('php://output');
+
+ob_end_flush();
+?>
