@@ -1,176 +1,95 @@
 <?php
-// Enable error reporting
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-ob_start();
-
-// Load PhpWord (no vendor folder required)
-require_once __DIR__ . '/phpword/src/PhpWord/Autoloader.php';
+// 1. Load PHPWord (manual installation)
+require_once __DIR__ . '/PHPWord-master/src/PhpWord/Autoloader.php';
 \PhpOffice\PhpWord\Autoloader::register();
 
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\IOFactory;
 
-// Database connection settings
-$host = "aws-1-eu-north-1.pooler.supabase.com";
-$port = "6543";
-$dbname = "postgres";
-$user = "postgres.mqtuzltstbshtjigzujz";
-$password = "Ernestbizz..123";
+// --------------------------------------------------
+// SAMPLE DATA — you can replace with DB values
+// --------------------------------------------------
+$student_name = "John Doe";
+$class = "JSS 2A";
+$term = "Second Term";
+$session = "2024 / 2025";
 
-// Connect to DB
-try {
-    $conn = new PDO("pgsql:host=$host;port=$port;dbname=$dbname", $user, $password, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-    ]);
-} catch (PDOException $e) {
-    die("Connection failed: " . $e->getMessage());
+$subjects = [
+    ["Mathematics", 78],
+    ["English Language", 73],
+    ["Basic Science", 84],
+    ["Social Studies", 69],
+    ["Computer Science", 92],
+    ["Physical & Health Ed", 81]
+];
+
+// --------------------------------------------------
+// CREATE DOCUMENT
+// --------------------------------------------------
+$phpWord = new PhpWord();
+$section = $phpWord->addSection();
+
+// Header (School Name)
+$titleStyle = [
+    'bold' => true,
+    'size' => 20,
+    'underline' => 'single',
+    'alignment' => 'center'
+];
+$section->addText("SCHOOL REPORT CARD", $titleStyle);
+
+// Student info
+$section->addTextBreak(1);
+$section->addText("Student Name:  $student_name", ['size' => 14]);
+$section->addText("Class:         $class", ['size' => 14]);
+$section->addText("Term:          $term", ['size' => 14]);
+$section->addText("Session:       $session", ['size' => 14]);
+
+$section->addTextBreak(1);
+
+// --------------------------------------------------
+// SUBJECT SCORES TABLE
+// --------------------------------------------------
+$tableStyle = [
+    'borderSize' => 6,
+    'borderColor' => '000000',
+    'cellMargin' => 120
+];
+
+$phpWord->addTableStyle("ReportTable", $tableStyle);
+
+$table = $section->addTable("ReportTable");
+
+// Header row
+$table->addRow();
+$table->addCell(6000)->addText("Subject", ['bold' => true]);
+$table->addCell(2000)->addText("Score", ['bold' => true]);
+
+// Subject rows
+foreach ($subjects as $sub) {
+    $table->addRow();
+    $table->addCell(6000)->addText($sub[0]);
+    $table->addCell(2000)->addText($sub[1]);
 }
 
-// Convert number to ordinal
-function ordinal($number) {
-    $number = (int)$number;
-    if (!in_array($number % 100, [11, 12, 13])) {
-        switch ($number % 10) {
-            case 1: return $number . 'st';
-            case 2: return $number . 'nd';
-            case 3: return $number . 'rd';
-        }
-    }
-    return $number . 'th';
-}
+// --------------------------------------------------
+// FOOTER SECTION
+// --------------------------------------------------
+$section->addTextBreak(2);
+$section->addText("Teacher's Remark: ____________________________", ['size' => 12]);
+$section->addTextBreak(1);
+$section->addText("Principal's Signature: ________________________", ['size' => 12]);
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// --------------------------------------------------
+// SAVE FILE
+// --------------------------------------------------
+$filename = "report_card_" . str_replace(" ", "_", strtolower($student_name)) . ".docx";
+$savePath = __DIR__ . "/" . $filename;
 
-    $class = $_POST['askclass'];
-    $exam = $_POST['exam'];
+$writer = IOFactory::createWriter($phpWord, "Word2007");
+$writer->save($savePath);
 
-    // Fetch marks
-    $sql = "SELECT admission_number, student, subject, class_score, exam_score, remarks, position 
-            FROM marks 
-            WHERE class = :class AND examname = :exam 
-            ORDER BY admission_number ASC";
+echo "Report card generated successfully!<br>";
+echo "<a href='$filename' download>Click here to download report card</a>";
 
-    $stmt = $conn->prepare($sql);
-    $stmt->execute(['class' => $class, 'exam' => $exam]);
-
-    $students = [];
-    while ($row = $stmt->fetch()) {
-        $adm = $row["admission_number"];
-
-        if (!isset($students[$adm])) {
-            $students[$adm] = [
-                'name' => $row['student'],
-                'marks' => []
-            ];
-        }
-
-        $students[$adm]['marks'][] = [
-            'subject' => $row["subject"],
-            'class_score' => (int)$row["class_score"],
-            'exam_score' => (int)$row["exam_score"],
-            'total' => (int)$row["class_score"] + (int)$row["exam_score"],
-            'remarks' => $row["remarks"],
-            'position' => $row["position"]
-        ];
-    }
-
-    // Fetch school config
-    $config = $conn->query("SELECT school_name, po_box, address, term_ends, term_begins 
-                            FROM config_report LIMIT 1")
-                   ->fetch() ?: [];
-
-    // Create Word doc
-    $phpWord = new PhpWord();
-    $section = $phpWord->addSection(['marginTop' => 600, 'marginBottom' => 600]);
-
-    foreach ($students as $adm => $data) {
-
-        // School header
-        if (file_exists('gat.png')) {
-            $section->addImage('gat.png', ['width' => 80, 'height' => 80, 'alignment' => 'left']);
-        }
-
-        $section->addText(strtoupper($config['school_name'] ?? 'STARS ON EARTH ACADEMY'),
-            ['size' => 28, 'bold' => true], ['alignment' => 'center']);
-
-        $section->addText('LOCATION: ABOKOBI-AKPORMAN, ACCRA', ['size' => 14], ['alignment' => 'center']);
-        $section->addText('TEL: +233246484366 / +233244457834', ['size' => 14], ['alignment' => 'center']);
-        $section->addText('EMAIL: starsonearth@gmail.com', ['size' => 14], ['alignment' => 'center']);
-        $section->addTextBreak(1);
-
-        $section->addText('Terminal Report (Upper Primary)', ['italic' => true, 'size' => 11], ['alignment' => 'center']);
-        $section->addTextBreak(1);
-
-        // Student info
-        $section->addText('STUDENT: ' . strtoupper($data['name']), ['bold' => true, 'size' => 16]);
-        $section->addText('CLASS: ' . $class);
-        $section->addText('EXAM: ' . $exam);
-        $section->addText('NEXT TERM BEGINS: ' . ($config['term_begins'] ?? 'January 8, 2025'));
-
-        $overallPos = is_numeric($data['marks'][0]['position'] ?? null)
-                        ? ordinal($data['marks'][0]['position'])
-                        : 'N/A';
-        $section->addText("POSITION: $overallPos");
-        $section->addTextBreak(1);
-
-        // Table
-        $phpWord->addTableStyle('MarksTable', [
-            'borderSize' => 6,
-            'borderColor' => '000000',
-            'cellMargin' => 40
-        ]);
-
-        $table = $section->addTable('MarksTable');
-
-        $headers = ['SUBJECT', 'CLASS SCORE 50%', 'EXAM SCORE 50%', 'TOTAL 100%', 'REMARKS', 'INITIALS'];
-
-        $table->addRow();
-        foreach ($headers as $h) {
-            $table->addCell(2000)->addText($h, ['bold' => true], ['alignment' => 'center']);
-        }
-
-        foreach ($data['marks'] as $m) {
-            $table->addRow();
-            $table->addCell(2000)->addText($m['subject'], [], ['alignment' => 'center']);
-            $table->addCell(1500)->addText($m['class_score'], [], ['alignment' => 'center']);
-            $table->addCell(1500)->addText($m['exam_score'], [], ['alignment' => 'center']);
-            $table->addCell(1500)->addText($m['total'], ['bold' => true], ['alignment' => 'center']);
-            $table->addCell(2500)->addText($m['remarks'], [], ['alignment' => 'center']);
-
-            $pos = is_numeric($m['position']) ? ordinal($m['position']) : 'N/A';
-            $table->addCell(1500)->addText($pos, [], ['alignment' => 'center']);
-        }
-
-        $section->addTextBreak(1);
-
-        // Comments fields
-        $section->addText("ATTENDANCE: .................. OUT OF: .................. PROMOTED TO: ..................");
-        $section->addText("CONDUCT/TEMPERAMENT: ________________________________________________");
-        $section->addText("ATTITUDE TOWARDS WORK: _____________________________________________");
-        $section->addText("INTEREST: ___________________________________________________________");
-        $section->addText("CLASS TEACHER’S REMARKS: _______________________   HEADMASTER/MISTRESS REMARKS: _______________________");
-
-        // Page break
-        if ($adm !== array_key_last($students)) {
-            $section->addPageBreak();
-        }
-    }
-
-    // Output file
-    $filename = "Student_Academic_Report.docx";
-
-    header("Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document");
-    header("Content-Disposition: attachment; filename=\"$filename\"");
-
-    $writer = IOFactory::createWriter($phpWord, "Word2007");
-    $writer->save("php://output");
-
-    ob_end_flush();
-    exit;
-}
-
-echo "Invalid request.";
 ?>
